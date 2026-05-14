@@ -54,6 +54,25 @@ assertFileIncludes("apps/slots/src/views/AuthPage.tsx", [
   "Check your email",
   "Verify your email first",
 ]);
+assertFileIncludes("apps/slots/src/views/BookingPage.tsx", [
+  "const [bookingDraft, setBookingDraft] = useState<InlineSlotFormDraft>",
+  "setBookingDraft(EMPTY_INLINE_SLOT_FORM_DRAFT);",
+  "onDraftChange={setBookingDraft}",
+  "if (selectedSlotId && !selectedSlot)",
+]);
+assertFileIncludes("apps/slots/src/components/InlineSlotForm.tsx", [
+  'name="participantName"',
+  'name="participantEmail"',
+  'name="notes"',
+  "maxLength={160}",
+  "maxLength={2000}",
+  "participantTimezone: viewerTz",
+  "participantLocale: navigator.language || undefined",
+  "participantOffsetAtBooking: formatUtcOffset(startsAt, viewerTz)",
+  "notes: notes.trim()",
+  "onDraftChange?.(EMPTY_INLINE_SLOT_FORM_DRAFT)",
+  "We kept your",
+]);
 
 const distJs = filesUnder("apps/slots/dist/assets").filter((file) => file.endsWith(".js"));
 assert(

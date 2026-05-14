@@ -150,6 +150,12 @@ export function BookingPage({
     [carouselSlots, selectedSlotId],
   );
 
+  useEffect(() => {
+    if (selectedSlotId && !selectedSlot) {
+      setSelectedSlotId(undefined);
+    }
+  }, [selectedSlot, selectedSlotId]);
+
   /* Click outside the selected band → close. Pointerdown so we catch
      it before the click bubbles to a chip in another band. ESC also
      closes via a global keydown. */

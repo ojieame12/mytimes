@@ -17,8 +17,9 @@
     "test:billing": "tsx scripts/test-billing-entitlements.mjs",
     "test:auth-reset": "tsx scripts/test-auth-password-reset.mjs",
     "test:email": "tsx scripts/test-email-shape.mjs",
+    "test:booking-ui": "tsx scripts/test-booking-ui-regression.tsx",
     "test:frontend-readiness": "node scripts/test-frontend-readiness.mjs",
-    "test:e2e": "npm run typecheck && npm run build && npm run test:email && npm run test:auth-reset && npm run test:billing && npm run test:api && npm run test:hardening && npm run test:frontend-readiness",
+    "test:e2e": "npm run typecheck && npm run build && npm run test:email && npm run test:auth-reset && npm run test:billing && npm run test:api && npm run test:hardening && npm run test:booking-ui && npm run test:frontend-readiness",
     "auth:links": "node scripts/auth-links.mjs",
     "email:ready": "node scripts/email-readiness.mjs",
     "email:test": "node scripts/email-test.mjs",
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "jsdom": "^29.1.1",
     "typescript": "^5.9.0"
   }
 }
