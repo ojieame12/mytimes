@@ -1,6 +1,6 @@
 # mytimes Launch Status
 
-Last updated: May 14, 2026, 17:45 SAST.
+Last updated: May 14, 2026, 20:07 SAST.
 
 ## Overall
 
@@ -11,6 +11,7 @@ Core production path is wired and passing:
 - The frontend calls production API routes through same-origin `/api` on `mytimes.co`.
 - Stripe billing readiness is green for the hidden board unlock, Company monthly, and Company annual.
 - Resend readiness is green with the production sender.
+- Organizer signup requires email verification; password reset is wired.
 - Public email preview files are no longer shipped.
 - The demo board is explicitly read-only.
 
@@ -32,7 +33,8 @@ Core production path is wired and passing:
 | Public booking page | Done | Real token routes call the API. `/b/preview` is demo-only and cannot create bookings. |
 | Admin/manage links | Done | Existing token routes remain wired. |
 | My Boards recovery | Done | `/my-boards` and `/my-boards/request` are routed and call real API endpoints. |
-| Email sending | Done | Resend production readiness passes; templates have shape tests. |
+| Email sending | Done | Resend production readiness passes; templates have shape tests, including password reset and account verification. |
+| Account verification | Done | Signup sends a logged verification email, unverified signin resends, and `/verify-email` returns users to the app. |
 | Billing | Done | Stripe readiness passes; webhook/entitlement transitions have regression tests. |
 | Public email previews | Done | Generated previews now write to `.generated/email-previews`, not Vite public output. |
 | Apex domain | Done | `mytimes.co` serves production frontend. |
@@ -58,10 +60,7 @@ Core production path is wired and passing:
 3. **Keep frontend API env clean.**
    `VITE_SLOTBOARD_API_URL` should remain unset on the `slots` service while same-origin mode is the launch target. If the chosen target later becomes branded API, redeploy the frontend with `VITE_SLOTBOARD_API_URL=https://api.mytimes.co`.
 
-4. **Public account hardening before pushing account signup hard.**
-   Email/password auth exists, but email verification and password reset should be treated as required before account signup becomes a major public conversion path.
-
-5. **Non-blocking performance cleanup.**
+4. **Non-blocking performance cleanup.**
    The frontend build passes but Vite reports a large JS chunk. Code splitting is worth doing after launch, not before the current production cut.
 
 ## Current Verdict

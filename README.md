@@ -257,6 +257,25 @@ For a failing CI-style check, require Stripe checkout and webhook readiness:
 SLOTBOARD_API_URL=https://<api-service>.up.railway.app SLOTBOARD_REQUIRE_PRODUCTION_BILLING=true npm run billing:ready
 ```
 
+To verify live Stripe Checkout session creation without charging a card:
+
+```sh
+SLOTBOARD_API_URL=https://mytimes.co \
+SLOTBOARD_WEB_ORIGIN=https://mytimes.co \
+SLOTBOARD_SMOKE_ORGANIZER_EMAIL=<verified-organizer-email> \
+SLOTBOARD_SMOKE_ORGANIZER_PASSWORD=<verified-organizer-password> \
+npm run smoke:billing-live
+```
+
+This creates a temporary board, starts an Event Pass Checkout session, confirms
+that pending payment hides public slots, creates annual and monthly Company
+Checkout sessions, and then deletes the temporary board. It does not complete
+payment or prove webhook fulfillment; after manually completing one Checkout,
+refresh the board/account page to confirm the webhook applied the paid
+entitlement. In local/dev environments you can use `SLOTBOARD_AUTH_SECRET`
+instead of smoke organizer credentials; the script will create and verify a
+temporary account.
+
 Stripe webhook URL:
 
 ```txt

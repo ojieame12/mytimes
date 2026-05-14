@@ -15,6 +15,7 @@ export type Route =
   | { type: 'new-done' }
   | { type: 'signin' }
   | { type: 'signup' }
+  | { type: 'verify-email' }
   | { type: 'forgot-password' }
   | { type: 'reset-password' }
   | { type: 'account' }
@@ -36,6 +37,7 @@ export function parseRoute(pathname: string): Route {
   if (pathname === '/new/done') return { type: 'new-done' };
   if (pathname === '/signin') return { type: 'signin' };
   if (pathname === '/signup') return { type: 'signup' };
+  if (pathname === '/verify-email') return { type: 'verify-email' };
   if (pathname === '/forgot-password') return { type: 'forgot-password' };
   if (pathname === '/reset-password') return { type: 'reset-password' };
   if (pathname === '/account') return { type: 'account' };

@@ -17,6 +17,7 @@ export type EmailType =
   | "manage_link_recovery"
   | "my_boards_link"
   | "password_reset"
+  | "email_verification"
   | "email_test";
 
 export type EmailDeliveryResult = {
@@ -759,6 +760,48 @@ export async function sendPasswordResetEmail(input: {
   });
 }
 
+export async function sendEmailVerificationEmail(input: {
+  organizerEmail: string;
+  verificationURL: string;
+  expiresInMinutes: number;
+}): Promise<EmailDeliveryResult> {
+  const expiryLabel = `${input.expiresInMinutes} minute${input.expiresInMinutes === 1 ? "" : "s"}`;
+  return deliverLoggedEmail({
+    eventId: null,
+    emailType: "email_verification",
+    recipientEmail: input.organizerEmail,
+    message: {
+      to: input.organizerEmail,
+      subject: "Verify your mytimes account",
+      text: [
+        "Use this private link to verify your mytimes organizer account.",
+        `Verify email: ${input.verificationURL}`,
+        `This link expires in ${expiryLabel}.`,
+        "If you did not create this account, you can ignore this email.",
+      ].join("\n\n"),
+      html: renderEmailHtml({
+        eyebrow: "Email verification",
+        title: "Verify your email.",
+        preheader: buildPreheader([
+          "private verification link",
+          `expires in ${expiryLabel}`,
+        ]),
+        body: [
+          `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Use the private link below to verify your mytimes organizer account. It expires in <strong style="font-weight:600">${escapeHtml(expiryLabel)}</strong>.</p>`,
+          renderLinkCard({
+            variant: "admin",
+            label: "Private verification link",
+            url: input.verificationURL,
+            caption: "Anyone with this link can verify this mytimes account until it expires. Keep it private.",
+          }),
+        ].join(""),
+        primaryCta: { href: input.verificationURL, label: "Verify email" },
+        footerNote: "If you didn't create this account, you can safely ignore this email.",
+      }),
+    },
+  });
+}
+
 // Fires each design-system email variant at a single recipient so we can
 // visually verify rendering in real inboxes (Gmail, Outlook, Apple Mail).
 // Optionally filtered to one variant by id or alias.
@@ -874,7 +917,17 @@ export async function sendEmailDesignTestBatch(input: {
     },
     {
       id: "11",
-      aliases: ["11", "operational-test"],
+      aliases: ["11", "email-verification", "verification"],
+      label: "Email verification",
+      run: () => sendEmailVerificationEmail({
+        organizerEmail: recipient,
+        verificationURL: "https://mytimes.co/api/auth/verify-email?token=verify_design_token&callbackURL=https%3A%2F%2Fmytimes.co%2Fverify-email",
+        expiresInMinutes: 60,
+      }),
+    },
+    {
+      id: "12",
+      aliases: ["12", "operational-test"],
       label: "Operational test",
       run: () => sendOperationalTestEmail({ recipientEmail: recipient }),
     },

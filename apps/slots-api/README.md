@@ -344,5 +344,5 @@ Create-event request shape:
 
 ## Remaining Backend Work
 
-- Add frontend account screens if the product needs persistent organizer dashboards.
-- Add email verification/password-reset templates before opening public account registration.
+- Add frontend account screens if the product needs more persistent organizer dashboard depth.
+- Email verification and password-reset templates are wired; keep their smoke tests in the production gate.

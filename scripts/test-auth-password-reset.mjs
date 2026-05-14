@@ -1,6 +1,7 @@
 import pg from "pg";
 
 const { Pool } = pg;
+const { createEmailVerificationToken } = await import("../apps/slots-api/node_modules/better-auth/dist/api/index.mjs");
 
 const providedBaseURL = process.env.SLOTBOARD_API_URL;
 let baseURL = providedBaseURL || "";
@@ -45,10 +46,72 @@ try {
       name: "Reset Flow Owner",
       email,
       password: oldPassword,
+      callbackURL: `${frontendOrigin}/verify-email`,
     },
   });
   assert(signedUp.user?.email === email, "expected sign-up to create the reset-flow owner");
-  assert(ownerJar.size > 0, "expected sign-up to set a session cookie");
+  assert(signedUp.token === null, "expected verified-email sign-up not to return an auth token");
+  assert(signedUp.user?.emailVerified === false, "expected sign-up user to start unverified");
+  assert(signedUp.session === undefined, "expected verified-email sign-up not to create a session");
+  assert(ownerJar.size === 0, "expected verified-email sign-up not to set a session cookie");
+  assert((await activeSessionCount(email)) === 0, "expected unverified sign-up to have no active sessions");
+
+  const verificationCountAfterSignUp = await emailVerificationEmailCount(email);
+  assert(verificationCountAfterSignUp >= 1, "expected sign-up to send an email verification message");
+  const verificationEmail = await latestEmailVerificationEmail(email);
+  assert(
+    verificationEmail?.status === "sent",
+    `expected email_verification email log to be sent, got ${verificationEmail?.status}`,
+  );
+  assert(
+    verificationEmail?.provider === "console",
+    `expected console provider in local test, got ${verificationEmail?.provider}`,
+  );
+  assert(verificationEmail?.event_id === null, "expected verification email not to attach to a board");
+
+  await authRequest("/api/auth/sign-in/email", {
+    method: "POST",
+    expectedStatus: 403,
+    expectedCode: "EMAIL_NOT_VERIFIED",
+    json: {
+      email,
+      password: oldPassword,
+      callbackURL: `${frontendOrigin}/verify-email`,
+    },
+  });
+  assert(
+    (await emailVerificationEmailCount(email)) > verificationCountAfterSignUp,
+    "expected unverified sign-in to send a fresh verification email",
+  );
+
+  const verificationToken = await createEmailVerificationToken(
+    process.env.SLOTBOARD_AUTH_SECRET,
+    email,
+    undefined,
+    3600,
+  );
+  const verified = await requestRaw(
+    `/api/auth/verify-email?token=${encodeURIComponent(verificationToken)}&callbackURL=${encodeURIComponent(`${frontendOrigin}/verify-email`)}`,
+    {
+      origin: frontendOrigin,
+      redirect: "manual",
+    },
+  );
+  storeSetCookies(ownerJar, verified.headers);
+  assert(
+    verified.status >= 300 && verified.status < 400,
+    `expected email verification to redirect to the frontend, got ${verified.status}: ${verified.text}`,
+  );
+  assert(
+    verified.headers.get("location")?.startsWith(`${frontendOrigin}/verify-email`),
+    `expected email verification callback redirect, got ${verified.headers.get("location")}`,
+  );
+  assert(await userEmailVerified(email), "expected email verification to mark the organizer email verified");
+  assert(ownerJar.size > 0, "expected email verification to create a session cookie");
+  assert((await activeSessionCount(email)) >= 1, "expected verified organizer to have an active session");
+  const session = await authRequest("/api/auth/get-session", { jar: ownerJar });
+  assert(session?.user?.email === email, "expected verified session to belong to the reset-flow owner");
+  assert(session?.user?.emailVerified === true, "expected verified session to expose emailVerified=true");
 
   const resetRequest = await authRequest("/api/auth/request-password-reset", {
     method: "POST",
@@ -125,6 +188,12 @@ try {
     baseURL,
     checked: [
       "password-reset-request-generic-success",
+      "signup-requires-email-verification",
+      "email-verification-email-log",
+      "unverified-signin-blocked",
+      "verification-email-resent-on-signin",
+      "email-verification-callback-redirect",
+      "email-verification-creates-session",
       "password-reset-email-log",
       "password-reset-token-issued",
       "missing-account-generic-no-email",
@@ -203,6 +272,7 @@ async function requestRaw(path, options = {}) {
     method: options.method || "GET",
     headers: headers(options),
     body: options.json === undefined ? undefined : JSON.stringify(options.json),
+    redirect: options.redirect || "follow",
   });
   const text = await response.text();
   return {
@@ -321,6 +391,21 @@ async function latestPasswordResetEmail(email) {
   return result.rows[0];
 }
 
+async function latestEmailVerificationEmail(email) {
+  const result = await pool.query(
+    `
+      select event_id, email_type, provider, status
+      from slotboard.email_delivery_logs
+      where recipient_email = $1
+        and email_type = 'email_verification'
+      order by created_at desc
+      limit 1
+    `,
+    [email],
+  );
+  return result.rows[0];
+}
+
 async function passwordResetEmailCount(email) {
   const result = await pool.query(
     `
@@ -332,6 +417,32 @@ async function passwordResetEmailCount(email) {
     [email],
   );
   return result.rows[0]?.count ?? 0;
+}
+
+async function emailVerificationEmailCount(email) {
+  const result = await pool.query(
+    `
+      select count(*)::int as count
+      from slotboard.email_delivery_logs
+      where recipient_email = $1
+        and email_type = 'email_verification'
+    `,
+    [email],
+  );
+  return result.rows[0]?.count ?? 0;
+}
+
+async function userEmailVerified(email) {
+  const result = await pool.query(
+    `
+      select email_verified
+      from slotboard.auth_users
+      where email = $1
+      limit 1
+    `,
+    [email],
+  );
+  return result.rows[0]?.email_verified === true;
 }
 
 function parseJson(text, path) {

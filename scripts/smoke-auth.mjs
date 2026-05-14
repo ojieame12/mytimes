@@ -4,6 +4,11 @@ const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const smokeIp = process.env.SMOKE_ACTOR_IP || `198.51.100.${Math.floor(Math.random() * 200) + 1}`;
 const ownerJar = new Map();
 const otherJar = new Map();
+const authSecret =
+  process.env.SLOTBOARD_AUTH_SECRET ||
+  process.env.BETTER_AUTH_SECRET ||
+  (isLocalURL(baseURL) ? "dev-better-auth-secret-replace-before-production" : undefined);
+const { createEmailVerificationToken } = await import("../apps/slots-api/node_modules/better-auth/dist/api/index.mjs");
 
 await request("/healthz");
 await request("/readyz");
@@ -16,14 +21,23 @@ await authRequest("/api/auth/sign-up/email", {
     name: "Auth Smoke Owner",
     email: ownerEmail,
     password: `AuthSmoke!${suffix}`,
+    callbackURL: `${frontendOrigin}/verify-email`,
   },
 });
-assert(ownerJar.size > 0, "expected sign-up to set a session cookie");
+assert(ownerJar.size === 0, "expected sign-up to wait for email verification before creating a session");
+
+const ownerVerificationToken = await createSmokeVerificationToken(ownerEmail);
+const ownerVerified = await authRequest(`/api/auth/verify-email?token=${encodeURIComponent(ownerVerificationToken)}`, {
+  jar: ownerJar,
+});
+assert(ownerVerified.status === true, "expected owner email verification to succeed");
+assert(ownerJar.size > 0, "expected email verification to set a session cookie");
 
 const session = await authRequest("/api/auth/get-session", {
   jar: ownerJar,
 });
 assert(session?.user?.email === ownerEmail, "expected get-session to return the signed-in owner");
+assert(session?.user?.emailVerified === true, "expected signed-in owner to be email verified");
 
 const accountBilling = await request("/api/slotboard/billing/account", {
   jar: ownerJar,
@@ -177,7 +191,13 @@ await authRequest("/api/auth/sign-up/email", {
     name: "Auth Smoke Other",
     email: `other+${suffix}@example.com`,
     password: `AuthSmokeOther!${suffix}`,
+    callbackURL: `${frontendOrigin}/verify-email`,
   },
+});
+const otherEmail = `other+${suffix}@example.com`;
+const otherVerificationToken = await createSmokeVerificationToken(otherEmail);
+await authRequest(`/api/auth/verify-email?token=${encodeURIComponent(otherVerificationToken)}`, {
+  jar: otherJar,
 });
 await request(`/api/slotboard/account/events/${created.event.id}`, {
   jar: otherJar,
@@ -207,6 +227,7 @@ console.log(
       baseURL,
       checked: [
         "better-auth-sign-up",
+        "better-auth-email-verification",
         "better-auth-session",
         "account-billing-summary",
         "account-custom-domain-lock",
@@ -309,6 +330,22 @@ function setCookieHeaders(headers) {
   }
   const value = headers.get("set-cookie");
   return value ? value.split(/,(?=[^;,]+=)/g) : [];
+}
+
+async function createSmokeVerificationToken(email) {
+  if (!authSecret) {
+    throw new Error("smoke:auth needs SLOTBOARD_AUTH_SECRET or BETTER_AUTH_SECRET when run against a non-local API.");
+  }
+  return createEmailVerificationToken(authSecret, email, undefined, 3600);
+}
+
+function isLocalURL(value) {
+  try {
+    const hostname = new URL(value).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
 }
 
 function tokenFromLink(link) {

@@ -24,6 +24,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [verificationSentTo, setVerificationSentTo] = useState<string | undefined>();
 
   useEffect(() => {
     let cancelled = false;
@@ -41,19 +42,38 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
     };
   }, []);
 
+  useEffect(() => {
+    setVerificationSentTo(undefined);
+    setError(undefined);
+  }, [mode]);
+
   const submit = async () => {
     if (busy) return;
     setBusy(true);
     setError(undefined);
     try {
       if (mode === 'signup') {
-        await signUpOrganizer({ name: name.trim(), email: email.trim(), password });
+        const response = await signUpOrganizer({ name: name.trim(), email: email.trim(), password });
+        if (!response.session) {
+          setVerificationSentTo(response.user.email);
+          setPassword('');
+          return;
+        }
       } else {
-        await signInOrganizer({ email: email.trim(), password });
+        const response = await signInOrganizer({ email: email.trim(), password });
+        if (!response.session) {
+          setVerificationSentTo(response.user.email);
+          setPassword('');
+          return;
+        }
       }
       navigate('/account');
     } catch (error_) {
-      setError(error_ instanceof ApiClientError ? error_.message : 'Authentication failed.');
+      if (error_ instanceof ApiClientError && error_.code === 'EMAIL_NOT_VERIFIED') {
+        setError('Verify your email first. We sent a fresh verification link.');
+      } else {
+        setError(error_ instanceof ApiClientError ? error_.message : 'Authentication failed.');
+      }
     } finally {
       setBusy(false);
     }
@@ -82,67 +102,71 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
               style={{ height: '28px', width: 'auto', marginBottom: '4px' }}
             />
             <h1 className="auth-split__title">
-              {isSignUp ? 'Create your account' : 'Welcome back'}
+              {verificationSentTo ? 'Check your email' : isSignUp ? 'Create your account' : 'Welcome back'}
             </h1>
             <p className="auth-split__body">
-              {isSignUp
+              {verificationSentTo
+                ? `We sent a verification link to ${verificationSentTo}. Open it to finish setting up your organizer account.`
+                : isSignUp
                 ? 'Sign up to start organizing your interviews.'
                 : 'Enter your details to access your boards.'}
             </p>
           </header>
 
-          <div className="auth-split__fields">
-            {isSignUp && (
-              <FormField label="Your name">
+          {!verificationSentTo && (
+            <div className="auth-split__fields">
+              {isSignUp && (
+                <FormField label="Your name">
+                  {({ id, describedBy, invalid }) => (
+                    <TextInput
+                      id={id}
+                      describedBy={describedBy}
+                      invalid={invalid}
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      autoComplete="name"
+                      maxLength={160}
+                      placeholder="Jane Doe"
+                      required
+                    />
+                  )}
+                </FormField>
+              )}
+
+              <FormField label="Email">
                 {({ id, describedBy, invalid }) => (
                   <TextInput
                     id={id}
+                    type="email"
                     describedBy={describedBy}
                     invalid={invalid}
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    autoComplete="name"
-                    maxLength={160}
-                    placeholder="Jane Doe"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    autoComplete="email"
+                    placeholder="jane@company.com"
                     required
                   />
                 )}
               </FormField>
-            )}
 
-            <FormField label="Email">
-              {({ id, describedBy, invalid }) => (
-                <TextInput
-                  id={id}
-                  type="email"
-                  describedBy={describedBy}
-                  invalid={invalid}
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoComplete="email"
-                  placeholder="jane@company.com"
-                  required
-                />
-              )}
-            </FormField>
-
-            <FormField label="Password">
-              {({ id, describedBy, invalid }) => (
-                <TextInput
-                  id={id}
-                  type="password"
-                  describedBy={describedBy}
-                  invalid={invalid}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                  minLength={8}
-                  placeholder={isSignUp ? 'At least 8 characters' : 'Your password'}
-                  required
-                />
-              )}
-            </FormField>
-          </div>
+              <FormField label="Password">
+                {({ id, describedBy, invalid }) => (
+                  <TextInput
+                    id={id}
+                    type="password"
+                    describedBy={describedBy}
+                    invalid={invalid}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                    minLength={8}
+                    placeholder={isSignUp ? 'At least 8 characters' : 'Your password'}
+                    required
+                  />
+                )}
+              </FormField>
+            </div>
+          )}
 
           {error && (
             <p className="auth-split__error" aria-live="polite">
@@ -151,23 +175,25 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
           )}
 
           <div className="auth-split__actions">
-            <button
-              type="submit"
-              className="auth-split__submit"
-              disabled={busy}
-            >
-              {busy ? 'Working…' : isSignUp ? 'Create account →' : 'Sign in →'}
-            </button>
+            {!verificationSentTo && (
+              <button
+                type="submit"
+                className="auth-split__submit"
+                disabled={busy}
+              >
+                {busy ? 'Working…' : isSignUp ? 'Create account →' : 'Sign in →'}
+              </button>
+            )}
             <button
               type="button"
               className="auth-split__alt"
-              onClick={() => navigate(isSignUp ? '/signin' : '/signup')}
+              onClick={() => navigate(isSignUp || verificationSentTo ? '/signin' : '/signup')}
             >
-              {isSignUp ? 'I already have an account' : 'Create a new account'}
+              {isSignUp || verificationSentTo ? 'Back to sign in' : 'Create a new account'}
             </button>
           </div>
 
-          {!isSignUp && (
+          {!isSignUp && !verificationSentTo && (
             <>
               <p className="auth-split__recover">
                 Forgot your password?{' '}

@@ -32,6 +32,7 @@
     "retention": "npm run retention --workspace @fresh-feel/slots-api",
     "smoke:api": "node scripts/smoke-api.mjs",
     "smoke:auth": "node scripts/smoke-auth.mjs",
+    "smoke:billing-live": "node scripts/smoke-billing-live.mjs",
     "smoke:retention": "node scripts/smoke-retention.mjs",
     "smoke:live": "node scripts/test-live-readiness.mjs",
     "security:ready": "node scripts/test-live-readiness.mjs"

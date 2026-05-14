@@ -232,7 +232,60 @@ export function ResetPasswordPage() {
   );
 }
 
+export function VerifyEmailPage() {
+  const error = emailVerificationErrorFromURL();
+  const hasError = Boolean(error);
+
+  return (
+    <section className="auth-split">
+      <main className="auth-split__form">
+        <section className="auth-split__inner" aria-live="polite">
+          <header className="auth-split__head">
+            <img
+              src="/assets/brand/wordmark-dark.svg"
+              alt="mytimes"
+              style={{ height: '28px', width: 'auto', marginBottom: '4px' }}
+            />
+            <h1 className="auth-split__title">
+              {hasError ? 'Verification link expired' : 'Email verified'}
+            </h1>
+            <p className="auth-split__body">
+              {hasError
+                ? 'Request a fresh link by signing in again with your organizer email.'
+                : 'Your organizer account is verified. You can open your boards now.'}
+            </p>
+          </header>
+
+          <div className="auth-split__actions">
+            {!hasError && (
+              <button
+                type="button"
+                className="auth-split__submit"
+                onClick={() => navigate('/account')}
+              >
+                Open account →
+              </button>
+            )}
+            <button
+              type="button"
+              className="auth-split__alt"
+              onClick={() => navigate('/signin')}
+            >
+              {hasError ? 'Back to sign in' : 'Sign in instead'}
+            </button>
+          </div>
+        </section>
+      </main>
+    </section>
+  );
+}
+
 function resetTokenFromURL(): string {
   if (typeof window === 'undefined') return '';
   return new URLSearchParams(window.location.search).get('token') ?? '';
+}
+
+function emailVerificationErrorFromURL(): string {
+  if (typeof window === 'undefined') return '';
+  return new URLSearchParams(window.location.search).get('error') ?? '';
 }

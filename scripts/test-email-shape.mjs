@@ -91,13 +91,23 @@ assert(!emailSource.includes("&mdash;"), "expected email templates to avoid em d
 assert(!emailSource.includes("—"), "expected email templates to avoid em dash glyphs");
 assert(emailSource.includes('| "password_reset"'), "expected password_reset email type to be registered");
 assert(emailSource.includes("sendPasswordResetEmail"), "expected password reset email sender to exist");
+assert(emailSource.includes('| "email_verification"'), "expected email_verification email type to be registered");
+assert(emailSource.includes("sendEmailVerificationEmail"), "expected email verification email sender to exist");
 assert(
   emailSource.includes('aliases: ["10", "password-reset"]'),
   "expected password reset to be available in the email design-test batch",
 );
 assert(
+  emailSource.includes('aliases: ["11", "email-verification", "verification"]'),
+  "expected email verification to be available in the email design-test batch",
+);
+assert(
   emailSource.includes("Reset your mytimes password"),
   "expected password reset email subject to be branded",
+);
+assert(
+  emailSource.includes("Verify your mytimes account"),
+  "expected email verification email subject to be branded",
 );
 
 console.log(JSON.stringify({
@@ -112,6 +122,8 @@ console.log(JSON.stringify({
     "email-template-punctuation",
     "password-reset-email-registration",
     "password-reset-design-test-variant",
+    "email-verification-email-registration",
+    "email-verification-design-test-variant",
   ],
 }, null, 2));
 

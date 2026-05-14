@@ -244,6 +244,14 @@ export type OrganizerSessionResponse = {
   };
 };
 
+export type OrganizerAuthResponse = {
+  token?: string | null;
+  redirect?: boolean;
+  url?: string | null;
+  user: OrganizerSessionResponse['user'];
+  session?: OrganizerSessionResponse['session'];
+};
+
 export type AdminEventPatch = Partial<
   Pick<BookingEvent, 'title' | 'description' | 'organizerName' | 'organizerEmail'>
 >;
@@ -288,22 +296,28 @@ export async function signUpOrganizer(input: {
   name: string;
   email: string;
   password: string;
-}): Promise<OrganizerSessionResponse> {
-  return apiJson<OrganizerSessionResponse>('/api/auth/sign-up/email', {
+}): Promise<OrganizerAuthResponse> {
+  return apiJson<OrganizerAuthResponse>('/api/auth/sign-up/email', {
     method: 'POST',
     credentials: 'include',
-    body: input,
+    body: {
+      ...input,
+      callbackURL: emailVerificationCallbackURL(),
+    },
   });
 }
 
 export async function signInOrganizer(input: {
   email: string;
   password: string;
-}): Promise<OrganizerSessionResponse> {
-  return apiJson<OrganizerSessionResponse>('/api/auth/sign-in/email', {
+}): Promise<OrganizerAuthResponse> {
+  return apiJson<OrganizerAuthResponse>('/api/auth/sign-in/email', {
     method: 'POST',
     credentials: 'include',
-    body: input,
+    body: {
+      ...input,
+      callbackURL: emailVerificationCallbackURL(),
+    },
   });
 }
 
@@ -778,6 +792,11 @@ function apiBaseURL(): string {
   }
 
   return window.location.origin;
+}
+
+function emailVerificationCallbackURL(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  return `${window.location.origin}/verify-email`;
 }
 
 function parseJson(text: string): unknown {

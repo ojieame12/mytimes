@@ -41,6 +41,9 @@ if (bundleURL) {
   assertIncludes(bundle.text, "mytimes.co", "live bundle uses mytimes.co examples");
   assertIncludes(bundle.text, "Reset your password", "live bundle has password reset request copy");
   assertIncludes(bundle.text, "Choose a new password", "live bundle has password reset completion copy");
+  assertIncludes(bundle.text, "Check your email", "live bundle has verification sent copy");
+  assertIncludes(bundle.text, "Email verified", "live bundle has email verification success copy");
+  assertIncludes(bundle.text, "Verification link expired", "live bundle has email verification error copy");
   assertExcludes(bundle.text, "Email previews", "live bundle does not contain email preview copy");
   assertExcludes(bundle.text, "mytimes.app", "live bundle does not contain old mytimes.app origin");
   assertExcludes(bundle.text, "MT-2026", "live bundle does not contain fake receipt ids");
@@ -58,7 +61,7 @@ if (configuredApiURL) {
 await checkApiCustomDomain();
 checkActiveApiTarget(bundleText);
 
-for (const path of ["/pricing", "/b/preview", "/new", "/signin", "/forgot-password", "/reset-password"]) {
+for (const path of ["/pricing", "/b/preview", "/new", "/signin", "/verify-email", "/forgot-password", "/reset-password"]) {
   const response = await fetchText(`${frontendURL}${path}`);
   assertStatus(response, 200, `frontend route ${path} loads`);
   assertFrontendSecurityHeaders(response, `frontend route ${path}`);

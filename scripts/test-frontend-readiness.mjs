@@ -39,6 +39,7 @@ assertFileExcludes("apps/slots/src/views/PricingPage.tsx", [
   "$9",
 ]);
 assertFileIncludes("apps/slots/src/lib/routing.ts", [
+  "/verify-email",
   "/forgot-password",
   "/reset-password",
 ]);
@@ -46,6 +47,12 @@ assertFileIncludes("apps/slots/src/views/PasswordResetPage.tsx", [
   "Reset your password",
   "Choose a new password",
   "Request a fresh link",
+  "Email verified",
+  "Verification link expired",
+]);
+assertFileIncludes("apps/slots/src/views/AuthPage.tsx", [
+  "Check your email",
+  "Verify your email first",
 ]);
 
 const distJs = filesUnder("apps/slots/dist/assets").filter((file) => file.endsWith(".js"));
@@ -60,6 +67,9 @@ assertIncludes(bundleText, "View demo board", "bundle must include demo CTA copy
 assertIncludes(bundleText, "mytimes.co", "bundle must use branded mytimes.co examples");
 assertIncludes(bundleText, "Reset your password", "bundle must include password reset request copy");
 assertIncludes(bundleText, "Choose a new password", "bundle must include password reset completion copy");
+assertIncludes(bundleText, "Check your email", "bundle must include verification sent copy");
+assertIncludes(bundleText, "Email verified", "bundle must include email verification success copy");
+assertIncludes(bundleText, "Verification link expired", "bundle must include email verification error copy");
 assertExcludes(bundleText, "Email previews", "bundle must not include email preview index copy");
 assertExcludes(bundleText, "mytimes.app", "bundle must not include old mytimes.app origin");
 assertExcludes(bundleText, "MT-2026", "bundle must not include fake receipt ids");

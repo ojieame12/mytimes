@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import pg from "pg";
-import { sendPasswordResetEmail } from "./email.js";
+import { sendEmailVerificationEmail, sendPasswordResetEmail } from "./email.js";
 import { ApiError } from "./errors.js";
 import { loadEnv } from "./env.js";
 
@@ -74,12 +74,26 @@ function createOrganizerAuth(env: ReturnType<typeof loadEnv>) {
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 8,
+      requireEmailVerification: true,
       resetPasswordTokenExpiresIn: 3600,
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, token }) => {
         await sendPasswordResetEmail({
           organizerEmail: user.email,
           resetURL: buildAppURL(`/reset-password?token=${encodeURIComponent(token)}`, env.publicAppURL),
+          expiresInMinutes: 60,
+        });
+      },
+    },
+    emailVerification: {
+      expiresIn: 3600,
+      sendOnSignUp: true,
+      sendOnSignIn: true,
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: async ({ user, url }) => {
+        await sendEmailVerificationEmail({
+          organizerEmail: user.email,
+          verificationURL: url,
           expiresInMinutes: 60,
         });
       },
