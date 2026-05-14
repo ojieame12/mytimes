@@ -10,6 +10,7 @@ export type ActivityType =
   | "slot_reopened"
   | "booking_created"
   | "booking_cancelled"
+  | "booking_rescheduled"
   | "public_link_rotated"
   | "admin_link_rotated"
   | "manage_link_rotated";

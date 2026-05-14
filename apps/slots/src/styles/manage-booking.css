@@ -352,6 +352,87 @@
   flex-wrap: wrap;
 }
 
+/* ─── In-place reschedule picker ───────────────────────── */
+.manage-card__reschedule {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: hsla(30, 50%, 99%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.10);
+}
+.manage-card__reschedule-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.manage-card__reschedule-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--zinc-800);
+}
+.manage-card__reschedule-head p,
+.manage-card__reschedule-note,
+.manage-card__reschedule-error {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--fg-muted);
+}
+.manage-card__reschedule-error {
+  color: hsl(0, 60%, 38%);
+}
+.manage-card__reschedule-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+.manage-card__reschedule-slot {
+  appearance: none;
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  min-height: 88px;
+  padding: 12px;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-input);
+  background: var(--card);
+  color: var(--fg-default);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.25;
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    box-shadow var(--motion-medium) var(--ease-out);
+}
+.manage-card__reschedule-slot:hover:not(:disabled) {
+  border-color: var(--orange-500);
+  box-shadow: var(--shadow-button-secondary);
+}
+.manage-card__reschedule-slot:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.manage-card__reschedule-slot:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.manage-card__reschedule-slot .mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--zinc-800);
+}
+
 /* ─── Feedback line (success / error) ──────────────────── */
 .manage-card__feedback {
   margin: 0;

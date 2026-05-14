@@ -82,7 +82,7 @@ assert(!queryField("participantName"), "stale selected slot does not re-open aft
 
 await testClaimSubmitGuard(root);
 await testConflictKeepsDraft(root);
-await testManagePageDoesNotRouteWithEventId(root);
+await testManagePageReschedulesWithManageToken(root);
 testUnavailableBoardCopy();
 
 await React.act(async () => {
@@ -211,17 +211,38 @@ async function testConflictKeepsDraft(rootInstance: Root) {
   );
 }
 
-async function testManagePageDoesNotRouteWithEventId(rootInstance: Root) {
+async function testManagePageReschedulesWithManageToken(rootInstance: Root) {
   const manageResponse: ManageBookingResponse = {
     event,
     slot: slotOne,
     booking: makeClaimResponse(slotOne).booking,
   };
-  const calls = installFetchMock((url) => {
-    if (url.pathname !== "/api/slotboard/manage") {
-      throw new Error(`Unexpected fetch in manage page test: ${url.pathname}`);
+  const calls = installFetchMock((url, init) => {
+    if (url.pathname === "/api/slotboard/manage") {
+      return jsonResponse(manageResponse);
     }
-    return jsonResponse(manageResponse);
+    if (url.pathname === "/api/slotboard/manage/reschedule" && init?.method !== "POST") {
+      return jsonResponse({
+        ...manageResponse,
+        slots: [slotTwo],
+      });
+    }
+    if (url.pathname === "/api/slotboard/manage/reschedule" && init?.method === "POST") {
+      return jsonResponse({
+        ...manageResponse,
+        slot: {
+          ...slotTwo,
+          state: "booked",
+          bookingId: manageResponse.booking.id,
+        },
+        booking: {
+          ...manageResponse.booking,
+          slotId: slotTwo.id,
+          icsSequence: manageResponse.booking.icsSequence + 1,
+        },
+      });
+    }
+    throw new Error(`Unexpected fetch in manage page test: ${url.pathname}`);
   });
 
   await React.act(async () => {
@@ -235,6 +256,24 @@ async function testManagePageDoesNotRouteWithEventId(rootInstance: Root) {
     !document.body.textContent?.includes("Reschedule"),
     "manage page avoids invalid event-id reschedule route",
   );
+  await click(buttonContaining("Change time"));
+  assert(calls[1]?.headers.authorization === "Bearer manage-token", "manage reschedule options use manage token");
+  assert(document.body.textContent?.includes("Move booking"), "manage page renders replacement slot action");
+  const moveButton = buttonContaining("Move booking");
+  await React.act(async () => {
+    moveButton.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    moveButton.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+  });
+  await flushEffects();
+  assert(calls[2]?.method === "POST", "manage reschedule posts selected replacement slot");
+  assert(
+    calls.filter((call) => call.url.endsWith("/api/slotboard/manage/reschedule") && call.method === "POST").length === 1,
+    "manage reschedule suppresses duplicate same-tick posts",
+  );
+  assert(calls[2]?.headers.authorization === "Bearer manage-token", "manage reschedule submit uses manage token");
+  assert(Boolean(calls[2]?.headers["idempotency-key"]), "manage reschedule sends idempotency key");
+  assert(JSON.parse(calls[2]?.body ?? "{}").slotId === slotTwo.id, "manage reschedule posts replacement slot id");
+  assert(document.body.textContent?.includes("Booking moved"), "manage page confirms reschedule");
 }
 
 function testUnavailableBoardCopy() {
@@ -506,6 +545,7 @@ function makeClaimResponse(slot: TimeSlot): ClaimSlotResponse {
       notes: "Keep this note after conflict.",
       status: "active",
       bookedAt: "2026-05-14T12:30:00.000Z",
+      icsSequence: 0,
     },
     links: {
       manage: "https://mytimes.co/m/manage-token",

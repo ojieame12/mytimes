@@ -77,6 +77,7 @@ export async function sendBookingClaimedEmails(input: {
   const organizerTimeBlock = buildOrganizerTimeBlock(input.slot, input.event.timezone, input.booking);
   const ics = createBookingRequestIcs({
     bookingId: input.booking.id,
+    sequence: input.booking.icsSequence,
     startsAt: input.slot.startsAt,
     endsAt: input.slot.endsAt,
     title: input.event.title,
@@ -312,7 +313,7 @@ export async function sendBookingCancellationEmails(input: {
   const organizerTimeBlock = buildOrganizerTimeBlock(input.slot, input.event.timezone, input.booking);
   const ics = createBookingCancellationIcs({
     bookingId: input.booking.id,
-    sequence: 1,
+    sequence: input.booking.icsSequence,
     startsAt: input.slot.startsAt,
     endsAt: input.slot.endsAt,
     title: input.event.title,
@@ -854,6 +855,7 @@ export async function sendEmailDesignTestBatch(input: {
     notes: "On a phone for the first 5 minutes.",
     status: "active",
     bookedAt: "2026-05-12T10:30:00Z",
+    icsSequence: 0,
   };
 
   const manageURL = "https://mytimes.co/m/k3J9-2Xm-4Tn8";

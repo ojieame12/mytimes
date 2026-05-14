@@ -94,6 +94,37 @@ try {
   await click(buttonContaining("Done"));
   await waitFor(() => document.querySelectorAll(".day-band__chip").length === 7, "app removes claimed slot after Done");
 
+  const rescheduleOptions = await apiJson("/api/slotboard/manage/reschedule", { token: manageToken });
+  assert(rescheduleOptions.slots.length === 7, `manage reschedule lists replacement slots, got ${rescheduleOptions.slots.length}`);
+  assert(!JSON.stringify(rescheduleOptions).includes(publicToken), "manage reschedule options do not expose public token");
+  assert(!JSON.stringify(rescheduleOptions).includes(tokenFromLink(board.links.admin)), "manage reschedule options do not expose admin token");
+  const replacementSlot = rescheduleOptions.slots[0];
+  const rescheduled = await apiJson("/api/slotboard/manage/reschedule", {
+    method: "POST",
+    token: manageToken,
+    idempotencyKey: `trace-reschedule-${suffix}`,
+    body: {
+      slotId: replacementSlot.id,
+      participantTimezone: "Africa/Johannesburg",
+      participantLocale: "en-ZA",
+      participantOffsetAtBooking: "+02:00",
+      notes: "Rescheduled via manage-token flow.",
+    },
+  });
+  assert(rescheduled.booking.id === booking.id, "reschedule keeps the same private manage booking");
+  assert(rescheduled.slot.id === replacementSlot.id, "reschedule moves manage booking to requested slot");
+  assert(rescheduled.booking.icsSequence > booking.ics_sequence, "reschedule increments calendar sequence");
+
+  const publicAfterReschedule = await apiJson("/api/slotboard/book", { token: publicToken });
+  assert(publicAfterReschedule.slots.length === 7, `server keeps one booked slot after reschedule, got ${publicAfterReschedule.slots.length}`);
+  assert(publicAfterReschedule.slots.some((slot: { id: string }) => slot.id === booking.slot_id), "server reopens the original slot after reschedule");
+  assert(!publicAfterReschedule.slots.some((slot: { id: string }) => slot.id === replacementSlot.id), "server hides the replacement slot after reschedule");
+
+  const rescheduledBooking = await readLatestBooking(board.event.id);
+  assert(rescheduledBooking.id === booking.id, "database keeps rescheduled booking id stable");
+  assert(rescheduledBooking.slot_id === replacementSlot.id, "database persists rescheduled slot");
+  assert(rescheduledBooking.notes === "Rescheduled via manage-token flow.", "database persists reschedule notes");
+
   await apiJson("/api/slotboard/manage/cancel", {
     method: "POST",
     token: manageToken,
@@ -249,11 +280,14 @@ async function readLatestBooking(eventId: string) {
   const result = await pool.query(
     `
       select participant_name,
+             id,
+             slot_id,
              participant_email,
              participant_timezone,
              participant_locale,
              participant_offset_at_booking,
-             notes
+             notes,
+             ics_sequence
       from slotboard.bookings
       where event_id = $1
       order by booked_at desc

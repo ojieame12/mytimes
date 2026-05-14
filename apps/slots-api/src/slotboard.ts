@@ -26,6 +26,7 @@ import type {
   CancelBookingInput,
   ClaimSlotInput,
   ManageLinkRecoveryInput,
+  RescheduleBookingInput,
   UpdateEventInput,
 } from "./validation.js";
 
@@ -84,6 +85,7 @@ export type BookingDTO = {
   bookedAt: string;
   cancelledAt?: string | undefined;
   cancelledBy?: "participant" | "organizer" | undefined;
+  icsSequence: number;
 };
 
 export type OrganizerEventSummaryDTO = {
@@ -248,6 +250,22 @@ export async function readManageBooking(rawToken: string): Promise<{
   return mapManageRow(row);
 }
 
+export async function readManagedRescheduleOptions(rawToken: string): Promise<{
+  event: EventDTO;
+  slot: SlotDTO;
+  booking: BookingDTO;
+  slots: SlotDTO[];
+}> {
+  const current = await readManageBooking(rawToken);
+  const slots = current.booking.status === "active" && isEventPubliclyBookable(current.event)
+    ? await readOpenSlots(current.event.id, current.event.slotLimit)
+    : [];
+  return {
+    ...current,
+    slots,
+  };
+}
+
 export async function resendManagedBookingEmail(rawToken: string): Promise<{
   event: EventDTO;
   slot: SlotDTO;
@@ -337,6 +355,145 @@ export async function cancelManagedBooking(
     });
   }
   return response;
+}
+
+export async function rescheduleManagedBooking(
+  rawToken: string,
+  input: RescheduleBookingInput,
+): Promise<{
+  event: EventDTO;
+  slot: SlotDTO;
+  booking: BookingDTO;
+  email: BookingClaimedEmailResult;
+}> {
+  const result = await withTransaction(async (client) => {
+    const locked = await lockBookingByManageToken(client, rawToken);
+    const event = mapEventFromBookingRow(locked);
+
+    if (locked.cancelled_at) {
+      throw new ApiError(409, "booking_cancelled", "This booking has already been cancelled");
+    }
+    if (locked.slot_id === input.slotId) {
+      throw new ApiError(409, "same_slot", "Choose a different slot to reschedule this booking");
+    }
+    if (event.status !== "active") {
+      throw new ApiError(409, "event_not_active", "This event is not accepting booking changes");
+    }
+    if (isEventExpired(event)) {
+      throw new ApiError(409, "event_expired", "This booking board is no longer accepting booking changes");
+    }
+    if (!isEventPaymentReady(event)) {
+      throw new ApiError(
+        402,
+        "event_payment_pending",
+        "This booking board is waiting for payment before it can accept booking changes",
+      );
+    }
+
+    const targetSlot = await lockSlot(client, event.id, input.slotId);
+    await assertSlotWithinPublishedLimit(client, event, input.slotId);
+    if (targetSlot.status !== "open") {
+      throw new ApiError(409, "slot_unavailable", "This slot is not open");
+    }
+
+    const activeCount = await activeBookingCount(client, input.slotId);
+    if (activeCount >= targetSlot.capacity) {
+      throw new ApiError(409, "slot_unavailable", "This slot has already been booked");
+    }
+
+    if (!event.allowMultipleBookings) {
+      const existing = await client.query(
+        `
+          select 1
+          from slotboard.bookings
+          where event_id = $1
+            and dedupe_email = $2
+            and id <> $3
+            and cancelled_at is null
+          limit 1
+        `,
+        [event.id, locked.participant_email, locked.booking_id],
+      );
+      if (existing.rowCount && existing.rowCount > 0) {
+        throw new ApiError(409, "duplicate_booking", "This email already has an active booking for this event");
+      }
+    }
+
+    if (!locked.close_after_booking) {
+      await client.query(
+        `
+          update slotboard.time_slots
+          set status = 'open'
+          where id = $1
+        `,
+        [locked.slot_id],
+      );
+    }
+
+    await client.query(
+      `
+        update slotboard.bookings
+        set slot_id = $2,
+            participant_timezone = coalesce($3, participant_timezone),
+            participant_locale = coalesce($4, participant_locale),
+            participant_offset_at_booking = coalesce($5, participant_offset_at_booking),
+            notes = coalesce($6, notes),
+            booked_at = now(),
+            cancelled_reason = null,
+            ics_sequence = ics_sequence + 1,
+            updated_at = now()
+        where id = $1
+      `,
+      [
+        locked.booking_id,
+        input.slotId,
+        input.participantTimezone ?? null,
+        input.participantLocale ?? null,
+        input.participantOffsetAtBooking ?? null,
+        input.notes ?? null,
+      ],
+    );
+
+    await recordActivity(client, {
+      eventId: event.id,
+      type: "booking_rescheduled",
+      actorType: "participant",
+      actorLabel: locked.participant_name,
+      slotId: input.slotId,
+      bookingId: locked.booking_id,
+      metadata: {
+        fromSlotId: locked.slot_id,
+        toSlotId: input.slotId,
+        fromStartsAt: locked.starts_at.toISOString(),
+        toStartsAt: targetSlot.starts_at.toISOString(),
+      },
+    });
+
+    return readBookingByManageToken(rawToken, client);
+  });
+
+  const response = mapManageRow(result);
+  const manageURL = await buildParticipantURL(`/m/${rawToken}`, response.event);
+  const email = await sendBookingClaimedEmails({
+    event: response.event,
+    slot: response.slot,
+    booking: response.booking,
+    manageURL,
+  });
+
+  logInfo("slotboard_booking_rescheduled", {
+    eventId: response.event.id,
+    bookingId: response.booking.id,
+    slotId: response.slot.id,
+    recipientDomain: emailDomain(response.booking.participantEmail),
+    participantConfirmationStatus: email.participantConfirmation.status,
+    organizerNoticeStatus: email.organizerNotice.status,
+  });
+
+  return {
+    ...response,
+    email,
+  };
 }
 
 export async function readAdminDashboard(rawToken: string): Promise<DashboardDTO> {
@@ -1032,7 +1189,7 @@ export async function readManagedCalendar(rawToken: string): Promise<CalendarDow
   const cancelled = booking.status === "cancelled";
   const content = (cancelled ? createBookingCancellationIcs : createBookingRequestIcs)({
     bookingId: booking.id,
-    sequence: cancelled ? 1 : 0,
+    sequence: booking.icsSequence,
     startsAt: slot.startsAt,
     endsAt: slot.endsAt,
     title: event.title,
@@ -1399,7 +1556,8 @@ async function insertBooking(
           notes,
           booked_at,
           cancelled_at,
-          cancelled_by
+          cancelled_by,
+          ics_sequence
       `,
       [
         eventId,
@@ -1589,6 +1747,7 @@ function mapBooking(row: BookingRow): BookingDTO {
     bookedAt: row.booked_at.toISOString(),
     cancelledAt: row.cancelled_at?.toISOString(),
     cancelledBy: row.cancelled_by ?? undefined,
+    icsSequence: row.ics_sequence,
   };
 }
 
@@ -1607,6 +1766,7 @@ function mapBookingFromJoinedRow(row: ManageBookingRow): BookingDTO {
     bookedAt: row.booked_at.toISOString(),
     cancelledAt: row.cancelled_at?.toISOString(),
     cancelledBy: row.cancelled_by ?? undefined,
+    icsSequence: row.ics_sequence,
   };
 }
 
@@ -1791,6 +1951,7 @@ type BookingRow = {
   booked_at: Date;
   cancelled_at: Date | null;
   cancelled_by: "participant" | "organizer" | null;
+  ics_sequence: number;
 };
 
 type AdminSlotRow = SlotStatusRow & {
@@ -1838,7 +1999,8 @@ const joinedBookingColumns = `
   b.notes,
   b.booked_at,
   b.cancelled_at,
-  b.cancelled_by
+  b.cancelled_by,
+  b.ics_sequence
 `;
 
 type ManageBookingRow = {
@@ -1878,6 +2040,7 @@ type ManageBookingRow = {
   booked_at: Date;
   cancelled_at: Date | null;
   cancelled_by: "participant" | "organizer" | null;
+  ics_sequence: number;
 };
 
 type AdminBookingLockRow = {

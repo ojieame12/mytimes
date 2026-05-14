@@ -39,6 +39,14 @@ export type CancelBookingInput = {
   reopenSlot: boolean;
 };
 
+export type RescheduleBookingInput = {
+  slotId: string;
+  notes?: string | undefined;
+  participantTimezone?: string | undefined;
+  participantLocale?: string | undefined;
+  participantOffsetAtBooking?: string | undefined;
+};
+
 export type RecoveryInput = {
   organizerEmail: string;
 };
@@ -249,6 +257,42 @@ export function toCancelBookingInput(value: unknown): CancelBookingInput {
   return {
     reason: optionalString(value, "reason", ""),
     reopenSlot: optionalBoolean(value, "reopenSlot", true),
+  };
+}
+
+export function toRescheduleBookingInput(value: unknown): RescheduleBookingInput {
+  if (!isRecord(value)) {
+    throw new ApiError(400, "invalid_reschedule", "Request body must be an object");
+  }
+
+  const slotId = trimmedString(value, "slotId");
+  const notes = value.notes === undefined ? undefined : optionalString(value, "notes", "");
+  const participantTimezone = optionalString(value, "participantTimezone", "");
+  const participantLocale = optionalString(value, "participantLocale", "");
+  const participantOffsetAtBooking = optionalString(value, "participantOffsetAtBooking", "");
+
+  if (!isUuid(slotId)) {
+    throw new ApiError(400, "invalid_reschedule", "slotId must be a UUID");
+  }
+  if (notes !== undefined && notes.length > 2000) {
+    throw new ApiError(400, "invalid_reschedule", "notes cannot exceed 2000 characters");
+  }
+  if (participantTimezone && !isValidTimeZone(participantTimezone)) {
+    throw new ApiError(400, "invalid_reschedule", "participantTimezone must be a valid IANA timezone");
+  }
+  if (participantLocale.length > 80) {
+    throw new ApiError(400, "invalid_reschedule", "participantLocale cannot exceed 80 characters");
+  }
+  if (participantOffsetAtBooking.length > 64) {
+    throw new ApiError(400, "invalid_reschedule", "participantOffsetAtBooking cannot exceed 64 characters");
+  }
+
+  return {
+    slotId,
+    notes,
+    participantTimezone: participantTimezone || undefined,
+    participantLocale: participantLocale || undefined,
+    participantOffsetAtBooking: participantOffsetAtBooking || undefined,
   };
 }
 

@@ -51,10 +51,12 @@ import {
   readOrganizerActivity,
   readOrganizerDashboard,
   readOrganizerEvents,
+  readManagedRescheduleOptions,
   readManageBooking,
   readPublicBoard,
   recoverAdminLinks,
   recoverManageLink,
+  rescheduleManagedBooking,
   resendBookingEmailByAdmin,
   resendBookingEmailByOrganizer,
   resendManagedBookingEmail,
@@ -77,6 +79,7 @@ import {
   toMyBoardsLinkRequestInput,
   toProductEventInput,
   toRecoveryInput,
+  toRescheduleBookingInput,
   toUpdateEventInput,
 } from "./validation.js";
 
@@ -321,10 +324,18 @@ app.get("/api/slotboard/manage/calendar.ics", async (c) => readManagedCalendarHa
 app.get("/api/slotboard/manage/:manageToken/calendar.ics", async (c) =>
   readManagedCalendarHandler(c, "manageToken"),
 );
+app.get("/api/slotboard/manage/reschedule", async (c) => readManagedRescheduleOptionsHandler(c));
+app.get("/api/slotboard/manage/:manageToken/reschedule", async (c) =>
+  readManagedRescheduleOptionsHandler(c, "manageToken"),
+);
 app.get("/api/slotboard/manage/:manageToken", async (c) => readManageBookingHandler(c, "manageToken"));
 app.post("/api/slotboard/manage/resend-email", async (c) => resendManagedBookingEmailHandler(c));
 app.post("/api/slotboard/manage/:manageToken/resend-email", async (c) =>
   resendManagedBookingEmailHandler(c, "manageToken"),
+);
+app.post("/api/slotboard/manage/reschedule", async (c) => rescheduleManagedBookingHandler(c));
+app.post("/api/slotboard/manage/:manageToken/reschedule", async (c) =>
+  rescheduleManagedBookingHandler(c, "manageToken"),
 );
 app.post("/api/slotboard/manage/cancel", async (c) => cancelManagedBookingHandler(c));
 app.post("/api/slotboard/manage/:manageToken/cancel", async (c) => cancelManagedBookingHandler(c, "manageToken"));
@@ -661,6 +672,16 @@ async function readManageBookingHandler(c: Context, paramName?: string) {
   }
 }
 
+async function readManagedRescheduleOptionsHandler(c: Context, paramName?: string) {
+  try {
+    const rawToken = tokenFromRequest(c, { purpose: "manage", paramName });
+    await assertRateLimit("manage-reschedule-options:token", `manage:${tokenHash(rawToken)}`, { limit: 120, windowSeconds: 3600 });
+    return c.json(await readManagedRescheduleOptions(rawToken));
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
 async function readManagedCalendarHandler(c: Context, paramName?: string) {
   try {
     const rawToken = tokenFromRequest(c, { purpose: "manage", paramName });
@@ -691,6 +712,26 @@ async function cancelManagedBookingHandler(c: Context, paramName?: string) {
     const rawToken = tokenFromRequest(c, { purpose: "manage", paramName });
     const body = await readOptionalJson(c.req);
     return c.json(await cancelManagedBooking(rawToken, toCancelBookingInput(body)));
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
+async function rescheduleManagedBookingHandler(c: Context, paramName?: string) {
+  try {
+    const rawToken = tokenFromRequest(c, { purpose: "manage", paramName });
+    await assertRateLimit("manage-reschedule:ip", requestActorKey(c.req.raw.headers), { limit: 30, windowSeconds: 3600 });
+    await assertRateLimit("manage-reschedule:token", `manage:${tokenHash(rawToken)}`, { limit: 10, windowSeconds: 3600 });
+    const body = await readJson(c.req);
+    const input = toRescheduleBookingInput(body);
+    const response = await runIdempotent({
+      routeKey: "slotboard.manage.reschedule",
+      actorKey: `manage:${tokenHash(rawToken)}`,
+      idempotencyKey: idempotencyKeyFromHeaders(c.req.raw.headers),
+      requestBody: input,
+      run: () => rescheduleManagedBooking(rawToken, input),
+    });
+    return c.json(response);
   } catch (error) {
     return jsonError(c, error);
   }

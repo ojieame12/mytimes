@@ -1,18 +1,21 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, Download } from 'lucide-react';
 import {
   ApiClientError,
   cancelManagedBooking,
   manageCalendarURL,
+  readManagedRescheduleOptions,
   readManageBooking,
   resendManagedBookingEmail,
+  rescheduleManagedBooking,
   type ManageBookingResponse,
 } from '../lib/api';
 import { navigate } from '../lib/routing';
-import { formatTimeInTz, formatTzAbbrev, viewerTimezone } from '../lib/time';
+import { formatTimeInTz, formatTzAbbrev, formatUtcOffset, viewerTimezone } from '../lib/time';
 import { FormField } from '../components/form/FormField';
 import { Textarea } from '../components/form/Inputs';
 import { Avatar } from '../components/Avatar';
+import type { TimeSlot } from '../lib/types';
 
 export interface ManageBookingPageProps {
   manageToken: string;
@@ -23,11 +26,19 @@ type ManageState =
   | { status: 'ready'; data: ManageBookingResponse }
   | { status: 'error'; message: string };
 
+type RescheduleState =
+  | { status: 'closed' }
+  | { status: 'loading' }
+  | { status: 'ready'; slots: TimeSlot[] }
+  | { status: 'error'; message: string };
+
 export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
   const [state, setState] = useState<ManageState>({ status: 'loading' });
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
+  const [rescheduleState, setRescheduleState] = useState<RescheduleState>({ status: 'closed' });
+  const [reschedulingSlotId, setReschedulingSlotId] = useState<string | undefined>();
   const [actionMessage, setActionMessage] = useState<string | undefined>();
   const [actionError, setActionError] = useState<string | undefined>();
   /* Track whether the participant cancelled in this session, so we
@@ -35,6 +46,8 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
    * cancelled when we loaded" path still renders inline inside the
    * card, which feels less celebratory than a fresh cancellation. */
   const [justCancelled, setJustCancelled] = useState(false);
+  const rescheduleIdempotencyKeyRef = useRef<string | undefined>();
+  const reschedulingRef = useRef(false);
   const currentViewerTz = useMemo(() => viewerTimezone(), []);
 
   useEffect(() => {
@@ -44,6 +57,10 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
     setActionMessage(undefined);
     setActionError(undefined);
     setJustCancelled(false);
+    setRescheduleState({ status: 'closed' });
+    setReschedulingSlotId(undefined);
+    rescheduleIdempotencyKeyRef.current = undefined;
+    reschedulingRef.current = false;
 
     readManageBooking(manageToken)
       .then((data) => {
@@ -120,6 +137,83 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
     }
   };
 
+  const loadRescheduleOptions = async () => {
+    if (state.status !== 'ready') return;
+    if (rescheduleState.status === 'ready') {
+      setRescheduleState({ status: 'closed' });
+      return;
+    }
+    setRescheduleState({ status: 'loading' });
+    setActionMessage(undefined);
+    setActionError(undefined);
+    try {
+      const response = await readManagedRescheduleOptions(manageToken);
+      setState({
+        status: 'ready',
+        data: {
+          event: response.event,
+          slot: response.slot,
+          booking: response.booking,
+        },
+      });
+      setRescheduleState({ status: 'ready', slots: response.slots });
+    } catch (error) {
+      setRescheduleState({
+        status: 'error',
+        message:
+          error instanceof ApiClientError
+            ? error.message
+            : 'Could not load open times for this booking.',
+      });
+    }
+  };
+
+  const moveBookingToSlot = async (nextSlot: TimeSlot) => {
+    if (state.status !== 'ready' || reschedulingRef.current) return;
+    reschedulingRef.current = true;
+    setReschedulingSlotId(nextSlot.id);
+    setActionMessage(undefined);
+    setActionError(undefined);
+    try {
+      const idempotencyKey =
+        rescheduleIdempotencyKeyRef.current ?? makeManageRescheduleIdempotencyKey(nextSlot.id);
+      rescheduleIdempotencyKeyRef.current = idempotencyKey;
+      const response = await rescheduleManagedBooking(
+        manageToken,
+        {
+          slotId: nextSlot.id,
+          notes: state.data.booking.notes,
+          participantTimezone: currentViewerTz,
+          participantLocale: navigator.language || undefined,
+          participantOffsetAtBooking: formatUtcOffset(new Date(nextSlot.startsAt), currentViewerTz),
+        },
+        { idempotencyKey },
+      );
+      setState({
+        status: 'ready',
+        data: {
+          event: response.event,
+          slot: response.slot,
+          booking: response.booking,
+        },
+      });
+      setRescheduleState({ status: 'closed' });
+      setActionMessage(
+        `Booking moved to ${formatDisplayDate(new Date(response.slot.startsAt), currentViewerTz)} at ${formatTimeInTz(new Date(response.slot.startsAt), currentViewerTz)}.`,
+      );
+    } catch (error) {
+      setActionError(
+        error instanceof ApiClientError
+          ? error.message
+          : 'Could not move this booking. Try another time.',
+      );
+    } finally {
+      rescheduleIdempotencyKeyRef.current = undefined;
+      reschedulingRef.current = false;
+      setReschedulingSlotId(undefined);
+    }
+  };
+
   if (state.status === 'loading') {
     return <ManagePlaceholder title="Loading booking" body="Fetching your booking details." />;
   }
@@ -139,7 +233,7 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
   const bookedTz = booking.participantTimezone ?? currentViewerTz;
   const startDate = new Date(slot.startsAt);
   const isCancelled = booking.status === 'cancelled';
-  const disabled = submitting || resending;
+  const disabled = submitting || resending || Boolean(reschedulingSlotId);
   const reference = formatReference(booking.id);
 
   /* Display title is split into two typographic halves: a SF
@@ -306,9 +400,49 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
                 />
               )}
             </FormField>
-            {/* Manage actions strip. We do not reconstruct or expose
-             *  public booking tokens from manage links; rescheduling
-             *  needs a first-class server action before it is shown. */}
+            {rescheduleState.status !== 'closed' && (
+              <section className="manage-card__reschedule" aria-live="polite">
+                <div className="manage-card__reschedule-head">
+                  <h2>Choose a new time</h2>
+                  <p>{event.durationMinutes} min · shown in {formatTzAbbrev(new Date(), currentViewerTz)}</p>
+                </div>
+                {rescheduleState.status === 'loading' && (
+                  <p className="manage-card__reschedule-note">Loading open times…</p>
+                )}
+                {rescheduleState.status === 'error' && (
+                  <p className="manage-card__reschedule-error">{rescheduleState.message}</p>
+                )}
+                {rescheduleState.status === 'ready' && rescheduleState.slots.length === 0 && (
+                  <p className="manage-card__reschedule-note">No other open times are available right now.</p>
+                )}
+                {rescheduleState.status === 'ready' && rescheduleState.slots.length > 0 && (
+                  <div className="manage-card__reschedule-slots">
+                    {rescheduleState.slots.map((candidate) => {
+                      const candidateStart = new Date(candidate.startsAt);
+                      const candidateEnd = new Date(candidate.endsAt);
+                      const moving = reschedulingSlotId === candidate.id;
+                      return (
+                        <button
+                          key={candidate.id}
+                          type="button"
+                          className="manage-card__reschedule-slot"
+                          disabled={disabled}
+                          onClick={() => void moveBookingToSlot(candidate)}
+                        >
+                          <span>{formatDisplayDate(candidateStart, currentViewerTz)}</span>
+                          <span className="mono">
+                            {formatTimeInTz(candidateStart, currentViewerTz)}–{formatTimeInTz(candidateEnd, currentViewerTz)}
+                          </span>
+                          <span>{moving ? 'Moving…' : 'Move booking'}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            )}
+            {/* Manage actions strip. Rescheduling stays on the manage
+             *  token and never reconstructs a public booking URL. */}
             <div className="manage-card__actions" aria-label="Manage booking actions">
               <div className="manage-card__actions-left">
                 <button
@@ -321,6 +455,14 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
                 </button>
               </div>
               <div className="manage-card__actions-right">
+                <button
+                  type="button"
+                  className="manage-btn manage-btn--ghost"
+                  disabled={disabled}
+                  onClick={() => void loadRescheduleOptions()}
+                >
+                  {rescheduleState.status === 'ready' ? 'Hide times' : 'Change time'}
+                </button>
                 <button
                   type="submit"
                   className="manage-btn manage-btn--destructive"
@@ -399,4 +541,11 @@ function formatDisplayDate(date: Date, timezone: string): string {
 function formatReference(id: string): string {
   const tail = id.replace(/[^a-z0-9]/gi, '').slice(-12).toUpperCase().padStart(12, '0');
   return `${tail.slice(0, 4)}-${tail.slice(4, 8)}-${tail.slice(8, 12)}`;
+}
+
+function makeManageRescheduleIdempotencyKey(slotId: string): string {
+  if (globalThis.crypto?.randomUUID) {
+    return `manage-reschedule:${slotId}:${globalThis.crypto.randomUUID()}`;
+  }
+  return `manage-reschedule:${slotId}:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 12)}`;
 }

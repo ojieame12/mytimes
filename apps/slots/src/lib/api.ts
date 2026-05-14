@@ -68,6 +68,7 @@ export type BookingRecord = {
   bookedAt: string;
   cancelledAt?: string;
   cancelledBy?: 'participant' | 'organizer';
+  icsSequence: number;
 };
 
 export type ClaimSlotResponse = {
@@ -91,6 +92,17 @@ export type ManageBookingResponse = {
 
 export type ResendManagedBookingEmailResponse = ManageBookingResponse & {
   delivery: EmailDeliveryResult;
+};
+
+export type ManagedRescheduleOptionsResponse = ManageBookingResponse & {
+  slots: TimeSlot[];
+};
+
+export type RescheduleManagedBookingResponse = ManageBookingResponse & {
+  email?: {
+    participantConfirmation: EmailDeliveryResult;
+    organizerNotice: EmailDeliveryResult;
+  };
 };
 
 export type OrganizerResendBookingEmailResponse = ManageBookingResponse & {
@@ -573,6 +585,33 @@ export async function resendManagedBookingEmail(
   return apiJson<ResendManagedBookingEmailResponse>('/api/slotboard/manage/resend-email', {
     method: 'POST',
     token: manageToken,
+  });
+}
+
+export async function readManagedRescheduleOptions(
+  manageToken: string,
+): Promise<ManagedRescheduleOptionsResponse> {
+  return apiJson<ManagedRescheduleOptionsResponse>('/api/slotboard/manage/reschedule', {
+    token: manageToken,
+  });
+}
+
+export async function rescheduleManagedBooking(
+  manageToken: string,
+  input: {
+    slotId: string;
+    notes?: string;
+    participantTimezone?: string;
+    participantLocale?: string;
+    participantOffsetAtBooking?: string;
+  },
+  options: { idempotencyKey?: string } = {},
+): Promise<RescheduleManagedBookingResponse> {
+  return apiJson<RescheduleManagedBookingResponse>('/api/slotboard/manage/reschedule', {
+    method: 'POST',
+    token: manageToken,
+    idempotencyKey: options.idempotencyKey,
+    body: input,
   });
 }
 

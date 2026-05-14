@@ -153,6 +153,7 @@ create table if not exists slotboard.activity_events (
       'slot_reopened',
       'booking_created',
       'booking_cancelled',
+      'booking_rescheduled',
       'public_link_rotated',
       'admin_link_rotated',
       'manage_link_rotated'
@@ -192,6 +193,7 @@ alter table slotboard.activity_events
       'slot_reopened',
       'booking_created',
       'booking_cancelled',
+      'booking_rescheduled',
       'public_link_rotated',
       'admin_link_rotated',
       'manage_link_rotated'
@@ -279,6 +281,9 @@ alter table slotboard.bookings
   add column if not exists participant_timezone text,
   add column if not exists participant_locale text,
   add column if not exists participant_offset_at_booking text;
+
+alter table slotboard.bookings
+  add column if not exists ics_sequence int not null default 0;
 
 update slotboard.booking_events e
 set timezone_locked_at = coalesce(e.timezone_locked_at, e.created_at)
