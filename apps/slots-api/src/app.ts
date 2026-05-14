@@ -148,14 +148,13 @@ app.use("/api/auth/*", async (c, next) => {
   return next();
 });
 
-app.get("/healthz", (c) =>
+const healthzHandler: Handler = (c) =>
   c.json({
     ok: true,
     service: "slotboard-api",
-  }),
-);
+  });
 
-app.get("/readyz", async (c) => {
+const readyzHandler: Handler = async (c) => {
   try {
     await getPool().query("select 1");
     return c.json({
@@ -169,7 +168,12 @@ app.get("/readyz", async (c) => {
   } catch (error) {
     return jsonError(c, error);
   }
-});
+};
+
+app.get("/healthz", healthzHandler);
+app.get("/api/healthz", healthzHandler);
+app.get("/readyz", readyzHandler);
+app.get("/api/readyz", readyzHandler);
 
 app.get("/api/slotboard/ops/email-readiness", (c) =>
   c.json({

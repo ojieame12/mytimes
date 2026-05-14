@@ -56,7 +56,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  if (pathname === "/api" || pathname.startsWith("/api/")) {
+  if (pathname === "/api" || pathname.startsWith("/api/") || pathname === "/healthz" || pathname === "/readyz") {
     proxyApiRequest(req, res, url);
     return;
   }
