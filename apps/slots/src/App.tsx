@@ -13,6 +13,7 @@ import { AccountEventsPage } from './views/AccountEventsPage';
 import { AuthPage } from './views/AuthPage';
 import { LandingPage } from './views/LandingPage';
 import { MyBoardsPage } from './views/MyBoardsPage';
+import { ForgotPasswordPage, ResetPasswordPage } from './views/PasswordResetPage';
 import { PricingPage } from './views/PricingPage';
 import { RequestBoardsLinkPage } from './views/RequestBoardsLinkPage';
 import { ApiClientError, readPublicBoard, type ClaimSlotResponse, type PublicBoardResponse } from './lib/api';
@@ -108,6 +109,22 @@ export function App() {
     return (
       <AppShell>
         <AuthPage mode="signup" />
+      </AppShell>
+    );
+  }
+
+  if (route.type === 'forgot-password') {
+    return (
+      <AppShell>
+        <ForgotPasswordPage />
+      </AppShell>
+    );
+  }
+
+  if (route.type === 'reset-password') {
+    return (
+      <AppShell>
+        <ResetPasswordPage />
       </AppShell>
     );
   }

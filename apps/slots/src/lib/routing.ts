@@ -15,6 +15,8 @@ export type Route =
   | { type: 'new-done' }
   | { type: 'signin' }
   | { type: 'signup' }
+  | { type: 'forgot-password' }
+  | { type: 'reset-password' }
   | { type: 'account' }
   | { type: 'account-event'; eventId: string }
   | { type: 'my-boards' }
@@ -34,6 +36,8 @@ export function parseRoute(pathname: string): Route {
   if (pathname === '/new/done') return { type: 'new-done' };
   if (pathname === '/signin') return { type: 'signin' };
   if (pathname === '/signup') return { type: 'signup' };
+  if (pathname === '/forgot-password') return { type: 'forgot-password' };
+  if (pathname === '/reset-password') return { type: 'reset-password' };
   if (pathname === '/account') return { type: 'account' };
   if (pathname === '/my-boards') return { type: 'my-boards' };
   if (pathname === '/my-boards/request' || pathname === '/my-boards/request-link') {

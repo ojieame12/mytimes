@@ -38,6 +38,15 @@ assertFileExcludes("apps/slots/src/views/PricingPage.tsx", [
   "$60",
   "$9",
 ]);
+assertFileIncludes("apps/slots/src/lib/routing.ts", [
+  "/forgot-password",
+  "/reset-password",
+]);
+assertFileIncludes("apps/slots/src/views/PasswordResetPage.tsx", [
+  "Reset your password",
+  "Choose a new password",
+  "Request a fresh link",
+]);
 
 const distJs = filesUnder("apps/slots/dist/assets").filter((file) => file.endsWith(".js"));
 assert(
@@ -49,6 +58,8 @@ assertIncludes(bundleText, "Preview only", "bundle must include read-only demo s
 assertIncludes(bundleText, "This is a demo board", "bundle must include demo submit guard copy");
 assertIncludes(bundleText, "View demo board", "bundle must include demo CTA copy");
 assertIncludes(bundleText, "mytimes.co", "bundle must use branded mytimes.co examples");
+assertIncludes(bundleText, "Reset your password", "bundle must include password reset request copy");
+assertIncludes(bundleText, "Choose a new password", "bundle must include password reset completion copy");
 assertExcludes(bundleText, "Email previews", "bundle must not include email preview index copy");
 assertExcludes(bundleText, "mytimes.app", "bundle must not include old mytimes.app origin");
 assertExcludes(bundleText, "MT-2026", "bundle must not include fake receipt ids");

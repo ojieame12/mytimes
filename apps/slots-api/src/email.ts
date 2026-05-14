@@ -16,6 +16,7 @@ export type EmailType =
   | "admin_link_recovery"
   | "manage_link_recovery"
   | "my_boards_link"
+  | "password_reset"
   | "email_test";
 
 export type EmailDeliveryResult = {
@@ -716,6 +717,48 @@ export async function sendMyBoardsLinkEmail(input: {
   });
 }
 
+export async function sendPasswordResetEmail(input: {
+  organizerEmail: string;
+  resetURL: string;
+  expiresInMinutes: number;
+}): Promise<EmailDeliveryResult> {
+  const expiryLabel = `${input.expiresInMinutes} minute${input.expiresInMinutes === 1 ? "" : "s"}`;
+  return deliverLoggedEmail({
+    eventId: null,
+    emailType: "password_reset",
+    recipientEmail: input.organizerEmail,
+    message: {
+      to: input.organizerEmail,
+      subject: "Reset your mytimes password",
+      text: [
+        "Use this private link to reset your mytimes password.",
+        `Reset password: ${input.resetURL}`,
+        `This link expires in ${expiryLabel}.`,
+        "If you did not request this, you can ignore this email.",
+      ].join("\n\n"),
+      html: renderEmailHtml({
+        eyebrow: "Password reset",
+        title: "Reset your password.",
+        preheader: buildPreheader([
+          "private reset link",
+          `expires in ${expiryLabel}`,
+        ]),
+        body: [
+          `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Use the private link below to set a new password for your mytimes account. It expires in <strong style="font-weight:600">${escapeHtml(expiryLabel)}</strong>.</p>`,
+          renderLinkCard({
+            variant: "admin",
+            label: "Private reset link",
+            url: input.resetURL,
+            caption: "Anyone with this link can reset your mytimes password until it expires. Keep it private.",
+          }),
+        ].join(""),
+        primaryCta: { href: input.resetURL, label: "Reset password" },
+        footerNote: "If you didn't request this, you can safely ignore this email.",
+      }),
+    },
+  });
+}
+
 // Fires each design-system email variant at a single recipient so we can
 // visually verify rendering in real inboxes (Gmail, Outlook, Apple Mail).
 // Optionally filtered to one variant by id or alias.
@@ -821,7 +864,17 @@ export async function sendEmailDesignTestBatch(input: {
     },
     {
       id: "10",
-      aliases: ["10", "operational-test"],
+      aliases: ["10", "password-reset"],
+      label: "Password reset",
+      run: () => sendPasswordResetEmail({
+        organizerEmail: recipient,
+        resetURL: "https://mytimes.co/reset-password?token=reset_design_token",
+        expiresInMinutes: 60,
+      }),
+    },
+    {
+      id: "11",
+      aliases: ["11", "operational-test"],
       label: "Operational test",
       run: () => sendOperationalTestEmail({ recipientEmail: recipient }),
     },

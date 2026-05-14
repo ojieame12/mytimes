@@ -89,6 +89,16 @@ assert(!html.includes("#FFFFFF"), "expected rendered email HTML to avoid pure wh
 const emailSource = readFileSync(new URL("../apps/slots-api/src/email.ts", import.meta.url), "utf8");
 assert(!emailSource.includes("&mdash;"), "expected email templates to avoid em dash entities");
 assert(!emailSource.includes("—"), "expected email templates to avoid em dash glyphs");
+assert(emailSource.includes('| "password_reset"'), "expected password_reset email type to be registered");
+assert(emailSource.includes("sendPasswordResetEmail"), "expected password reset email sender to exist");
+assert(
+  emailSource.includes('aliases: ["10", "password-reset"]'),
+  "expected password reset to be available in the email design-test batch",
+);
+assert(
+  emailSource.includes("Reset your mytimes password"),
+  "expected password reset email subject to be branded",
+);
 
 console.log(JSON.stringify({
   ok: true,
@@ -100,6 +110,8 @@ console.log(JSON.stringify({
     "resend-calendar-content-type",
     "email-html-brand-shape",
     "email-template-punctuation",
+    "password-reset-email-registration",
+    "password-reset-design-test-variant",
   ],
 }, null, 2));
 

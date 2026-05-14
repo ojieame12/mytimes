@@ -315,6 +315,27 @@ export async function signOutOrganizer(): Promise<unknown> {
   });
 }
 
+export async function requestOrganizerPasswordReset(email: string): Promise<{ status: boolean; message: string }> {
+  const redirectTo =
+    typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined;
+  return apiJson<{ status: boolean; message: string }>('/api/auth/request-password-reset', {
+    method: 'POST',
+    credentials: 'include',
+    body: redirectTo ? { email, redirectTo } : { email },
+  });
+}
+
+export async function resetOrganizerPassword(input: {
+  token: string;
+  newPassword: string;
+}): Promise<{ status: boolean }> {
+  return apiJson<{ status: boolean }>('/api/auth/reset-password', {
+    method: 'POST',
+    credentials: 'include',
+    body: input,
+  });
+}
+
 export async function getOrganizerSession(): Promise<OrganizerSessionResponse | undefined> {
   const response = await fetch(`${apiBaseURL()}/api/auth/get-session`, {
     method: 'GET',
@@ -326,10 +347,10 @@ export async function getOrganizerSession(): Promise<OrganizerSessionResponse | 
   }
   const data = parseJson(text);
   if (!response.ok) {
-    const error = isApiError(data)
-      ? data
-      : { error: 'request_failed', message: `Request failed with status ${response.status}` };
-    throw new ApiClientError(response.status, error.error, error.message);
+    const error =
+      apiErrorFrom(data) ??
+      { error: 'request_failed', message: `Request failed with status ${response.status}` };
+    throw new ApiClientError(response.status, error.error ?? error.code ?? 'request_failed', error.message);
   }
   return data as OrganizerSessionResponse;
 }
@@ -726,10 +747,10 @@ async function apiJson<T>(
   const data = text ? parseJson(text) : undefined;
 
   if (!response.ok) {
-    const error = isApiError(data)
-      ? data
-      : { error: 'request_failed', message: `Request failed with status ${response.status}` };
-    throw new ApiClientError(response.status, error.error, error.message);
+    const error =
+      apiErrorFrom(data) ??
+      { error: 'request_failed', message: `Request failed with status ${response.status}` };
+    throw new ApiClientError(response.status, error.error ?? error.code ?? 'request_failed', error.message);
   }
 
   return data as T;
@@ -767,13 +788,15 @@ function parseJson(text: string): unknown {
   }
 }
 
-function isApiError(value: unknown): value is { error: string; message: string } {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'error' in value &&
-    'message' in value &&
-    typeof value.error === 'string' &&
-    typeof value.message === 'string'
-  );
+function apiErrorFrom(value: unknown): { error?: string; code?: string; message: string } | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const candidate = value as { error?: unknown; code?: unknown; message?: unknown };
+  if (typeof candidate.message !== 'string') return undefined;
+  if (typeof candidate.error === 'string') {
+    return { error: candidate.error, message: candidate.message };
+  }
+  if (typeof candidate.code === 'string') {
+    return { code: candidate.code, message: candidate.message };
+  }
+  return undefined;
 }

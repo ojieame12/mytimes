@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import pg from "pg";
+import { sendPasswordResetEmail } from "./email.js";
 import { ApiError } from "./errors.js";
 import { loadEnv } from "./env.js";
 
@@ -73,6 +74,15 @@ function createOrganizerAuth(env: ReturnType<typeof loadEnv>) {
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 8,
+      resetPasswordTokenExpiresIn: 3600,
+      revokeSessionsOnPasswordReset: true,
+      sendResetPassword: async ({ user, token }) => {
+        await sendPasswordResetEmail({
+          organizerEmail: user.email,
+          resetURL: buildAppURL(`/reset-password?token=${encodeURIComponent(token)}`, env.publicAppURL),
+          expiresInMinutes: 60,
+        });
+      },
     },
     advanced: {
       ipAddress: {
@@ -122,6 +132,10 @@ function createOrganizerAuth(env: ReturnType<typeof loadEnv>) {
       },
     },
   });
+}
+
+function buildAppURL(path: string, baseURL: string): string {
+  return new URL(path, baseURL).toString();
 }
 
 export async function closeOrganizerAuthPool(): Promise<void> {

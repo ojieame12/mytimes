@@ -168,16 +168,28 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
           </div>
 
           {!isSignUp && (
-            <p className="auth-split__recover">
-              Lost an admin link?{' '}
-              <button
-                type="button"
-                className="auth-split__recover-link"
-                onClick={() => navigate('/recover')}
-              >
-                Recover it →
-              </button>
-            </p>
+            <>
+              <p className="auth-split__recover">
+                Forgot your password?{' '}
+                <button
+                  type="button"
+                  className="auth-split__recover-link"
+                  onClick={() => navigate('/forgot-password')}
+                >
+                  Reset it →
+                </button>
+              </p>
+              <p className="auth-split__recover auth-split__recover--compact">
+                Lost an admin link?{' '}
+                <button
+                  type="button"
+                  className="auth-split__recover-link"
+                  onClick={() => navigate('/recover')}
+                >
+                  Recover it →
+                </button>
+              </p>
+            </>
           )}
         </form>
       </main>
