@@ -13,6 +13,15 @@ export function participantClaimErrorMessage(error: ApiClientError): string {
   if (error.code === 'event_payment_pending') {
     return 'This booking board is waiting for payment before it can accept bookings.';
   }
+  if (error.code === 'idempotency_request_in_progress') {
+    return 'Your booking is already being confirmed. Wait a moment before trying again.';
+  }
+  if (error.code === 'idempotency_request_replayed') {
+    return 'This booking may already be saved. Check your email for the confirmation and manage link.';
+  }
+  if (error.code === 'idempotency_key_reused') {
+    return 'This booking request changed after it started. Refresh the board and try again.';
+  }
   return error.message;
 }
 

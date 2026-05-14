@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MessageSquarePlus } from 'lucide-react';
 import {
   ApiClientError,
@@ -87,6 +87,11 @@ export function InlineSlotForm({
   const [submitError, setSubmitError] = useState<string | undefined>();
   const [conflict, setConflict] = useState(false);
   const [claimed, setClaimed] = useState<ClaimSlotResponse | undefined>();
+  const claimedRef = useRef<ClaimSlotResponse | undefined>();
+  const finalizedClaimRef = useRef(false);
+  const idempotencyKeyRef = useRef<string | undefined>();
+  const onClaimedRef = useRef(onClaimed);
+  onClaimedRef.current = onClaimed;
 
   const startsAt = useMemo(() => new Date(slot.startsAt), [slot.startsAt]);
   const endsAt = useMemo(() => new Date(slot.endsAt), [slot.endsAt]);
@@ -113,6 +118,19 @@ export function InlineSlotForm({
     });
   };
 
+  const finalizeClaim = () => {
+    const response = claimedRef.current;
+    if (!response || finalizedClaimRef.current) return;
+    finalizedClaimRef.current = true;
+    onClaimedRef.current?.(response);
+  };
+
+  useEffect(() => {
+    return () => {
+      finalizeClaim();
+    };
+  }, []);
+
   /* Focus first field when the form mounts inside the band. */
   useEffect(() => {
     const first = document.querySelector<HTMLInputElement>(
@@ -137,18 +155,24 @@ export function InlineSlotForm({
     setSubmitError(undefined);
     setConflict(false);
     try {
-      const response = await claimSlot(publicToken, {
-        slotId: slot.id,
-        participantName: participantName.trim(),
-        participantEmail: participantEmail.trim(),
-        participantTimezone: viewerTz,
-        participantLocale: navigator.language || undefined,
-        participantOffsetAtBooking: formatUtcOffset(startsAt, viewerTz),
-        notes: notes.trim(),
-      });
+      const idempotencyKey = idempotencyKeyRef.current ?? makeClaimIdempotencyKey();
+      idempotencyKeyRef.current = idempotencyKey;
+      const response = await claimSlot(
+        publicToken,
+        {
+          slotId: slot.id,
+          participantName: participantName.trim(),
+          participantEmail: participantEmail.trim(),
+          participantTimezone: viewerTz,
+          participantLocale: navigator.language || undefined,
+          participantOffsetAtBooking: formatUtcOffset(startsAt, viewerTz),
+          notes: notes.trim(),
+        },
+        { idempotencyKey },
+      );
+      claimedRef.current = response;
       setClaimed(response);
       onDraftChange?.(EMPTY_INLINE_SLOT_FORM_DRAFT);
-      onClaimed?.(response);
     } catch (error) {
       if (error instanceof ApiClientError && CONFLICT_CODES.has(error.code)) {
         setConflict(true);
@@ -206,7 +230,10 @@ export function InlineSlotForm({
           viewerTz={viewerTz}
           sourceTz={sourceTz}
           showSourceLine={showSourceLine}
-          onDone={onClose}
+          onDone={() => {
+            finalizeClaim();
+            onClose();
+          }}
         />
       ) : conflict ? (
         <ConflictState
@@ -403,4 +430,11 @@ function confirmationDeliveryCopy(delivery?: EmailDeliveryResult): string {
     return 'Your booking is saved. Email delivery is not configured here, so keep the manage link below.';
   }
   return "We've sent a confirmation email with a calendar invite.";
+}
+
+function makeClaimIdempotencyKey(): string {
+  if (globalThis.crypto?.randomUUID) {
+    return `claim:${globalThis.crypto.randomUUID()}`;
+  }
+  return `claim:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 12)}`;
 }

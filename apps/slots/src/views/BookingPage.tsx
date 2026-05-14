@@ -83,9 +83,16 @@ export function BookingPage({
   }, [publicToken]);
 
   const isArchived = event.status === 'archived';
+  const isExpired = Boolean(event.expiresAt && Date.parse(event.expiresAt) <= Date.now());
+  const isPaymentUnavailable = Boolean(
+    event.paymentStatus &&
+      event.paymentStatus !== 'paid' &&
+      event.paymentStatus !== 'not_required',
+  );
+  const isUnavailable = !isArchived && (isExpired || isPaymentUnavailable);
   const openSlots = slots.filter((s) => s.state === 'open');
   const openSlotCount = openSlots.length;
-  const fullyBooked = !isArchived && openSlotCount === 0;
+  const fullyBooked = !isArchived && !isUnavailable && openSlotCount === 0;
 
   const tBuckets = useMemo(() => bucketByTimeOfDay(openSlots, viewerTz), [openSlots, viewerTz]);
   const counts = useMemo(
@@ -256,7 +263,7 @@ export function BookingPage({
 
         {/* Picker toolbar — spinners on the left, filter pills on
             the right. Same row, no heading text. */}
-        {!isArchived && !fullyBooked && (
+        {!isArchived && !isUnavailable && !fullyBooked && (
           <>
             <div className="booking__toolbar">
               <MonthDateSpinners
@@ -428,6 +435,13 @@ export function BookingPage({
         )}
 
         {isArchived && <ArchivedNotice organizerName={event.organizerName} />}
+        {isUnavailable && (
+          <UnavailableNotice
+            organizerName={event.organizerName}
+            organizerEmail={event.organizerEmail}
+            reason={isExpired ? 'expired' : 'payment'}
+          />
+        )}
         {fullyBooked && (
           <FullyBookedNotice
             organizerName={event.organizerName}
@@ -792,6 +806,34 @@ function ArchivedNotice({ organizerName }: { organizerName: string }) {
       <p className="booking__notice-body">
         {organizerName} archived this event. If you already have a booking, keep your
         confirmation details and private manage link.
+      </p>
+    </div>
+  );
+}
+
+function UnavailableNotice({
+  organizerName,
+  organizerEmail,
+  reason,
+}: {
+  organizerName: string;
+  organizerEmail: string;
+  reason: 'expired' | 'payment';
+}) {
+  const title =
+    reason === 'expired'
+      ? 'This booking board has expired.'
+      : 'This booking board is not accepting bookings yet.';
+  const body =
+    reason === 'expired'
+      ? `${organizerName}'s board is past its active booking window.`
+      : `${organizerName}'s board needs to be activated by the organizer before reservations open.`;
+  return (
+    <div className="booking__notice booking__notice--unavailable">
+      <h2 className="booking__notice-title">{title}</h2>
+      <p className="booking__notice-body">
+        {body}{' '}
+        <a href={`mailto:${organizerEmail}`}>Contact {organizerName}</a> if you need a time.
       </p>
     </div>
   );

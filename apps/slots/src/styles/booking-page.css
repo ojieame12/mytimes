@@ -1194,6 +1194,10 @@
   border-color: var(--intent-danger-soft);
   background: var(--intent-danger-soft);
 }
+.booking__notice--unavailable {
+  border-color: var(--intent-warning-soft);
+  background: var(--intent-warning-soft);
+}
 .booking__notice-title {
   margin: 0;
   font-family: var(--font-display);

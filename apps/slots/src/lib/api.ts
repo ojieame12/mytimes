@@ -542,10 +542,12 @@ export async function claimSlot(
     participantOffsetAtBooking?: string;
     notes: string;
   },
+  options: { idempotencyKey?: string } = {},
 ): Promise<ClaimSlotResponse> {
   return apiJson<ClaimSlotResponse>('/api/slotboard/book/claim', {
     method: 'POST',
     token: publicToken,
+    idempotencyKey: options.idempotencyKey,
     body: input,
   });
 }
@@ -746,6 +748,7 @@ async function apiJson<T>(
   options: {
     method?: 'GET' | 'POST' | 'PATCH';
     token?: string;
+    idempotencyKey?: string;
     body?: unknown;
     credentials?: RequestCredentials;
   } = {},
@@ -770,13 +773,20 @@ async function apiJson<T>(
   return data as T;
 }
 
-function requestHeaders(options: { token?: string; body?: unknown }): HeadersInit {
+function requestHeaders(options: {
+  token?: string;
+  idempotencyKey?: string;
+  body?: unknown;
+}): HeadersInit {
   const headers: Record<string, string> = {};
   if (options.body !== undefined) {
     headers['content-type'] = 'application/json';
   }
   if (options.token) {
     headers.authorization = `Bearer ${options.token}`;
+  }
+  if (options.idempotencyKey) {
+    headers['Idempotency-Key'] = options.idempotencyKey;
   }
   return headers;
 }

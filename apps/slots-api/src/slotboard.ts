@@ -275,9 +275,11 @@ export async function cancelManagedBooking(
   rawToken: string,
   input: CancelBookingInput,
 ): Promise<{ event: EventDTO; slot: SlotDTO; booking: BookingDTO }> {
-  const row = await withTransaction(async (client) => {
+  const result = await withTransaction(async (client) => {
     const locked = await lockBookingByManageToken(client, rawToken);
+    let changed = false;
     if (!locked.cancelled_at) {
+      changed = true;
       await client.query(
         `
           update slotboard.bookings
@@ -312,21 +314,26 @@ export async function cancelManagedBooking(
         },
       });
     }
-    return readBookingByManageToken(rawToken, client);
+    return {
+      row: await readBookingByManageToken(rawToken, client),
+      changed,
+    };
   });
 
-  const response = mapManageRow(row);
-  const reopenedSlot = !response.slot.closeAfterBooking &&
-    response.event.status === "active" &&
-    !isEventExpired(response.event);
-  await sendBookingCancellationEmails({
-    event: response.event,
-    slot: response.slot,
-    booking: response.booking,
-    cancelledBy: "participant",
-    reopenedSlot,
-    openSlotCount: reopenedSlot ? await countPublishedOpenSlots(response.event) : undefined,
-  });
+  const response = mapManageRow(result.row);
+  if (result.changed) {
+    const reopenedSlot = !response.slot.closeAfterBooking &&
+      response.event.status === "active" &&
+      !isEventExpired(response.event);
+    await sendBookingCancellationEmails({
+      event: response.event,
+      slot: response.slot,
+      booking: response.booking,
+      cancelledBy: "participant",
+      reopenedSlot,
+      openSlotCount: reopenedSlot ? await countPublishedOpenSlots(response.event) : undefined,
+    });
+  }
   return response;
 }
 
@@ -650,9 +657,11 @@ async function cancelBookingForEvent(
   bookingId: string,
   input: CancelBookingInput,
 ): Promise<{ event: EventDTO; slot: SlotDTO; booking: BookingDTO }> {
-  const row = await withTransaction(async (client) => {
+  const result = await withTransaction(async (client) => {
     const locked = await lockBookingById(client, event.id, bookingId);
+    let changed = false;
     if (!locked.cancelled_at) {
+      changed = true;
       await client.query(
         `
           update slotboard.bookings
@@ -687,21 +696,26 @@ async function cancelBookingForEvent(
         },
       });
     }
-    return readBookingById(client, event.id, bookingId);
+    return {
+      row: await readBookingById(client, event.id, bookingId),
+      changed,
+    };
   });
 
-  const response = mapManageRow(row);
-  const reopenedSlot = Boolean(input.reopenSlot) &&
-    !response.slot.closeAfterBooking &&
-    response.event.status === "active" &&
-    !isEventExpired(response.event);
-  await sendBookingCancellationEmails({
-    event: response.event,
-    slot: response.slot,
-    booking: response.booking,
-    cancelledBy: "organizer",
-    reopenedSlot,
-  });
+  const response = mapManageRow(result.row);
+  if (result.changed) {
+    const reopenedSlot = Boolean(input.reopenSlot) &&
+      !response.slot.closeAfterBooking &&
+      response.event.status === "active" &&
+      !isEventExpired(response.event);
+    await sendBookingCancellationEmails({
+      event: response.event,
+      slot: response.slot,
+      booking: response.booking,
+      cancelledBy: "organizer",
+      reopenedSlot,
+    });
+  }
   return response;
 }
 
