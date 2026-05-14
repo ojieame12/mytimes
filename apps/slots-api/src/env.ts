@@ -36,6 +36,11 @@ export type Env = {
   companyStandbyAmount: number;
   companyStandbyAnnualAmount: number;
   customDomainCnameTarget: string;
+  railwayApiToken: string | undefined;
+  railwayProjectId: string | undefined;
+  railwayEnvironmentId: string | undefined;
+  railwayCustomDomainServiceId: string | undefined;
+  railwayCustomDomainTargetPort: number;
   sentryDsn: string | undefined;
   sentryEnvironment: string;
   sentryRelease: string | undefined;
@@ -88,9 +93,11 @@ export type BillingReadiness = {
 export type CustomDomainReadiness = {
   cnameTarget: string;
   requestAndVerifyConfigured: boolean;
-  activationMode: "ops_manual";
+  activationMode: "ops_manual" | "railway_api";
   selfServeActivation: boolean;
   publicAppURL: string;
+  requiredVariables: string[];
+  optionalVariables: string[];
   issues: string[];
 };
 
@@ -154,6 +161,11 @@ export function loadEnv(): Env {
     companyStandbyAmount: numberEnv("SLOTBOARD_COMPANY_STANDBY_AMOUNT", 4900, { min: 100 }),
     companyStandbyAnnualAmount: numberEnv("SLOTBOARD_COMPANY_STANDBY_ANNUAL_AMOUNT", 48000, { min: 100 }),
     customDomainCnameTarget: env("SLOTBOARD_CUSTOM_DOMAIN_CNAME_TARGET", hostnameFromURL(publicAppURL)),
+    railwayApiToken: optionalEnv("SLOTBOARD_RAILWAY_API_TOKEN") ?? optionalEnv("RAILWAY_TOKEN"),
+    railwayProjectId: optionalEnv("SLOTBOARD_RAILWAY_PROJECT_ID") ?? optionalEnv("RAILWAY_PROJECT_ID"),
+    railwayEnvironmentId: optionalEnv("SLOTBOARD_RAILWAY_ENVIRONMENT_ID") ?? optionalEnv("RAILWAY_ENVIRONMENT_ID"),
+    railwayCustomDomainServiceId: optionalEnv("SLOTBOARD_RAILWAY_CUSTOM_DOMAIN_SERVICE_ID"),
+    railwayCustomDomainTargetPort: numberEnv("SLOTBOARD_RAILWAY_DOMAIN_PORT", 4174, { min: 1 }),
     sentryDsn: optionalEnv("SENTRY_DSN") ?? optionalEnv("SLOTBOARD_SENTRY_DSN"),
     sentryEnvironment: env("SENTRY_ENVIRONMENT", process.env.NODE_ENV || "development"),
     sentryRelease: optionalEnv("SENTRY_RELEASE") ?? optionalEnv("RAILWAY_GIT_COMMIT_SHA"),
@@ -292,21 +304,40 @@ export function billingReadiness(env: Env = loadEnv()): BillingReadiness {
 }
 
 export function customDomainReadiness(env: Env = loadEnv()): CustomDomainReadiness {
+  const railwayMissing = [
+    env.railwayApiToken ? undefined : "SLOTBOARD_RAILWAY_API_TOKEN or RAILWAY_TOKEN",
+    env.railwayProjectId ? undefined : "SLOTBOARD_RAILWAY_PROJECT_ID or RAILWAY_PROJECT_ID",
+    env.railwayEnvironmentId ? undefined : "SLOTBOARD_RAILWAY_ENVIRONMENT_ID or RAILWAY_ENVIRONMENT_ID",
+    env.railwayCustomDomainServiceId ? undefined : "SLOTBOARD_RAILWAY_CUSTOM_DOMAIN_SERVICE_ID",
+  ].filter((item): item is string => Boolean(item));
+  const selfServeActivation = railwayMissing.length === 0;
   const issues = [
     ...(env.customDomainCnameTarget
       ? []
       : ["SLOTBOARD_CUSTOM_DOMAIN_CNAME_TARGET is required for customer DNS instructions."]),
-    ...(env.opsSecret
+    ...(env.opsSecret || selfServeActivation
       ? []
-      : ["SLOTBOARD_OPS_SECRET is required to activate verified custom domains."]),
+      : ["SLOTBOARD_OPS_SECRET is required for manual activation, or configure Railway API variables for automatic activation."]),
+    ...railwayMissing.map((name) => `${name} is required for automatic Railway custom-domain activation.`),
   ];
 
   return {
     cnameTarget: env.customDomainCnameTarget,
     requestAndVerifyConfigured: Boolean(env.customDomainCnameTarget),
-    activationMode: "ops_manual",
-    selfServeActivation: false,
+    activationMode: selfServeActivation ? "railway_api" : "ops_manual",
+    selfServeActivation,
     publicAppURL: env.publicAppURL,
+    requiredVariables: [
+      "SLOTBOARD_CUSTOM_DOMAIN_CNAME_TARGET",
+      "SLOTBOARD_RAILWAY_API_TOKEN or RAILWAY_TOKEN",
+      "SLOTBOARD_RAILWAY_PROJECT_ID or RAILWAY_PROJECT_ID",
+      "SLOTBOARD_RAILWAY_ENVIRONMENT_ID or RAILWAY_ENVIRONMENT_ID",
+      "SLOTBOARD_RAILWAY_CUSTOM_DOMAIN_SERVICE_ID",
+    ],
+    optionalVariables: [
+      "SLOTBOARD_OPS_SECRET",
+      "SLOTBOARD_RAILWAY_DOMAIN_PORT",
+    ],
     issues,
   };
 }

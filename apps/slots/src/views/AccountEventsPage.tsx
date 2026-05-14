@@ -613,9 +613,11 @@ function CustomDomainCard({
           </h2>
           <p className="account-domain-card__body">
             {domain
-              ? domainStatusDescription(domain.status)
+              ? domainStatusDescription(domain.status, settings.activation.automatic)
               : settings.eligible
-              ? 'Connect a subdomain such as book.company.com. DNS can be verified here, then the final Railway domain attachment can be completed once the records resolve.'
+              ? settings.activation.automatic
+                ? 'Connect a subdomain such as book.company.com. Once DNS checks out, mytimes will attach it to the booking app automatically.'
+                : 'Connect a subdomain such as book.company.com. DNS can be verified here, then the final Railway domain attachment can be completed once the records resolve.'
               : 'Included with Company for teams that want a permanent booking URL.'}
           </p>
         </div>
@@ -728,12 +730,17 @@ function domainStatusLabel(status: NonNullable<CustomDomainSettingsResponse['dom
   return 'Pending DNS';
 }
 
-function domainStatusDescription(status: NonNullable<CustomDomainSettingsResponse['domain']>['status']): string {
+function domainStatusDescription(
+  status: NonNullable<CustomDomainSettingsResponse['domain']>['status'],
+  automaticActivation: boolean,
+): string {
   if (status === 'active') {
     return 'New public booking links and participant manage links use this host. Admin and billing links stay on the main mytimes app.';
   }
   if (status === 'verified_dns') {
-    return 'DNS is verified. mytimes still needs to attach this host to the Railway frontend before it becomes active.';
+    return automaticActivation
+      ? 'DNS is verified. mytimes is attaching this host to the booking app.'
+      : 'DNS is verified. mytimes still needs to attach this host to the Railway frontend before it becomes active.';
   }
   if (status === 'rejected') {
     return 'This request needs review before it can be used for booking links.';

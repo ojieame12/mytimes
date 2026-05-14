@@ -189,6 +189,10 @@ export type CustomDomainSettingsResponse = {
   eligible: boolean;
   reason?: 'company_standby_required';
   cnameTarget: string;
+  activation: {
+    mode: 'railway_api' | 'ops_manual';
+    automatic: boolean;
+  };
   domain?: {
     id: string;
     hostname: string;

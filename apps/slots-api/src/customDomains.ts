@@ -4,6 +4,7 @@ import { getPool, withTransaction } from "./db.js";
 import { hasActiveCompanyStandby } from "./entitlements.js";
 import { loadEnv } from "./env.js";
 import { ApiError } from "./errors.js";
+import { attachRailwayCustomDomain, hasRailwayCustomDomainAutomation } from "./railwayDomains.js";
 
 export type CustomDomainStatus = "pending_dns" | "verified_dns" | "active" | "rejected";
 
@@ -32,6 +33,10 @@ export type CustomDomainSettingsResponse = {
   eligible: boolean;
   reason?: "company_standby_required" | undefined;
   cnameTarget: string;
+  activation: {
+    mode: "railway_api" | "ops_manual";
+    automatic: boolean;
+  };
   domain?: CustomDomainDTO | undefined;
 };
 
@@ -48,6 +53,8 @@ export async function readCustomDomainSettings(input: {
   ownerUserId: string;
   ownerEmail: string;
 }): Promise<CustomDomainSettingsResponse> {
+  const env = loadEnv();
+  const automaticActivation = hasRailwayCustomDomainAutomation(env);
   const [eligible, domain] = await Promise.all([
     hasActiveCompanyStandby(input),
     readCustomDomain(input),
@@ -55,7 +62,11 @@ export async function readCustomDomainSettings(input: {
   return {
     eligible,
     reason: eligible ? undefined : "company_standby_required",
-    cnameTarget: loadEnv().customDomainCnameTarget,
+    cnameTarget: env.customDomainCnameTarget,
+    activation: {
+      mode: automaticActivation ? "railway_api" : "ops_manual",
+      automatic: automaticActivation,
+    },
     domain: domain ? toDTO(domain) : undefined,
   };
 }
@@ -189,6 +200,23 @@ export async function verifyCustomDomain(input: {
     `,
     [domain.id, status, check.verified, check.error],
   );
+
+  if (check.verified && domain.status !== "active" && hasRailwayCustomDomainAutomation()) {
+    try {
+      await attachRailwayCustomDomain({ hostname: domain.hostname });
+      await activateCustomDomain({ hostname: domain.hostname });
+    } catch (error) {
+      await getPool().query(
+        `
+          update slotboard.custom_domains
+          set last_check_error = $2,
+              last_checked_at = now()
+          where id = $1
+        `,
+        [domain.id, customDomainActivationErrorMessage(error)],
+      );
+    }
+  }
 
   return readCustomDomainSettings(input);
 }
@@ -381,6 +409,11 @@ function hostnameFromOrigin(origin: string): string | null {
   } catch {
     return null;
   }
+}
+
+function customDomainActivationErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return `DNS verified, but Railway activation did not complete: ${message}`.slice(0, 1000);
 }
 
 async function readCustomDomain(input: {

@@ -125,6 +125,11 @@ SLOTBOARD_EVENT_PASS_AMOUNT=1900
 SLOTBOARD_COMPANY_STANDBY_AMOUNT=4900
 SLOTBOARD_COMPANY_STANDBY_ANNUAL_AMOUNT=48000
 SLOTBOARD_CUSTOM_DOMAIN_CNAME_TARGET=slots-production-12d4.up.railway.app
+SLOTBOARD_RAILWAY_API_TOKEN=...
+SLOTBOARD_RAILWAY_PROJECT_ID=...
+SLOTBOARD_RAILWAY_ENVIRONMENT_ID=...
+SLOTBOARD_RAILWAY_CUSTOM_DOMAIN_SERVICE_ID=...
+SLOTBOARD_RAILWAY_DOMAIN_PORT=4174
 ```
 
 When Stripe price IDs are configured, Checkout uses those catalog prices. When
@@ -137,9 +142,12 @@ sets a 180-day paid window, raises limits to 75 bookings and 200 slots, and remo
 the mytimes footer on that board. Company stores the Stripe subscription against the organizer email/user
 and applies high-limit workspace entitlements to the signed-in organizer's
 active boards. Custom domains are gated to active/trialing Company
-subscriptions. DNS verification checks a TXT record and CNAME target. Final
-Railway custom-domain attachment stays an operations step; after attachment,
-run the activation command so the API accepts the custom origin through CORS:
+subscriptions. DNS verification checks a TXT record and CNAME target. When the
+Railway variables above are configured, `POST /api/slotboard/account/custom-domain/verify`
+also attaches the verified hostname to the Railway frontend service and marks
+the domain active. Without those variables, final Railway custom-domain
+attachment stays an operations step; after attachment, run the activation
+command so the API accepts the custom origin through CORS:
 
 ```sh
 SLOTBOARD_CUSTOM_DOMAIN=book.company.com \
