@@ -586,7 +586,7 @@ async function fetchWithSocketRetry(url, init) {
   try {
     return await fetch(url, init);
   } catch (error) {
-    if (error?.cause?.code !== "UND_ERR_SOCKET") {
+    if (!["UND_ERR_SOCKET", "ECONNRESET"].includes(error?.cause?.code)) {
       throw error;
     }
     return fetch(url, init);

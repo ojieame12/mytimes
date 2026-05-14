@@ -6,6 +6,8 @@ dist-ssr
 **/dist-ssr
 .env
 *.log
+backups/
+*.dump
 *.tsbuildinfo
 **/*.tsbuildinfo
 .DS_Store

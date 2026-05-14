@@ -175,6 +175,47 @@ Recommended Railway setup:
 The API Railway config runs the migration as a pre-deploy command and uses
 `/healthz` as the deployment health check.
 
+## Backup And Restore
+
+Backups are a launch blocker. A dump only counts once it has restored cleanly
+into a separate database.
+
+Create a local backup from `SLOTBOARD_DATABASE_URL`, or from the default local
+Compose database when that variable is unset:
+
+```sh
+npm run db:backup
+```
+
+Restore the latest backup into a temporary local database, verify the core
+`slotboard` tables, and drop the temporary database:
+
+```sh
+npm run db:restore-check
+```
+
+Create a deliberate Railway production backup:
+
+```sh
+npm run db:backup:railway
+```
+
+To verify Railway SSH backup wiring without copying production data, run a
+schema-only dump:
+
+```sh
+SLOTBOARD_BACKUP_SCHEMA_ONLY=true npm run db:backup:railway
+```
+
+The scripts prefer local `pg_dump`, `pg_restore`, and `psql` when installed.
+When those clients are unavailable, they fall back to the Docker
+`postgres:17-alpine` client image. Backups are written under `backups/`, ignored
+by git, and may contain customer data. Store production copies in encrypted
+storage only.
+
+See [docs/production-runbook.md](docs/production-runbook.md) for the launch
+runbook and restore-drill fields to fill in.
+
 Check whether the deployed API is actually configured for production email:
 
 ```sh
