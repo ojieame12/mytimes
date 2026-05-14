@@ -1,6 +1,6 @@
 import { JSDOM } from "jsdom";
-import { readFileSync } from "node:fs";
 import type { Root } from "react-dom/client";
+import type { ClaimSlotResponse, ManageBookingResponse } from "../apps/slots/src/lib/api";
 import type { BookingEvent, TimeSlot } from "../apps/slots/src/lib/types";
 
 const checked: string[] = [];
@@ -13,6 +13,7 @@ const { createRoot } = await import("react-dom/client");
 const { renderToStaticMarkup } = await import("react-dom/server");
 const { Simulate } = await import("react-dom/test-utils");
 const { BookingPage } = await import("../apps/slots/src/views/BookingPage");
+const { ManageBookingPage } = await import("../apps/slots/src/views/ManageBookingPage");
 
 const container = document.getElementById("root");
 if (!container) throw new Error("Missing test root");
@@ -79,7 +80,9 @@ assert(!queryField("participantName"), "selected form closes when selected slot 
 await renderBoard(root, { publicToken: "board-b", slots });
 assert(!queryField("participantName"), "stale selected slot does not re-open after slots return");
 
-testClaimSuccessPersistsUntilDone();
+await testClaimSubmitGuard(root);
+await testConflictKeepsDraft(root);
+await testManagePageDoesNotRouteWithEventId(root);
 testUnavailableBoardCopy();
 
 await React.act(async () => {
@@ -90,7 +93,13 @@ console.log(JSON.stringify({ ok: true, checked }, null, 2));
 
 async function renderBoard(
   rootInstance: Root,
-  props: { publicToken: string; slots: TimeSlot[] },
+  props: {
+    publicToken: string;
+    slots: TimeSlot[];
+    demoMode?: boolean;
+    onClaimed?: (response: ClaimSlotResponse) => void;
+    onConflict?: () => void;
+  },
 ) {
   await React.act(async () => {
     rootInstance.render(
@@ -98,26 +107,134 @@ async function renderBoard(
         publicToken: props.publicToken,
         event,
         slots: props.slots,
-        demoMode: true,
+        demoMode: props.demoMode ?? true,
+        onClaimed: props.onClaimed,
+        onConflict: props.onConflict,
       }),
     );
   });
   await flushEffects();
 }
 
-function testClaimSuccessPersistsUntilDone() {
-  const source = readFileSync(
-    new URL("../apps/slots/src/components/InlineSlotForm.tsx", import.meta.url),
-    "utf8",
-  );
-  assert(source.includes("claimSlot("), "claim form calls participant claim endpoint");
-  assert(source.includes("{ idempotencyKey }"), "claim request sends idempotency key");
-  assert(source.includes("setClaimed(response)"), "claim success stores local confirmation state");
+async function testClaimSubmitGuard(rootInstance: Root) {
+  const pending = deferred<Response>();
+  const calls = installFetchMock((url) => {
+    if (url.pathname !== "/api/slotboard/book/claim") {
+      throw new Error(`Unexpected fetch in claim guard test: ${url.pathname}`);
+    }
+    return pending.promise;
+  });
+
+  let claimed: ClaimSlotResponse | undefined;
+  await renderBoard(rootInstance, {
+    publicToken: "claim-guard-board",
+    slots,
+    demoMode: false,
+    onClaimed: (response) => {
+      claimed = response;
+    },
+  });
+  await click(chipAt(0));
+  await setField("participantName", "Ava Candidate");
+  await setField("participantEmail", "ava@example.com");
+
+  const form = bookingForm();
+  await React.act(async () => {
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  });
+
+  assert(calls.length === 1, "claim submit guard suppresses duplicate same-tick posts");
   assert(
-    source.includes("onDraftChange?.(EMPTY_INLINE_SLOT_FORM_DRAFT)"),
-    "claim success clears saved participant draft",
+    calls[0]?.method === "POST" && Boolean(calls[0]?.headers["idempotency-key"]),
+    "claim request is posted with idempotency key",
   );
-  assert(source.includes("finalizeClaim();") && source.includes("onDone={() =>"), "claim success finalizes on Done");
+  assert(
+    JSON.parse(calls[0]?.body ?? "{}").slotId === slotOne.id,
+    "claim request posts the selected slot",
+  );
+
+  const response = makeClaimResponse(slotOne);
+  await React.act(async () => {
+    pending.resolve(jsonResponse(response));
+    await pending.promise;
+  });
+  await flushEffects();
+
+  assert(document.body.textContent?.includes("You're booked"), "claim success stays mounted");
+  assert(!claimed, "claim success does not notify parent before Done");
+  await click(buttonContaining("Done"));
+  assert(claimed?.booking.id === response.booking.id, "claim success finalizes on Done");
+  assert(!document.body.textContent?.includes("You're booked"), "claim success closes after Done");
+}
+
+async function testConflictKeepsDraft(rootInstance: Root) {
+  const calls = installFetchMock((url) => {
+    if (url.pathname !== "/api/slotboard/book/claim") {
+      throw new Error(`Unexpected fetch in conflict test: ${url.pathname}`);
+    }
+    return jsonResponse(
+      { error: "slot_taken", message: "That slot was just booked." },
+      { status: 409 },
+    );
+  });
+
+  let conflictCount = 0;
+  await renderBoard(rootInstance, {
+    publicToken: "conflict-board",
+    slots,
+    demoMode: false,
+    onConflict: () => {
+      conflictCount += 1;
+    },
+  });
+  await click(chipAt(0));
+  await setField("participantName", "Ava Candidate");
+  await setField("participantEmail", "ava@example.com");
+  await click(buttonContaining("Add a note"));
+  await setField("notes", "Keep this note after conflict.");
+  await submitBookingForm();
+
+  assert(calls.length === 1, "slot conflict submits exactly one claim request");
+  assert(
+    document.body.textContent?.includes("That slot was just booked."),
+    "slot conflict renders recovery state",
+  );
+  await click(buttonContaining("Choose another time"));
+  assert(conflictCount === 1, "slot conflict acknowledgement notifies parent");
+  await click(chipAt(1));
+  assert(
+    inputValue("participantName") === "Ava Candidate" &&
+      inputValue("participantEmail") === "ava@example.com" &&
+      inputValue("notes") === "Keep this note after conflict.",
+    "slot conflict keeps participant draft for another slot",
+  );
+}
+
+async function testManagePageDoesNotRouteWithEventId(rootInstance: Root) {
+  const manageResponse: ManageBookingResponse = {
+    event,
+    slot: slotOne,
+    booking: makeClaimResponse(slotOne).booking,
+  };
+  const calls = installFetchMock((url) => {
+    if (url.pathname !== "/api/slotboard/manage") {
+      throw new Error(`Unexpected fetch in manage page test: ${url.pathname}`);
+    }
+    return jsonResponse(manageResponse);
+  });
+
+  await React.act(async () => {
+    rootInstance.render(React.createElement(ManageBookingPage, { manageToken: "manage-token" }));
+  });
+  await flushEffects();
+
+  assert(calls[0]?.headers.authorization === "Bearer manage-token", "manage page reads with manage token");
+  assert(document.body.textContent?.includes("Cancel booking"), "manage page renders cancellation action");
+  assert(
+    !document.body.textContent?.includes("Reschedule"),
+    "manage page avoids invalid event-id reschedule route",
+  );
 }
 
 function testUnavailableBoardCopy() {
@@ -274,6 +391,20 @@ async function click(element: HTMLElement) {
   await flushEffects();
 }
 
+async function submitBookingForm() {
+  const form = bookingForm();
+  await React.act(async () => {
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  });
+  await flushEffects();
+}
+
+function bookingForm(): HTMLFormElement {
+  const form = document.querySelector<HTMLFormElement>(".inline-slot-form__form");
+  if (!form) throw new Error("Missing booking form");
+  return form;
+}
+
 async function setField(name: string, value: string) {
   const field = queryField(name);
   if (!field) throw new Error(`Missing field ${name}`);
@@ -298,6 +429,88 @@ function inputValue(name: string): string {
 
 function queryField(name: string): HTMLInputElement | HTMLTextAreaElement | null {
   return document.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[name="${name}"]`);
+}
+
+type FetchCall = {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body?: string;
+};
+
+function installFetchMock(handler: (url: URL, init?: RequestInit) => Response | Promise<Response>) {
+  const calls: FetchCall[] = [];
+  Object.defineProperty(globalThis, "fetch", {
+    value: async (input: RequestInfo | URL, init?: RequestInit) => {
+      const rawURL =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
+      const url = new URL(rawURL);
+      calls.push({
+        url: url.href,
+        method: init?.method ?? "GET",
+        headers: headersToRecord(init?.headers),
+        body: typeof init?.body === "string" ? init.body : undefined,
+      });
+      return handler(url, init);
+    },
+    configurable: true,
+  });
+  return calls;
+}
+
+function headersToRecord(headers: HeadersInit | undefined): Record<string, string> {
+  const record: Record<string, string> = {};
+  if (!headers) return record;
+  new Headers(headers).forEach((value, key) => {
+    record[key] = value;
+  });
+  return record;
+}
+
+function jsonResponse(value: unknown, init: ResponseInit = {}) {
+  const headers = new Headers(init.headers);
+  if (!headers.has("content-type")) headers.set("content-type", "application/json");
+  return new Response(JSON.stringify(value), { ...init, headers });
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolve_, reject_) => {
+    resolve = resolve_;
+    reject = reject_;
+  });
+  return { promise, resolve, reject };
+}
+
+function makeClaimResponse(slot: TimeSlot): ClaimSlotResponse {
+  return {
+    event,
+    slot: {
+      ...slot,
+      state: "booked",
+    },
+    booking: {
+      id: "booking-ui-regression-booking",
+      eventId: event.id,
+      slotId: slot.id,
+      participantName: "Ava Candidate",
+      participantEmail: "ava@example.com",
+      participantTimezone: "UTC",
+      participantLocale: "en-GB",
+      participantOffsetAtBooking: "+00:00",
+      notes: "Keep this note after conflict.",
+      status: "active",
+      bookedAt: "2026-05-14T12:30:00.000Z",
+    },
+    links: {
+      manage: "https://mytimes.co/m/manage-token",
+    },
+  };
 }
 
 async function flushEffects() {

@@ -173,7 +173,8 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
           <h1 className="manage-success__title">Booking cancelled.</h1>
           <p className="manage-success__body">
             We let {event.organizerName} know. The slot is open again if
-            the board is still active. Come back any time.
+            the board is still active. Use the original booking board link from the organizer
+            if you want to choose a different time.
           </p>
         </section>
       </section>
@@ -279,7 +280,8 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
             <p>
               This booking was cancelled
               {booking.cancelledBy ? ` by the ${booking.cancelledBy}` : ''}. The slot can be booked
-              again if the board is still active.
+              again if the board is still active. Use the original booking board link from the
+              organizer if you want to choose a different time.
             </p>
           </section>
         ) : (
@@ -304,11 +306,9 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
                 />
               )}
             </FormField>
-            {/* Manage actions strip — Reschedule sits as a ghost
-             *  affordance, Cancel booking is the destructive submit
-             *  in warm orange. Reschedule isn't a server-side action
-             *  yet, so we send the participant to the public board
-             *  to pick a new time, same as a fresh booking. */}
+            {/* Manage actions strip. We do not reconstruct or expose
+             *  public booking tokens from manage links; rescheduling
+             *  needs a first-class server action before it is shown. */}
             <div className="manage-card__actions" aria-label="Manage booking actions">
               <div className="manage-card__actions-left">
                 <button
@@ -321,14 +321,6 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
                 </button>
               </div>
               <div className="manage-card__actions-right">
-                <button
-                  type="button"
-                  className="manage-btn manage-btn--ghost"
-                  disabled={disabled}
-                  onClick={() => navigate(`/b/${event.id}`)}
-                >
-                  Reschedule
-                </button>
                 <button
                   type="submit"
                   className="manage-btn manage-btn--destructive"

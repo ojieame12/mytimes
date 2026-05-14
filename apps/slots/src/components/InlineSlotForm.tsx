@@ -90,6 +90,7 @@ export function InlineSlotForm({
   const claimedRef = useRef<ClaimSlotResponse | undefined>();
   const finalizedClaimRef = useRef(false);
   const idempotencyKeyRef = useRef<string | undefined>();
+  const submittingRef = useRef(false);
   const onClaimedRef = useRef(onClaimed);
   onClaimedRef.current = onClaimed;
 
@@ -145,12 +146,14 @@ export function InlineSlotForm({
   }, [onClose, submitting]);
 
   const submit = async () => {
+    if (submittingRef.current) return;
     setSubmitAttempted(true);
     if (hasErrors) return;
     if (demoMode) {
       setSubmitError('This is a demo board. Create your own board to accept real bookings.');
       return;
     }
+    submittingRef.current = true;
     setSubmitting(true);
     setSubmitError(undefined);
     setConflict(false);
@@ -184,6 +187,7 @@ export function InlineSlotForm({
         );
       }
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
