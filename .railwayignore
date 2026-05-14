@@ -1,5 +1,6 @@
 node_modules
 **/node_modules
+.git
 dist
 **/dist
 dist-ssr
@@ -8,6 +9,8 @@ dist-ssr
 **/*.tsbuildinfo
 .env
 *.log
+backups
+*.dump
 .DS_Store
 .claude
 .agents

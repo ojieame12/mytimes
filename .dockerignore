@@ -6,6 +6,8 @@ node_modules
 .git
 .env
 *.log
+backups
+*.dump
 .DS_Store
 .generated
 apps/slots/public/email-previews
