@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: slotboard
+      POSTGRES_USER: slotboard
+      POSTGRES_PASSWORD: slotboard
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U slotboard -d slotboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "${SLOTBOARD_POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - slotboard_postgres:/var/lib/postgresql/data
+
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/slots-api/Dockerfile
+    environment:
+      SLOTBOARD_DATABASE_URL: postgres://slotboard:slotboard@postgres:5432/slotboard?sslmode=disable
+      SLOTBOARD_TOKEN_PEPPER: ${SLOTBOARD_TOKEN_PEPPER:-local-compose-token-pepper-change-me-32chars}
+      SLOTBOARD_AUTH_SECRET: ${SLOTBOARD_AUTH_SECRET:-local-compose-auth-secret-change-me-32chars}
+      SLOTBOARD_DB_STATEMENT_TIMEOUT_MS: ${SLOTBOARD_DB_STATEMENT_TIMEOUT_MS:-10000}
+      SLOTBOARD_DB_QUERY_TIMEOUT_MS: ${SLOTBOARD_DB_QUERY_TIMEOUT_MS:-10000}
+    command: ["npm", "run", "migrate:prod", "--workspace", "@fresh-feel/slots-api"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/slots-api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3014
+      SLOTBOARD_DATABASE_URL: postgres://slotboard:slotboard@postgres:5432/slotboard?sslmode=disable
+      SLOTBOARD_WEB_ORIGINS: http://127.0.0.1:5174,http://localhost:5174
+      SLOTBOARD_PUBLIC_APP_URL: http://127.0.0.1:5174
+      SLOTBOARD_TOKEN_PEPPER: ${SLOTBOARD_TOKEN_PEPPER:-local-compose-token-pepper-change-me-32chars}
+      SLOTBOARD_AUTH_SECRET: ${SLOTBOARD_AUTH_SECRET:-local-compose-auth-secret-change-me-32chars}
+      SLOTBOARD_AUTH_BASE_URL: http://127.0.0.1:3014
+      SLOTBOARD_DB_POOL_MAX: ${SLOTBOARD_DB_POOL_MAX:-10}
+      SLOTBOARD_DB_CONNECTION_TIMEOUT_MS: ${SLOTBOARD_DB_CONNECTION_TIMEOUT_MS:-5000}
+      SLOTBOARD_DB_IDLE_TIMEOUT_MS: ${SLOTBOARD_DB_IDLE_TIMEOUT_MS:-30000}
+      SLOTBOARD_DB_QUERY_TIMEOUT_MS: ${SLOTBOARD_DB_QUERY_TIMEOUT_MS:-10000}
+      SLOTBOARD_DB_STATEMENT_TIMEOUT_MS: ${SLOTBOARD_DB_STATEMENT_TIMEOUT_MS:-10000}
+      SLOTBOARD_GRACEFUL_SHUTDOWN_MS: ${SLOTBOARD_GRACEFUL_SHUTDOWN_MS:-10000}
+      SLOTBOARD_EMAIL_PROVIDER: console
+      SLOTBOARD_SENDER_EMAIL: mytimes <bookings@example.com>
+      SLOTBOARD_RESEND_API_KEY: ${SLOTBOARD_RESEND_API_KEY:-}
+      SLOTBOARD_RESEND_WEBHOOK_SECRET: ${SLOTBOARD_RESEND_WEBHOOK_SECRET:-}
+      SLOTBOARD_POSTMARK_SERVER_TOKEN: ${SLOTBOARD_POSTMARK_SERVER_TOKEN:-}
+      SLOTBOARD_POSTMARK_MESSAGE_STREAM: ${SLOTBOARD_POSTMARK_MESSAGE_STREAM:-outbound}
+      SLOTBOARD_EMAIL_WEBHOOK_SECRET: ${SLOTBOARD_EMAIL_WEBHOOK_SECRET:-local-compose-webhook-secret}
+      SLOTBOARD_OPS_SECRET: ${SLOTBOARD_OPS_SECRET:-local-compose-ops-secret-change-me-32chars}
+      SLOTBOARD_RETENTION_ENABLED: ${SLOTBOARD_RETENTION_ENABLED:-true}
+      SLOTBOARD_RETENTION_ARCHIVE_AFTER_DAYS: ${SLOTBOARD_RETENTION_ARCHIVE_AFTER_DAYS:-30}
+      SLOTBOARD_RETENTION_DELETE_ARCHIVED_AFTER_DAYS: ${SLOTBOARD_RETENTION_DELETE_ARCHIVED_AFTER_DAYS:-365}
+      SLOTBOARD_RETENTION_PII_SCRUB_AFTER_DAYS: ${SLOTBOARD_RETENTION_PII_SCRUB_AFTER_DAYS:-30}
+      SLOTBOARD_RETENTION_RATE_LIMIT_AFTER_DAYS: ${SLOTBOARD_RETENTION_RATE_LIMIT_AFTER_DAYS:-7}
+      SLOTBOARD_RETENTION_IDEMPOTENCY_AFTER_DAYS: ${SLOTBOARD_RETENTION_IDEMPOTENCY_AFTER_DAYS:-7}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:'+(process.env.PORT||3014)+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "${SLOTBOARD_API_PORT:-3014}:3014"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  slots:
+    build:
+      context: .
+      dockerfile: apps/slots/Dockerfile
+      args:
+        VITE_SLOTBOARD_API_URL: ${VITE_SLOTBOARD_API_URL:-}
+    environment:
+      PORT: 4174
+    ports:
+      - "${SLOTBOARD_WEB_PORT:-5174}:4174"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  slotboard_postgres:

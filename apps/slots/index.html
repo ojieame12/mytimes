@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- ─── Primary meta ──────────────────────────────────────────
+         Sensible site-wide defaults. Per-route overrides flow in
+         via react-helmet-async from the App/views, so anything here
+         is the "no JS" baseline that crawlers, link unfurlers, and
+         AI agents see before the SPA hydrates. -->
+    <title>mytimes — scheduling for one-off interview rounds</title>
+    <meta
+      name="description"
+      content="Scheduling for one-off interview rounds, candidate demos, and vendor calls. Fixed times, one shareable link, no participant accounts."
+    />
+    <meta name="theme-color" content="#F05A28" />
+    <meta name="application-name" content="mytimes" />
+    <meta name="author" content="mytimes" />
+
+    <!-- ─── Canonical + icons ────────────────────────────────────
+         Helmet overrides the canonical per route; this is the
+         default for the marketing root. apple-touch-icon path is
+         declared even though the file is not yet authored — see
+         TODO in the agent report. -->
+    <link rel="canonical" href="https://mytimes.co/" />
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/wordmark-dark.svg" />
+    <link rel="alternate icon" type="image/png" href="/assets/brand/wordmark-dark.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- ─── Open Graph ────────────────────────────────────────────
+         Drives Slack / iMessage / Discord / LinkedIn / Facebook
+         link previews. Image is 1200×630 to match the OG spec. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mytimes.co/" />
+    <meta property="og:title" content="mytimes — scheduling for one-off interview rounds" />
+    <meta
+      property="og:description"
+      content="Fixed times, one shareable link, no participant accounts. Five minutes from idea to live booking board for interview rounds, demos, and vendor calls."
+    />
+    <meta property="og:image" content="https://mytimes.co/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="mytimes wordmark over peach background with the tagline 'Your interview round, on a single page.'" />
+    <meta property="og:site_name" content="mytimes" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- ─── Twitter / X card ─────────────────────────────────────
+         summary_large_image renders the OG image as a hero. -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="mytimes — scheduling for one-off interview rounds" />
+    <meta
+      name="twitter:description"
+      content="Fixed times, one shareable link, no participant accounts. Five minutes from idea to live booking board for interview rounds, demos, and vendor calls."
+    />
+    <meta name="twitter:image" content="https://mytimes.co/og-image.png" />
+    <meta name="twitter:image:alt" content="mytimes wordmark over peach background with the tagline 'Your interview round, on a single page.'" />
+
+    <!-- ─── Structured data ──────────────────────────────────────
+         A single JSON-LD @graph carrying:
+         · Organization  — entity for knowledge-panel surfaces
+         · SoftwareApplication — pricing/category for product
+           listings (Free $0, Company $49/mo founding monthly)
+         · FAQPage — Q&A pairs verified against LandingPage.tsx
+           and PricingPage.tsx so the answers match what the
+           product actually does. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://mytimes.co/#organization",
+          "name": "mytimes",
+          "url": "https://mytimes.co",
+          "logo": "https://mytimes.co/assets/brand/wordmark-dark.png",
+          "description": "Scheduling for one-off interview rounds, candidate demos, and vendor calls. Fixed times, one shareable link, no participant accounts.",
+          "email": "ojieame@mytimes.co"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://mytimes.co/#software",
+          "name": "mytimes",
+          "url": "https://mytimes.co",
+          "description": "Scheduling for one-off interview rounds, candidate demos, and vendor calls. Fixed times, one shareable link, no participant accounts.",
+          "applicationCategory": "BusinessApplication",
+          "applicationSubCategory": "ProductivityApplication",
+          "operatingSystem": "Web",
+          "image": "https://mytimes.co/og-image.png",
+          "publisher": { "@id": "https://mytimes.co/#organization" },
+          "offers": [
+            {
+              "@type": "Offer",
+              "name": "Free",
+              "price": "0",
+              "priceCurrency": "USD",
+              "category": "Free",
+              "description": "Forever-free tier with 2 active boards, 25 bookings per board, 60 published slots, and a 60-day active window."
+            },
+            {
+              "@type": "Offer",
+              "name": "Company",
+              "price": "49",
+              "priceCurrency": "USD",
+              "category": "subscription",
+              "description": "Company workspace with unlimited boards, 10 organizer seats, custom company subdomain, cross-board CSV export, and company-wide admin recovery.",
+              "priceSpecification": {
+                "@type": "UnitPriceSpecification",
+                "price": "49",
+                "priceCurrency": "USD",
+                "unitText": "MONTH",
+                "referenceQuantity": {
+                  "@type": "QuantitativeValue",
+                  "value": "1",
+                  "unitCode": "MON"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://mytimes.co/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Do candidates need an account to book a time?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. Participants never sign up. They click your public link, pick a time, enter their name and email, and confirm. mytimes uses that email only to send the confirmation and a private manage link."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does mytimes connect to my calendar?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. There is no calendar OAuth. After a booking is confirmed, mytimes emails an .ics calendar file that drops into any calendar app. No third-party tracking, no marketing email."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How long does it take to create a booking board?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "About four to five minutes. The creation flow has four screens: describe the round, generate the slots from a date range and daily window, review the real public page, and post and send the link."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What counts as a board?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A board is one event: one interview round, one batch of vendor calls, one set of office hours. Each board has its own public link, its own admin link, and its own slot list."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I use a custom domain?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, on the Company plan. Participant links can live on a domain like book.company.com while admin, login, and billing stay on mytimes.co."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does pricing work?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Free is $0 forever for individuals running small rounds, capped at 2 active boards, 25 bookings per board, 60 slots, and a 60-day window. Company is $49 per month (or $480 per year) with unlimited boards, 10 seats, custom subdomain, and company-wide admin recovery."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- ─── Web fonts ────────────────────────────────────────────
+         Geist + Geist Mono are the editorial typeface pair used
+         across the product (display, body, and tabular numerals). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- ─── No-JS / crawler fallback ─────────────────────────────
+         The SPA hydrates into #root above. Until JS runs (or for
+         AI crawlers and link unfurlers that never run JS), this
+         block carries the pitch and the canonical CTAs so search
+         engines and language models have ground truth to index. -->
+    <noscript>
+      <main style="max-width: 720px; margin: 0 auto; padding: 48px 24px; font-family: 'Geist', system-ui, sans-serif; color: #2A2A2A; background: #FBF6EE;">
+        <h1 style="font-size: 40px; line-height: 1; margin-bottom: 16px; letter-spacing: -0.02em;">
+          mytimes
+        </h1>
+        <p style="font-size: 18px; line-height: 1.5; margin-bottom: 24px;">
+          Scheduling for one-off interview rounds, candidate demos, and vendor calls.
+          Fixed times, one shareable link, no participant accounts, no calendar OAuth,
+          no rules engine to configure.
+        </p>
+        <p style="font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+          Create a booking board in about four minutes. Pick a date window and a slot
+          length; mytimes generates the slots. Share one public link with candidates.
+          Each candidate picks a time. The organizer gets one admin link to manage
+          everything. The product needs JavaScript to run — open one of the links
+          below in a modern browser.
+        </p>
+        <ul style="font-size: 16px; line-height: 1.8; padding-left: 20px;">
+          <li><a href="https://mytimes.co/" style="color: #F05A28;">Product overview</a></li>
+          <li><a href="https://mytimes.co/pricing" style="color: #F05A28;">Pricing — Free and Company ($49/mo)</a></li>
+          <li><a href="https://mytimes.co/new" style="color: #F05A28;">Create a board</a></li>
+          <li><a href="https://mytimes.co/b/preview" style="color: #F05A28;">See the demo board</a></li>
+        </ul>
+      </main>
+    </noscript>
+
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

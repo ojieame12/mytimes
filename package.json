@@ -1,0 +1,38 @@
+{
+  "name": "mytimes-booking",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:slots": "npm run dev --workspace @fresh-feel/slots",
+    "dev:api": "npm run dev --workspace @fresh-feel/slots-api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test:api": "node scripts/test-api-concurrency-privacy.mjs",
+    "test:hardening": "node scripts/test-api-hardening.mjs",
+    "test:billing": "tsx scripts/test-billing-entitlements.mjs",
+    "test:email": "tsx scripts/test-email-shape.mjs",
+    "test:frontend-readiness": "node scripts/test-frontend-readiness.mjs",
+    "test:e2e": "npm run typecheck && npm run build && npm run test:email && npm run test:billing && npm run test:frontend-readiness",
+    "auth:links": "node scripts/auth-links.mjs",
+    "email:ready": "node scripts/email-readiness.mjs",
+    "email:test": "node scripts/email-test.mjs",
+    "email:activate:resend": "node scripts/activate-resend-production.mjs",
+    "billing:ready": "node scripts/billing-readiness.mjs",
+    "billing:activate:stripe": "node scripts/activate-stripe-production.mjs",
+    "custom-domain:activate": "node scripts/activate-custom-domain.mjs",
+    "retention": "npm run retention --workspace @fresh-feel/slots-api",
+    "smoke:api": "node scripts/smoke-api.mjs",
+    "smoke:auth": "node scripts/smoke-auth.mjs",
+    "smoke:retention": "node scripts/smoke-retention.mjs",
+    "smoke:live": "node scripts/test-live-readiness.mjs",
+    "security:ready": "node scripts/test-live-readiness.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,0 +1,257 @@
+/* ═══════════════════════════════════════════════════════════
+   mytimes — foundation.
+
+   Modern B2B language modeled on Cal.com (shadcn + Radix +
+   Zinc + Lucide) with a Linear/Cron-grade typographic
+   hierarchy (Inter Variable + Geist Mono on numerals) and
+   mytimes orange as the single sparing accent.
+
+   Tokens are split into two layers:
+     1. tokens.primitives.css — raw value scales
+     2. tokens.semantic.css   — role aliases (shadcn shape)
+
+   Components consume ONLY semantic tokens.
+═══════════════════════════════════════════════════════════ */
+
+@import '@fontsource-variable/geist-mono';
+@import './styles/tokens.primitives.css';
+@import './styles/tokens.semantic.css';
+@import './styles/paywall.css';
+
+/* SF Compact Rounded — Apple's softened sans, used here for
+   both headers and body text (anything non-numeric). Single
+   regular weight; numerals still go through Geist Mono. */
+@font-face {
+  font-family: 'SF Compact Rounded';
+  src: url('/fonts/SF-Compact-Rounded-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Page reset ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+/* Smooth easing on programmatic scrolls (scrollIntoView from the
+ *  date dial, the day-band anchors, etc.). User wheel / touchpad
+ *  scrolling is unaffected — the browser handles its own inertia. */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  color: var(--fg-default);
+  background: var(--bg-canvas);
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+/* Numerals tab-align by default in headings and time-y contexts. */
+.tabular { font-variant-numeric: tabular-nums; }
+.mono    { font-family: var(--font-mono); }
+
+/* ─── Materials ─────────────────────────────────────────── */
+
+/* panel — lifted card with inset bevel highlight + tinted depth. */
+.material-panel {
+  background: var(--gradient-card-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    var(--shadow-card);
+  transition:
+    box-shadow var(--motion-medium) var(--ease-out),
+    border-color var(--motion-short) var(--ease-press);
+}
+.material-panel:hover {
+  border-color: var(--border-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    var(--shadow-card-elevated);
+}
+
+/* panel-mini — same recipe at smaller radius for nested cards. */
+.material-panel-mini {
+  background: var(--gradient-card-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    var(--shadow-card);
+  transition:
+    box-shadow var(--motion-medium) var(--ease-out),
+    border-color var(--motion-short) var(--ease-press);
+}
+.material-panel-mini:hover {
+  border-color: var(--border-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    var(--shadow-card-elevated);
+}
+
+/* wax-seal — legacy class hook, now flat circle. */
+.material-wax-seal {
+  background: var(--seal-color, var(--muted));
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+/* ─── Buttons — Cal.com-grade with layered control shadow ── */
+
+.material-stamp-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--fg-default);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  border: 1px solid var(--border-input);
+  box-shadow: var(--shadow-button-rest);
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press),
+    transform var(--motion-micro) var(--ease-press);
+}
+.material-stamp-light:hover {
+  background: var(--bg-hover-subtle);
+  border-color: var(--zinc-900);
+  color: var(--zinc-900);
+}
+.material-stamp-light:active {
+  background: var(--bg-hover-default);
+  transform: translateY(0.5px);
+}
+.material-stamp-light:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.material-stamp-light:disabled,
+.material-stamp-light[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Primary CTA — brand orange with internal gradient, ambient
+   glow on hover. The default for primary actions across the
+   product. Use .is-dark when you specifically need a near-black
+   non-brand button (rare). */
+.material-stamp-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--orange-600);
+  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-button-primary);
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    box-shadow var(--motion-medium) var(--ease-out),
+    transform var(--motion-micro) var(--ease-press);
+}
+.material-stamp-dark:hover {
+  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  border-color: var(--orange-700);
+  box-shadow: var(--glow-primary);
+}
+.material-stamp-dark:active {
+  transform: translateY(0.5px);
+}
+.material-stamp-dark:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.material-stamp-dark:disabled,
+.material-stamp-dark[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Dark variant — rare, for buttons that explicitly should NOT
+   be branded (destructive confirms, neutral utility actions). */
+.material-stamp-dark.is-dark {
+  background: var(--zinc-900);
+  border-color: var(--zinc-900);
+  box-shadow:
+    0 1px 2px hsla(220, 30%, 12%, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.material-stamp-dark.is-dark:hover {
+  background: var(--zinc-800);
+  border-color: var(--zinc-800);
+  box-shadow:
+    0 4px 12px hsla(220, 30%, 12%, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+/* .is-primary — kept as alias for explicit "this is THE primary CTA". */
+.material-stamp-dark.is-primary,
+.btn-primary {
+  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  border-color: var(--orange-600);
+  color: var(--primary-foreground);
+}
+.material-stamp-dark.is-primary:hover,
+.btn-primary:hover {
+  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  border-color: var(--orange-700);
+  box-shadow: var(--glow-primary);
+}
+
+/* Size modifiers */
+.material-stamp-light.is-sm,
+.material-stamp-dark.is-sm  { height: 30px; padding: 0 10px; font-size: 13px; }
+.material-stamp-light.is-md,
+.material-stamp-dark.is-md  { height: 36px; padding: 0 12px; font-size: 14px; }
+.material-stamp-light.is-lg,
+.material-stamp-dark.is-lg  { height: 42px; padding: 0 16px; font-size: 15px; }
+.material-stamp-light.is-xl,
+.material-stamp-dark.is-xl  { height: 48px; padding: 0 20px; font-size: 16px; }
+
+/* ─── Motion primitives ────────────────────────────────── */
+@keyframes stamp-in {
+  0%   { opacity: 0; transform: translateY(2px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; }
+}

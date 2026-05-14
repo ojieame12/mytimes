@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /m/
+Disallow: /a/
+Disallow: /account
+Disallow: /my-boards
+Disallow: /new
+Disallow: /signin
+Disallow: /signup
+
+Sitemap: https://mytimes.co/sitemap.xml

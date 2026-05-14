@@ -1,0 +1,30 @@
+{
+  "name": "@fresh-feel/slots-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "npm --workspace @fresh-feel/slotboard-core run build && tsx watch src/server.ts",
+    "build": "npm --workspace @fresh-feel/slotboard-core run build && tsc -p tsconfig.json",
+    "typecheck": "npm --workspace @fresh-feel/slotboard-core run build && tsc -p tsconfig.json --noEmit",
+    "migrate": "tsx src/migrate.ts",
+    "migrate:prod": "node dist/migrate.js",
+    "retention": "tsx src/retention.ts",
+    "retention:prod": "node dist/retention.js",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@fresh-feel/slotboard-core": "file:../../packages/slotboard-core",
+    "@hono/node-server": "^1.19.0",
+    "better-auth": "^1.6.11",
+    "hono": "^4.10.0",
+    "pg": "^8.16.0",
+    "stripe": "^22.1.1",
+    "svix": "^1.93.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.0",
+    "tsx": "^4.21.0"
+  }
+}

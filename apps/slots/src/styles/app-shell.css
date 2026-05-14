@@ -1,0 +1,290 @@
+/* ═══════════════════════════════════════════════════════════
+   AppShell — minimal Notion-style top bar + footer.
+   No translucent rails, no blur, no warm wash. Just a thin
+   bar with a brand mark, optional actions, and a hairline.
+═══════════════════════════════════════════════════════════ */
+
+.app-shell {
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0;
+}
+
+/* ─── Top bar ────────────────────────────────────────── */
+.app-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 32px;
+  background: var(--bg-canvas);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.app-bar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  margin-left: -6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--fg-default);
+  transition: background var(--motion-short) var(--ease-press);
+}
+.app-bar__brand:hover {
+  background: var(--bg-hover-subtle);
+}
+.app-bar__brand:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Brand mark — small orange dot, not a wax seal */
+.app-bar__brand-seal {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--intent-primary);
+  box-shadow: none;
+}
+.app-bar__brand-seal-inner { display: none; }
+
+.app-bar__brand-name {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg-default);
+  line-height: 1;
+}
+.app-bar__brand-sub {
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-muted);
+  padding-left: 8px;
+  margin-left: 2px;
+  border-left: 1px solid var(--border-subtle);
+}
+
+.app-bar__actions {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+.app-bar__links {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+.app-bar__link {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  color: var(--fg-muted);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    color var(--motion-short) var(--ease-press),
+    background var(--motion-short) var(--ease-press);
+}
+.app-bar__link:hover {
+  color: var(--fg-default);
+  background: var(--bg-hover-subtle);
+}
+
+/* ─── Primary CTA (guest) ─────────────────────────────
+   Mirrors .landing-hero__primary — compressed for the
+   bar (smaller height, tighter padding). Kept here so
+   the nav doesn't import landing.css. */
+.app-bar__cta {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--orange-600);
+  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: var(--shadow-button-primary);
+  transition:
+    background var(--motion-short) var(--ease-press),
+    box-shadow var(--motion-medium) var(--ease-out),
+    transform var(--motion-micro) var(--ease-press);
+}
+.app-bar__cta:hover {
+  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  box-shadow: var(--glow-primary);
+}
+.app-bar__cta:active { transform: translateY(0.5px); }
+.app-bar__cta:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.app-bar__cta-arrow {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
+  transform: translateY(-0.5px);
+}
+
+/* ─── Account button (authed) ─────────────────────────
+   Quieter than the guest CTA — this is a "you're home"
+   affordance, not a conversion target. Reads as a
+   button via the chevron and hover treatment. */
+.app-bar__account {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-canvas);
+  color: var(--fg-default);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press);
+}
+.app-bar__account:hover {
+  background: var(--bg-hover-subtle);
+  border-color: var(--border-default, var(--border-subtle));
+}
+.app-bar__account:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.app-bar__account-chevron {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--fg-muted);
+  transform: translateY(0.5px);
+}
+
+/* ─── Main canvas ─────────────────────────────────────── */
+.app-shell__main {
+  width: 100%;
+  min-width: 0;
+  padding: 0 32px;
+}
+.app-shell--postmarked .app-shell__main { background: none; }
+
+/* ─── Footer ──────────────────────────────────────────── */
+.app-footer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px 32px 24px;
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0;
+  color: var(--fg-subtle);
+}
+.app-footer__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: none;
+  color: var(--fg-muted);
+  font-weight: 500;
+}
+.app-footer__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--intent-primary);
+}
+.app-footer__rule {
+  flex: 1;
+  min-width: 40px;
+  height: 1px;
+  background: var(--border-subtle);
+}
+.app-footer__year { letter-spacing: 0; }
+.app-footer__link {
+  color: var(--fg-muted);
+  text-decoration: none;
+  text-transform: none;
+  transition: color var(--motion-short) var(--ease-press);
+}
+.app-footer__link:hover { color: var(--fg-default); }
+.app-footer__hairline {
+  color: var(--fg-disabled);
+  font-family: var(--font-body);
+}
+.app-footer__credit {
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-subtle);
+}
+
+/* ─── Mobile ───────────────────────────────────────────
+   At narrow widths we hide the secondary text links and
+   keep only the brand mark + primary CTA / Account
+   affordance. Pricing/Demo/Sign in remain reachable from
+   the landing hero and footer. */
+@media (max-width: 720px) {
+  .app-bar { padding: 10px 16px; gap: 12px; }
+  .app-bar__brand-sub { display: none; }
+  .app-bar__actions { gap: 8px; }
+  .app-bar__links { display: none; }
+  .app-shell__main { padding: 0 16px; }
+  .app-footer { padding: 14px 16px 18px; gap: 8px; }
+  .app-footer__rule { display: none; }
+  .app-footer__credit { display: none; }
+}
+
+@media (max-width: 380px) {
+  .app-bar { padding: 10px 12px; gap: 8px; }
+  .app-bar__link {
+    padding: 6px 7px;
+    font-size: 13px;
+  }
+  .app-bar__cta {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+}

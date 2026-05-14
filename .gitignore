@@ -1,0 +1,20 @@
+node_modules
+**/node_modules
+dist
+**/dist
+dist-ssr
+**/dist-ssr
+.env
+*.log
+*.tsbuildinfo
+**/*.tsbuildinfo
+.DS_Store
+.claude/
+.agents/
+.impeccable/
+
+# Locally-generated email preview HTML. Inside Vite's public dir for
+# local serving only in older builds — not for production.
+apps/slots/public/email-previews/
+.generated/
+apps/slots-api/.generated/

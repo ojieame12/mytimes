@@ -1,0 +1,87 @@
+/* ═══════════════════════════════════════════════════════════
+   Avatar — circular frame around a DiceBear illustration.
+   Keeps the brand chrome (orange ambient glow, soft inner
+   highlight, breathing pulse) regardless of which DiceBear
+   style fills the inside.
+═══════════════════════════════════════════════════════════ */
+
+.avatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
+  background: var(--muted);
+  overflow: hidden;
+}
+
+.avatar__img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* ─── AvatarStylePicker — 2×2 grid of style choices for the
+   create flow. Each option previews the user's own seed in
+   that style, so they see how they'll look. */
+.avatar-style-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.avatar-style-picker__option {
+  appearance: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid var(--border-input);
+  text-align: left;
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    box-shadow var(--motion-medium) var(--ease-out);
+}
+.avatar-style-picker__option:hover {
+  border-color: var(--fg-faint);
+  background: var(--bg-hover-subtle);
+}
+.avatar-style-picker__option:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.avatar-style-picker__option.is-selected {
+  border-color: var(--primary);
+  background: var(--card);
+  box-shadow:
+    var(--shadow-button-rest),
+    0 0 0 3px hsla(16, 88%, 55%, 0.14);
+}
+.avatar-style-picker__option .avatar {
+  width: 40px;
+  height: 40px;
+}
+.avatar-style-picker__option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.avatar-style-picker__option-label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-default);
+  letter-spacing: -0.005em;
+}
+.avatar-style-picker__option-blurb {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+}

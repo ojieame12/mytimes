@@ -1,0 +1,1281 @@
+/* ═══════════════════════════════════════════════════════════
+   BookingPage — modern B2B layout, modeled on Cal.com with
+   SavvyCal-style week-view grid + Cron-style typographic
+   hierarchy. Two columns at the page level: primary (hero +
+   week grid) and a quiet right rail.
+═══════════════════════════════════════════════════════════ */
+
+.booking {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.booking__primary {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ─── BookingCompact — slim sticky bar shown after the full
+ *  header card scrolls out. Position: fixed at the very top so
+ *  day-rows visibly slide UNDER it. Backdrop-blur on a faintly
+ *  peach-tinted surface gives the "scroll under" feel without
+ *  needing extra fade masks. */
+.booking-compact {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  pointer-events: none;
+  /* Lighter blur (was 14px + saturate 140%) — backdrop-filter
+   *  repaints every scroll frame, so a heavier blur causes
+   *  jank visible on the toolbar/SpinPill below. 6px is enough
+   *  to soften the day-rows scrolling underneath, and dropping
+   *  saturate removes the most expensive part of the filter. */
+  background: hsla(28, 100%, 97%, 0.88);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid hsla(16, 88%, 55%, 0.12);
+  box-shadow: 0 6px 18px -10px hsla(16, 88%, 45%, 0.18);
+  opacity: 0;
+  transform: translateY(-100%);
+  /* will-change hints the compositor to keep this on its own
+   *  layer so the transform/opacity transition doesn't repaint
+   *  the layers underneath. */
+  will-change: transform, opacity;
+  transition:
+    opacity 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.booking-compact.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.booking-compact__inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 10px 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+}
+.booking-compact__title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--zinc-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+.booking-compact__dot {
+  color: var(--fg-faint);
+  font-size: 13px;
+}
+.booking-compact__count {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+.booking-compact__count .mono {
+  color: var(--zinc-800);
+  font-weight: 500;
+}
+@media (prefers-reduced-motion: reduce) {
+  .booking-compact {
+    transition: opacity 120ms linear;
+    transform: none;
+  }
+  .booking-compact.is-visible { transform: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Booking card — the consolidated header that replaces the
+   old split between hero and right rail. Single wide surface
+   with an always-visible identity zone, a compact strip of
+   essentials at the bottom (stats · reference · details
+   disclosure), and an inline collapsible tray that expands
+   what-to-expect / cancel-policy / trust content via the
+   grid-template-rows 0fr → 1fr trick.
+═══════════════════════════════════════════════════════════ */
+.booking-card {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-rows: auto auto 0fr;
+  padding: 28px 28px 0;
+  border-radius: var(--radius-xl);
+  /* Solid soft peach — gradient and grain stripped; text reads
+   * cleanly against the calm surface. Same warm family as the
+   * day-band hover but quieter. */
+  background: hsla(28, 100%, 97%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.12);
+  /* Warm-toned shadow, slightly softened so it doesn't fight
+   * the calmer surface. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px hsla(16, 88%, 45%, 0.05),
+    0 14px 36px -14px hsla(16, 88%, 45%, 0.18);
+  transition: grid-template-rows 540ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.booking-card.is-expanded {
+  grid-template-rows: auto auto 1fr;
+}
+
+/* Top zone — text column on the left, avatar pinned on the right.
+   Sharing the card's left padding with the strip below so the
+   two rows read as part of the same vertical rhythm. */
+.booking-card__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  padding-bottom: 22px;
+  align-items: start;
+}
+.booking-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.booking-card__eyebrow {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-subtle);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.booking-card__eyebrow span {
+  color: var(--primary);
+  font-weight: 600;
+}
+.booking-card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 3.4vw, 40px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--zinc-800);
+  line-height: 1.08;
+  font-optical-sizing: auto;
+}
+.booking-card__meta {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.booking-card__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+.booking-card__meta li svg {
+  color: var(--fg-subtle);
+  flex-shrink: 0;
+}
+.booking-card__timezone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-muted);
+}
+.booking-card__timezone-select {
+  max-width: 210px;
+  padding: 2px 18px 2px 0;
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 12.5px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.booking-card__timezone-select:hover {
+  border-bottom-color: var(--border-strong);
+  color: var(--fg-default);
+}
+.booking-card__timezone-select:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+.booking-card__meta-email {
+  color: inherit;
+  text-decoration: none;
+  font-size: 12.5px;
+  transition: color var(--motion-short) var(--ease-press);
+}
+.booking-card__meta-email:hover {
+  color: var(--fg-default);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+.booking-card__description {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  max-width: 58ch;
+  font-weight: 350;
+  font-variation-settings: 'opsz' 16, 'SOFT' 60;
+  font-optical-sizing: auto;
+  letter-spacing: 0;
+}
+
+/* Bottom strip — distinct subtle band. Bleeds to the card's
+   full inner width via negative margins, sits on a lightly
+   tinted background so it reads as its own "footer zone" but
+   still shares the card's typographic rhythm. The padding
+   matches the top zone (28px left) so items align with the
+   eyebrow + title above. */
+.booking-card__strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 -28px;
+  padding: 12px 28px;
+  /* Near-white band — reads as the "calm footer" against the
+   * peach card body. Still warm-toned (faint warm tint), but
+   * close enough to white that text sits cleanly on it. */
+  background: hsla(30, 50%, 99%, 1);
+  border-top: 1px solid hsla(16, 88%, 55%, 0.10);
+  flex-wrap: wrap;
+  /* Whole strip is the disclosure trigger — cursor, hover state,
+   *  and keyboard focus ring all apply to the entire band. */
+  cursor: pointer;
+  outline: none;
+  transition: background var(--motion-short) var(--ease-press);
+}
+.booking-card__strip:hover {
+  background: hsla(28, 100%, 96%, 1);
+}
+.booking-card__strip:focus-visible {
+  background: hsla(28, 100%, 96%, 1);
+  box-shadow: inset 0 0 0 2px var(--ring);
+}
+.booking-card.is-expanded .booking-card__strip {
+  background: hsla(28, 80%, 94%, 1);
+}
+.booking-card__strip-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.booking-card__stats {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.booking-card__stats-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-default);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+  line-height: 1;
+}
+.booking-card__stats-label {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+.booking-card__ref {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  font-family: inherit;
+  transition: color var(--motion-short) var(--ease-press);
+}
+.booking-card__ref code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: inherit;
+}
+.booking-card__ref svg {
+  color: var(--fg-faint);
+  transition: color var(--motion-short) var(--ease-press);
+}
+.booking-card__ref:hover { color: var(--fg-default); }
+.booking-card__ref:hover svg { color: var(--fg-muted); }
+.booking-card__ref:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+.booking-card__trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--fg-subtle);
+}
+.booking-card__trust svg {
+  color: var(--intent-success);
+}
+.booking-card__stats-sep {
+  color: var(--fg-faint);
+  font-size: 12px;
+  padding: 0 2px;
+}
+.booking-card__strip-sep {
+  width: 1px;
+  height: 14px;
+  background: var(--border-subtle);
+}
+/* Caret — purely decorative icon now. The whole strip is the
+   click target; this just signals direction. Sits where the
+   avatar lives above for right-column rhythm. */
+.booking-card__caret-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--fg-muted);
+  flex-shrink: 0;
+  transition: color var(--motion-short) var(--ease-press);
+}
+.booking-card__strip:hover .booking-card__caret-icon,
+.booking-card__strip:focus-visible .booking-card__caret-icon {
+  color: var(--fg-default);
+}
+.booking-card__caret-icon svg {
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.booking-card.is-expanded .booking-card__caret-icon svg {
+  transform: rotate(180deg);
+}
+.booking-card.is-expanded .booking-card__caret-icon {
+  color: var(--primary);
+}
+
+/* Inline tray — collapsed by default, expands via grid trick */
+.booking-card__tray {
+  overflow: hidden;
+  min-height: 0;
+  grid-row: 3;
+}
+.booking-card__tray-inner {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 48px;
+  padding: 20px 0 24px;
+  border-top: 1px solid var(--border-subtle);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 280ms cubic-bezier(0.16, 1, 0.3, 1) 80ms,
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1) 80ms;
+}
+.booking-card.is-expanded .booking-card__tray-inner {
+  opacity: 1;
+  transform: translateY(0);
+}
+.booking-card__tray-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.booking-card__tray-label {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--zinc-700);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.booking-card__tray-label svg {
+  color: var(--fg-subtle);
+}
+.booking-card__tray-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.booking-card__tray-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--fg-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.booking-card__tray-list li svg {
+  margin-top: 3px;
+  color: var(--fg-subtle);
+  flex-shrink: 0;
+}
+.booking-card__tray-body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+/* Responsive — tray collapses to single column on narrow screens */
+@media (max-width: 720px) {
+  .booking-card__tray-inner {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .booking-card__strip {
+    align-items: flex-start;
+  }
+}
+
+/* ─── Hero — organizer + title + meta + description ───
+   Sits inside a .mesh-hero wrapper (JSX class) that paints
+   the slow-drifting pastel mesh gradient behind it. Hero
+   itself stays clean — content reads on top of the wash. */
+.booking__hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 24px;
+  padding: 8px 0 32px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.booking__hero-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  color: var(--primary-foreground);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  flex-shrink: 0;
+  border: 1px solid var(--orange-600);
+  font-variation-settings: 'opsz' 48, 'SOFT' 70;
+  /* Ambient orange glow + slow breathing pulse. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 6px 16px -4px hsla(16, 88%, 55%, 0.40),
+    0 0 0 4px hsla(16, 88%, 55%, 0.08);
+  animation: avatar-breathe 4s ease-in-out infinite;
+}
+@keyframes avatar-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 6px 16px -4px hsla(16, 88%, 55%, 0.40),
+      0 0 0 4px hsla(16, 88%, 55%, 0.08);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 8px 20px -2px hsla(16, 88%, 55%, 0.48),
+      0 0 0 7px hsla(16, 88%, 55%, 0.05);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .booking__hero-avatar { animation: none; }
+}
+.booking__hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.booking__hero-with {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-subtle);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.booking__hero-with span {
+  color: var(--primary);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.booking__hero-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 3.4vw, 40px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--fg-default);
+  line-height: 1.08;
+  /* Fraunces axes — opsz 96 for display feel, SOFT 80 keeps
+     the warm rounded bowls without going full Cooper-Black. */
+  font-variation-settings: 'opsz' 96, 'SOFT' 80;
+  font-optical-sizing: auto;
+}
+.booking__hero-meta {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.booking__hero-meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+.booking__hero-meta li svg {
+  color: var(--fg-subtle);
+  flex-shrink: 0;
+}
+.booking__hero-description {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  max-width: 58ch;
+  font-weight: 350;
+  /* Fraunces TEXT optical size — designed for body sizes. */
+  font-variation-settings: 'opsz' 16, 'SOFT' 60;
+  font-optical-sizing: auto;
+  letter-spacing: 0;
+}
+
+/* ─── Toolbar — spinners on the left, filter pills on the right.
+ *  Same row, no heading text. */
+.booking__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ─── Participant timezone strip — surfaces the gap between the
+ *  viewer's tz and the organizer's source tz. Only renders when
+ *  the two differ. Tight, single line, sits between toolbar and
+ *  day-list. */
+.booking__tz-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 0;
+  border-radius: var(--radius-md);
+  background: hsla(28, 100%, 97%, 0.55);
+  border: 1px solid hsla(16, 88%, 55%, 0.12);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--fg-muted);
+  line-height: 1.3;
+}
+.booking__tz-strip-label {
+  color: var(--fg-subtle);
+}
+.booking__tz-strip-sep {
+  color: var(--fg-faint);
+  padding: 0 2px;
+}
+.booking__tz-strip-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.booking__tz-strip-source-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--zinc-700);
+  letter-spacing: -0.005em;
+}
+
+/* ─── Filter tabs — quiet editorial text tabs.
+ *  No container, no pill chrome. Each tab is just a label with
+ *  a count next to it and a thin density bar underneath that
+ *  shows the bucket's share of total open slots. Active tab's
+ *  bar turns orange; everything else stays calm. */
+.booking__filter {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+.booking__filter-tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  padding: 4px 0 0;
+  min-width: 64px;
+  font-family: var(--font-sans);
+  line-height: 1;
+  color: var(--fg-muted);
+  transition: color var(--motion-short) var(--ease-press);
+}
+.booking__filter-tab-head {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.booking__filter-tab-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: inherit;
+  letter-spacing: -0.005em;
+}
+.booking__filter-tab-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  transition: color var(--motion-short) var(--ease-press);
+}
+.booking__filter-tab-bar {
+  position: relative;
+  display: block;
+  height: 2px;
+  width: 100%;
+  border-radius: 1px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+.booking__filter-tab-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--fg-faint);
+  border-radius: 1px;
+  transition:
+    width var(--motion-medium) var(--ease-out),
+    background var(--motion-short) var(--ease-press);
+}
+.booking__filter-tab:hover {
+  color: var(--zinc-800);
+}
+.booking__filter-tab:hover .booking__filter-tab-count {
+  color: var(--fg-muted);
+}
+.booking__filter-tab:hover .booking__filter-tab-bar-fill {
+  background: var(--fg-muted);
+}
+.booking__filter-tab:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+.booking__filter-tab.is-active {
+  color: var(--zinc-800);
+}
+.booking__filter-tab.is-active .booking__filter-tab-label {
+  font-weight: 600;
+}
+.booking__filter-tab.is-active .booking__filter-tab-count {
+  color: var(--primary);
+}
+.booking__filter-tab.is-active .booking__filter-tab-bar-fill {
+  background: var(--primary);
+}
+
+/* ─── Week navigation ────────────────────────────────── */
+.booking__week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: -8px;
+}
+.booking__week-range {
+  font-size: 13px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.booking__week-nav-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.booking__week-btn {
+  appearance: none;
+  border: 1px solid var(--border-input);
+  background: var(--card);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  color: var(--fg-default);
+  box-shadow: var(--shadow-button-rest);
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press),
+    transform var(--motion-micro) var(--ease-press);
+}
+.booking__week-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.booking__week-btn:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+.booking__week-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.booking__week-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.booking__week-counter {
+  font-size: 12px;
+  color: var(--fg-subtle);
+  padding: 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Week grid frame — dot-grid texture under the columns ─
+   Adds engineering-quality structure to the empty space the
+   week grid sits on. Subtle — 10% alpha dots at 22px pitch. */
+.booking__week-frame {
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  background-color: var(--card);
+  background-image: radial-gradient(
+    circle,
+    hsla(220, 14%, 50%, 0.10) 1px,
+    transparent 1.5px
+  );
+  background-size: 22px 22px;
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    var(--shadow-card);
+}
+
+/* ─── Week grid — 5 columns, each a day ────────────── */
+.booking__week {
+  display: grid;
+  gap: 12px;
+  /* grid-template-columns set inline based on DAYS_PER_PAGE */
+}
+
+/* ─── Day column ───────────────────────────────────── */
+.booking__day {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: stamp-in var(--motion-medium) var(--ease-out) both;
+}
+.booking__day--placeholder {
+  visibility: hidden;
+}
+.booking__day-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 0 2px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.booking__day-weekday {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.booking__day-date {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg-default);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+  flex: 1;
+  padding-left: 8px;
+}
+.booking__day-count {
+  font-size: 11px;
+  color: var(--fg-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.booking__day--full .booking__day-weekday,
+.booking__day--full .booking__day-date,
+.booking__day--full .booking__day-count {
+  color: var(--fg-faint);
+}
+.booking__day-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.booking__day-empty {
+  margin: 4px 0 0;
+  padding: 12px 4px;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--fg-faint);
+}
+
+/* ─── Week-empty (no slots match filter) ───────────── */
+.booking__week-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--muted);
+  color: var(--fg-muted);
+}
+.booking__week-empty svg {
+  color: var(--fg-subtle);
+  margin-bottom: 4px;
+}
+.booking__week-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.booking__inline-link {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0;
+}
+.booking__inline-link:hover {
+  color: var(--primary-hover);
+}
+
+/* ─── Contact note (below week) ─────────────────────── */
+.booking__contact-note {
+  margin: 8px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--fg-subtle);
+  line-height: 1.55;
+}
+.booking__contact-note strong {
+  color: var(--fg-default);
+  font-weight: 500;
+}
+
+/* ─── Side rail ───────────────────────────────────────────
+   The rail is now a framed surface with a peach wash at the
+   top fading to white — ties it to the hero's mesh gradient.
+   Section labels carry tiny orange dot markers, body rows
+   are icon-led for scan-speed and visual interest. */
+.booking__rail {
+  position: sticky;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 22px 20px 18px;
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, hsla(16, 88%, 95%, 0.55) 0%, hsla(16, 88%, 95%, 0) 35%),
+    var(--card);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    var(--shadow-card);
+}
+.booking__rail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.booking__rail-item:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* Section label — small text + dot marker + optional inline glyph. */
+.booking__rail-label {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-default);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.booking__rail-label-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px hsla(16, 88%, 55%, 0.14);
+  flex-shrink: 0;
+}
+.booking__rail-label-dot--soft {
+  background: var(--fg-faint);
+  box-shadow: 0 0 0 3px hsla(220, 10%, 50%, 0.10);
+}
+.booking__rail-label-glyph {
+  color: var(--fg-subtle);
+}
+
+.booking__rail-body {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+.booking__rail-body p { margin: 0; }
+
+/* Host — inline avatar + name + mail row */
+.booking__rail-host {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.booking__rail-host-avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  color: var(--primary-foreground);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--orange-600);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 4px 10px -2px hsla(16, 88%, 55%, 0.35);
+}
+.booking__rail-host-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.booking__rail-host-name {
+  color: var(--fg-default);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: -0.005em;
+}
+.booking__rail-host-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--fg-muted);
+  text-decoration: none;
+  font-size: 12px;
+  word-break: break-all;
+  transition: color var(--motion-short) var(--ease-press);
+}
+.booking__rail-host-email:hover {
+  color: var(--primary);
+}
+.booking__rail-host-email svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* Icon-led "What to expect" list */
+.booking__rail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.booking__rail-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--fg-muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.booking__rail-list-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: hsla(16, 88%, 95%, 0.55);
+  color: var(--primary);
+  border: 1px solid hsla(16, 88%, 55%, 0.18);
+}
+.booking__rail-list li > span:last-child {
+  padding-top: 4px;
+}
+
+/* Reference plate — code + inline copy button */
+.booking__rail-ref-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+.booking__rail-ref {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-default);
+  background: var(--muted);
+  border: 1px solid var(--border-subtle);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.booking__rail-ref-copy {
+  appearance: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: auto;
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  border: 1px solid var(--border-input);
+  color: var(--fg-muted);
+  flex-shrink: 0;
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press);
+}
+.booking__rail-ref-copy:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--orange-50);
+}
+.booking__rail-ref-copy:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Stats — orange-tinted callout row */
+.booking__rail-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--orange-50) 0%, transparent 100%);
+  border: 1px solid hsla(16, 88%, 55%, 0.20);
+}
+.booking__rail-stats-num {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--primary-hover);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.booking__rail-stats-label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.booking__rail-stats-sep {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--fg-faint);
+  margin: 0 4px;
+}
+
+/* Trust footer — small but present */
+.booking__rail-trust {
+  margin: 0;
+  padding-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--fg-subtle);
+  line-height: 1.4;
+}
+.booking__rail-trust svg {
+  color: var(--intent-success);
+  flex-shrink: 0;
+}
+
+/* ─── Notices ────────────────────────────────────── */
+.booking__notice {
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+.booking__notice--archived {
+  border-color: var(--intent-danger-soft);
+  background: var(--intent-danger-soft);
+}
+.booking__notice-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--fg-default);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  font-variation-settings: 'opsz' 96, 'SOFT' 70;
+}
+.booking__notice-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  max-width: 60ch;
+}
+.booking__notice-body a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-color: var(--primary-soft);
+  text-underline-offset: 3px;
+}
+
+/* ─── Responsive ─────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .booking {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    max-width: 880px;
+  }
+  .booking__rail {
+    position: static;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-subtle);
+  }
+}
+
+@media (max-width: 880px) {
+  .booking__week {
+    /* On narrow widths, switch to a 2-column grid that wraps. */
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .booking__day--placeholder { display: none; }
+}
+
+@media (max-width: 540px) {
+  .booking {
+    max-width: 100%;
+    padding: 16px 0 32px;
+    gap: 28px;
+  }
+  .booking-card {
+    padding: 22px 20px 0;
+  }
+  .booking-card__main {
+    gap: 16px;
+    padding-bottom: 18px;
+  }
+  .booking-card__title {
+    font-size: clamp(30px, 9vw, 36px);
+  }
+  .booking-card__strip {
+    margin: 0 -20px;
+    padding: 12px 20px;
+  }
+  .booking-compact__inner {
+    padding: 10px 16px;
+  }
+  .booking__hero {
+    grid-template-columns: 1fr;
+    padding-bottom: 24px;
+  }
+  .booking__hero-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 13px;
+  }
+  .booking__hero-title { font-size: 26px; }
+  .booking__week {
+    grid-template-columns: 1fr !important;
+  }
+  .booking__toolbar { flex-direction: column; align-items: flex-start; }
+  .booking__filter { width: 100%; overflow-x: auto; }
+}

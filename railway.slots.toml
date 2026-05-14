@@ -1,0 +1,17 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/slots/Dockerfile"
+watchPatterns = [
+  "apps/slots/**",
+  "packages/slotboard-core/**",
+  "package.json",
+  "package-lock.json",
+  "tsconfig.base.json",
+  "railway.slots.toml"
+]
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

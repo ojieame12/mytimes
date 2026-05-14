@@ -1,0 +1,524 @@
+/* ═══════════════════════════════════════════════════════════
+   Paywall surfaces — UpgradePrompt modal, LimitIndicator pill,
+   LockedFeature chip. Same warm peach DNA as account-card /
+   booking-card; uses semantic tokens only.
+
+   Three components, three sections:
+     1. .upgrade-prompt           — scrim + centered peach card
+     2. .limit-indicator          — inline mono pill (n/m unit)
+     3. .locked-feature           — lock chip with tooltip
+═══════════════════════════════════════════════════════════ */
+
+/* ─── 1 ▸ UpgradePrompt — modal ───────────────────────────
+   Centered card on a dark scrim. Same peach surface as the
+   wizard's .create-step, scaled to ~440px and floated over
+   a backdrop. The board unlock primary uses the orange-gradient
+   button language we've established elsewhere. */
+
+.upgrade-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg-overlay-scrim);
+  /* Backdrop blur is cheap on a single layer and gives the
+     modal real lift against busy wizard screens behind it. */
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  animation: upgrade-prompt-fade var(--motion-medium) var(--ease-out) both;
+}
+@keyframes upgrade-prompt-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.upgrade-prompt__card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px 28px 24px;
+  border-radius: var(--radius-xl);
+  background: hsla(28, 100%, 97%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px hsla(16, 88%, 45%, 0.06),
+    0 24px 56px -18px hsla(16, 88%, 35%, 0.32);
+  animation: upgrade-prompt-rise var(--motion-medium) var(--ease-out) both;
+}
+@keyframes upgrade-prompt-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upgrade-prompt,
+  .upgrade-prompt__card { animation: none; }
+}
+
+/* Close icon — top-right of the card. */
+.upgrade-prompt__close {
+  appearance: none;
+  cursor: pointer;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg-subtle);
+  transition:
+    color var(--motion-short) var(--ease-press),
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press);
+}
+.upgrade-prompt__close:hover {
+  color: var(--zinc-800);
+  background: hsla(16, 88%, 55%, 0.08);
+  border-color: hsla(16, 88%, 55%, 0.20);
+}
+.upgrade-prompt__close:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Head: eyebrow + display title + body */
+.upgrade-prompt__head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 32px; /* leave room for close icon */
+}
+.upgrade-prompt__eyebrow {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.upgrade-prompt__eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px hsla(16, 88%, 55%, 0.14);
+  flex-shrink: 0;
+}
+.upgrade-prompt__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  color: var(--zinc-800);
+  line-height: 1.15;
+  font-optical-sizing: auto;
+  font-variation-settings: 'opsz' 72, 'SOFT' 75;
+}
+.upgrade-prompt__title .mono {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: var(--orange-700);
+  font-variant-numeric: tabular-nums;
+}
+.upgrade-prompt__body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+/* Optional small "what's included" strip — only used for the
+   feature variant to clarify what $9 buys. */
+.upgrade-prompt__strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: hsla(30, 50%, 99%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.12);
+}
+.upgrade-prompt__strip-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+.upgrade-prompt__strip-item svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* Action row — primary CTA + ghost. */
+.upgrade-prompt__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.upgrade-prompt__primary {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--orange-600);
+  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  box-shadow: var(--shadow-button-primary);
+  transition:
+    background var(--motion-short) var(--ease-press),
+    box-shadow var(--motion-medium) var(--ease-out),
+    transform var(--motion-micro) var(--ease-press);
+}
+.upgrade-prompt__primary:hover {
+  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  box-shadow: var(--glow-primary);
+}
+.upgrade-prompt__primary:active { transform: translateY(0.5px); }
+.upgrade-prompt__primary:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.upgrade-prompt__primary-price {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.upgrade-prompt__ghost {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  transition:
+    color var(--motion-short) var(--ease-press),
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press);
+}
+.upgrade-prompt__ghost:hover {
+  color: var(--zinc-800);
+  background: hsla(28, 100%, 97%, 1);
+  border-color: hsla(16, 88%, 55%, 0.18);
+}
+.upgrade-prompt__ghost:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Secondary inline link — used for board-limit's "archive an
+   existing board". Sits below the ghost as a quiet third option. */
+.upgrade-prompt__secondary {
+  appearance: none;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 4px 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg-subtle);
+  text-align: center;
+  transition: color var(--motion-short) var(--ease-press);
+}
+.upgrade-prompt__secondary:hover {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--primary-soft);
+}
+.upgrade-prompt__secondary:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── 2 ▸ LimitIndicator — inline pill ──────────────────────
+   Reads as "5 / 25 bookings". Numbers in mono, unit in sans.
+   States: normal (muted), near (amber), at (red). 24px tall,
+   tight padding, semantic colors. */
+
+.limit-indicator {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: hsla(30, 50%, 99%, 1);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press);
+}
+.limit-indicator__count {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--zinc-800);
+  letter-spacing: -0.01em;
+}
+.limit-indicator__sep {
+  font-family: var(--font-mono);
+  color: var(--fg-faint);
+  font-weight: 500;
+}
+.limit-indicator__max {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg-subdued);
+}
+.limit-indicator__unit {
+  color: var(--fg-subtle);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+
+/* Near-limit (60–95%) — amber wash. */
+.limit-indicator.is-near {
+  background: var(--intent-warning-soft);
+  border-color: hsla(38, 92%, 50%, 0.30);
+  color: var(--intent-warning-strong);
+}
+.limit-indicator.is-near .limit-indicator__count,
+.limit-indicator.is-near .limit-indicator__max,
+.limit-indicator.is-near .limit-indicator__unit,
+.limit-indicator.is-near .limit-indicator__sep {
+  color: var(--intent-warning-strong);
+}
+
+/* At-limit (≥95%) — red wash. */
+.limit-indicator.is-at {
+  background: var(--intent-danger-soft);
+  border-color: hsla(0, 70%, 55%, 0.30);
+  color: var(--intent-danger-strong);
+}
+.limit-indicator.is-at .limit-indicator__count,
+.limit-indicator.is-at .limit-indicator__max,
+.limit-indicator.is-at .limit-indicator__unit,
+.limit-indicator.is-at .limit-indicator__sep {
+  color: var(--intent-danger-strong);
+}
+
+/* ─── 3 ▸ LockedFeature — chip with tooltip ─────────────────
+   Inline element with a lock icon + label. Tooltip appears on
+   hover/focus. Click opens UpgradePrompt with variant=feature. */
+
+.locked-feature {
+  position: relative;
+  display: inline-flex;
+}
+.locked-feature__chip {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px 0 6px;
+  border-radius: var(--radius-pill);
+  background: hsla(28, 100%, 97%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.22);
+  color: var(--orange-700);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press);
+}
+.locked-feature__chip svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.locked-feature__chip:hover {
+  background: var(--primary-soft);
+  border-color: hsla(16, 88%, 55%, 0.40);
+  color: var(--orange-800);
+}
+.locked-feature__chip:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Tooltip — appears above the chip on hover/focus. */
+.locked-feature__tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  white-space: nowrap;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--zinc-900);
+  color: hsl(30, 80%, 96%);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--motion-short) var(--ease-press),
+    transform var(--motion-short) var(--ease-press);
+}
+.locked-feature__tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--zinc-900);
+}
+.locked-feature__tooltip .mono {
+  font-family: var(--font-mono);
+  color: var(--orange-300);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.locked-feature:hover .locked-feature__tooltip,
+.locked-feature__chip:focus-visible + .locked-feature__tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* ─── Inline limit banner — used in AvailabilityStep when the
+   user's settings would generate more slots than the free
+   ceiling allows. Sits above the SlotPreviewSummary in the
+   right rail; mirrors the .slot-preview vocabulary but in
+   an at-limit (red) intent. */
+.limit-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-xl);
+  background: var(--intent-danger-soft);
+  border: 1px solid hsla(0, 70%, 55%, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px hsla(0, 70%, 45%, 0.04);
+}
+.limit-banner__head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--intent-danger-strong);
+}
+.limit-banner__head svg {
+  color: var(--intent-danger-strong);
+  flex-shrink: 0;
+}
+.limit-banner__body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--intent-danger-strong);
+}
+.limit-banner__body strong {
+  font-weight: 600;
+  color: var(--red-700);
+}
+.limit-banner__body .mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.limit-banner__cta {
+  appearance: none;
+  cursor: pointer;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--orange-600);
+  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  box-shadow: var(--shadow-button-primary);
+  transition:
+    background var(--motion-short) var(--ease-press),
+    box-shadow var(--motion-medium) var(--ease-out);
+}
+.limit-banner__cta:hover {
+  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  box-shadow: var(--glow-primary);
+}
+.limit-banner__cta:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ─── Responsive ───────────────────────────────────────────── */
+@media (max-width: 540px) {
+  .upgrade-prompt { padding: 16px; }
+  .upgrade-prompt__card { padding: 24px 20px 20px; gap: 16px; }
+  .upgrade-prompt__title { font-size: 22px; }
+}

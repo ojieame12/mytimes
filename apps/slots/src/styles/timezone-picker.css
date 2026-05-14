@@ -1,0 +1,203 @@
+/* ═══════════════════════════════════════════════════════════
+   TimezonePicker — reusable trigger pill + searchable popover.
+   Used in the participant booking page meta line; will also be
+   used in admin "view as" and in the wizard.
+═══════════════════════════════════════════════════════════ */
+
+.tz-picker {
+  position: relative;
+  display: inline-block;
+}
+
+.tz-picker__trigger {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 6px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.2;
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press);
+}
+.tz-picker__trigger:hover {
+  background: var(--card);
+  border-color: hsla(16, 88%, 55%, 0.18);
+  color: var(--fg-default);
+}
+.tz-picker__trigger.is-open {
+  background: var(--card);
+  border-color: var(--primary);
+  color: var(--fg-default);
+  box-shadow: 0 0 0 3px hsla(16, 88%, 55%, 0.12);
+}
+.tz-picker__trigger:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.tz-picker__trigger svg {
+  color: var(--fg-subtle);
+  flex-shrink: 0;
+}
+.tz-picker__trigger-label {
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+.tz-picker__trigger-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: -0.005em;
+}
+
+/* ─── Popover ─────────────────────────────────────────── */
+.tz-picker__pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 55;
+  width: 280px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 14px 32px -10px rgba(20, 20, 25, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  padding: 6px;
+  animation: tz-picker-pop 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+@keyframes tz-picker-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Search ──────────────────────────────────────────── */
+.tz-picker__pop-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  border: 1px solid var(--border-subtle);
+}
+.tz-picker__pop-search svg {
+  color: var(--fg-subtle);
+  flex-shrink: 0;
+}
+.tz-picker__pop-search-input {
+  appearance: none;
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--fg-default);
+  outline: none;
+}
+.tz-picker__pop-search-input::placeholder {
+  color: var(--fg-subtle);
+}
+
+/* ─── List ────────────────────────────────────────────── */
+.tz-picker__pop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 2px 0;
+}
+.tz-picker__pop-item {
+  appearance: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--fg-muted);
+  text-align: left;
+  transition:
+    background var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press);
+}
+.tz-picker__pop-item:hover {
+  background: var(--bg-hover-subtle);
+  color: var(--fg-default);
+}
+.tz-picker__pop-item.is-active {
+  background: hsla(28, 100%, 95%, 1);
+  color: var(--fg-default);
+}
+.tz-picker__pop-item.is-active svg {
+  color: var(--primary);
+}
+.tz-picker__pop-item--detected {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-sm);
+  background: hsla(28, 100%, 96%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.18);
+}
+.tz-picker__pop-item--detected:hover {
+  background: hsla(28, 100%, 94%, 1);
+}
+.tz-picker__pop-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.tz-picker__pop-zone {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: -0.005em;
+  color: inherit;
+}
+.tz-picker__pop-empty {
+  margin: 0;
+  padding: 12px 10px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--fg-subtle);
+  text-align: center;
+}
+.tz-picker__pop-foot {
+  margin: 4px 0 0;
+  padding: 6px 10px 2px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--fg-faint);
+  letter-spacing: 0.02em;
+  border-top: 1px solid var(--border-subtle);
+}

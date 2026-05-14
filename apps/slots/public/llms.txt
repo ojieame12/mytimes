@@ -1,0 +1,70 @@
+# mytimes
+
+> Scheduling for one-off interview rounds, candidate demos, and vendor calls. Fixed times, one shareable link, no participant accounts.
+
+mytimes is a focused booking-board product. An organizer creates one board for one event (an interview round, a vendor evaluation, a partner demo day), gets two private links (a public one to share with participants and an admin one to manage the board), and is done. There are no participant accounts, no calendar OAuth, no rules engine, no recurring-meeting machinery. The whole creation flow takes about four to five minutes.
+
+## How it works
+
+1. The organizer describes the round — title, short context, organizer name and email, timezone, and slot length.
+2. mytimes generates the slots from a date range, weekday selection, daily window, and break list. A live preview counts every slot.
+3. The organizer reviews the exact public booking page participants will see.
+4. The organizer copies the public link to share and saves the admin link in a password manager or inbox.
+
+Participants open the public link, see times in their own timezone (with the organizer's timezone shown on hover and a +1d badge for slots that cross a date boundary), pick a slot, enter their name and email plus an optional note, and confirm. They get a confirmation email, an .ics calendar file, and a private manage link they can use to cancel if plans change.
+
+The organizer's admin link is a working dashboard: open, booked, and closed slot counts; per-slot detail with participant name, email, notes, and email delivery status; CSV export; admin-link recovery; and the ability to close or reopen slots.
+
+## Key URLs
+
+- [Home](https://mytimes.co/): product overview, live demo of the real booking page, four-step creation walkthrough, privacy data-flow diptych, organizer dashboard preview, participant lifecycle ticket, and a pricing summary.
+- [Pricing](https://mytimes.co/pricing): Free ($0 forever, 2 active boards, 25 bookings per board, 60 published slots, 60-day active window) and Company ($49/mo or $480/yr, unlimited boards, 10 organizer seats, custom company subdomain, cross-board CSV export, company-wide admin recovery, "Made with mytimes" footer removed).
+
+## When to use mytimes
+
+- Hiring rounds where you need to slot 10+ candidate interviews fast.
+- Vendor evaluation calls with multiple stakeholders.
+- Investor or partner demo days.
+- Office-hours blocks for a specific cohort.
+- Anything one-off where setting up a Calendly with rules, calendar integrations, and per-participant accounts feels like overkill.
+
+## When NOT to use mytimes
+
+- Long-running recurring meetings with rules.
+- Booking systems that need a calendar OAuth integration (Google, Microsoft, Apple).
+- High-volume consumer scheduling (haircuts, restaurants, fitness classes).
+- Anything that needs a payment-at-booking step — mytimes does not collect money from participants.
+- Multi-participant slots (round-tables, group sessions) — every slot is for one participant.
+
+## Privacy and data flow
+
+mytimes is built around radical data minimization.
+
+What mytimes asks from a participant:
+
+- Name (so the organizer knows who is coming).
+- Email (so we can send the confirmation and the private manage link).
+- Optional notes (skippable).
+
+What mytimes sends a participant:
+
+- Confirmation email at the moment of booking.
+- An .ics calendar file attached to that email.
+- A private manage link used to cancel if plans change.
+
+What mytimes never asks for: passwords, calendar OAuth, phone numbers, analytics trackers. What mytimes never sends: marketing email, reminders, third-party tracking pixels.
+
+## Pricing summary
+
+| Plan    | Price       | Boards    | Bookings/board | Slots | Window  | Seats | Subdomain     |
+|---------|-------------|-----------|----------------|-------|---------|-------|---------------|
+| Free    | $0 forever  | 2 active  | 25             | 60    | 60 days | 1     | mytimes.co    |
+| Company | $49/mo      | Unlimited | Unlimited      | -     | 12 mo   | 10    | book.you.com  |
+
+Company also has $480/yr annual billing and a 14-day refund if the workspace has not run a live board in the first cycle.
+
+## Contact
+
+- Founder: Ojieame
+- Email: ojieame@mytimes.co
+- Domain: mytimes.co

@@ -1,0 +1,954 @@
+/* ═══════════════════════════════════════════════════════════
+   Day-band slot picker — horizontal bands with huge editorial
+   date numerals on the left and time chips on the right.
+
+   Inspired by the SAI / Hauser references: each day is a row,
+   the date is the visual anchor, and selecting a chip morphs
+   the whole band into a dark inverted state with the inline
+   booking form mounted inside. No modal.
+═══════════════════════════════════════════════════════════ */
+
+.day-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  scroll-behavior: smooth;
+}
+
+/* ─── DateStrip — sticky top nav with arrows + months ── */
+.date-strip {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin: 0 -16px 8px;
+  padding: 10px 16px;
+  background: hsla(0, 0%, 99%, 0.84);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.date-strip__nav-btn {
+  appearance: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  color: var(--fg-default);
+  flex-shrink: 0;
+  transition:
+    background 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.date-strip__nav-btn:hover:not(:disabled) {
+  background: var(--bg-hover-subtle);
+  border-color: var(--fg-default);
+}
+.date-strip__nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.date-strip__nav-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.date-strip__track {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 2px 0;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  min-width: 0;
+}
+.date-strip__track::-webkit-scrollbar { display: none; }
+
+.date-strip__segment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+/* Month divider — shows MAY / JUN between days when month rolls over. */
+.date-strip__month {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 10px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  font-variation-settings: 'opsz' 48, 'SOFT' 30;
+  border-left: 1px solid var(--border-subtle);
+  margin-left: 4px;
+  padding-left: 14px;
+}
+.date-strip__segment:first-child .date-strip__month {
+  border-left: none;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.date-strip__cell {
+  appearance: none;
+  cursor: pointer;
+  position: relative;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  align-items: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 6px 12px 6px;
+  min-width: 58px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--fg-default);
+  transition:
+    background 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.date-strip__cell:hover {
+  background: var(--bg-hover-subtle);
+  border-color: var(--border-subtle);
+}
+.date-strip__cell:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.date-strip__cell.is-current {
+  background: var(--zinc-900);
+  border-color: var(--zinc-900);
+  color: var(--zinc-50);
+}
+.date-strip__cell.is-today {
+  border-color: var(--primary);
+}
+.date-strip__cell.is-today.is-current {
+  border-color: var(--primary);
+}
+.date-strip__cell-day {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  line-height: 1;
+}
+.date-strip__cell.is-current .date-strip__cell-day { color: var(--zinc-400); }
+.date-strip__cell-num {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 72, 'SOFT' 30;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.date-strip__cell-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.date-strip__cell.is-current .date-strip__cell-count { color: var(--orange-300); }
+.date-strip__cell-today {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.date-strip__cell.is-current .date-strip__cell-today {
+  background: var(--orange-300);
+}
+
+/* ─── Day band — single column, two rows.
+   Row 1 (.day-band__top) is a flex row with space-between
+   that puts the date block on the far left and the chips on
+   the far right. Row 2 is the form, which animates from
+   0fr → 1fr on select via grid-template-rows.
+
+   Apple-grade timing: 540ms ease-out-expo on the band-level
+   morphs, 520ms with a 220ms stagger on the form rise. */
+.day-band {
+  display: grid;
+  grid-template-rows: auto 0fr;
+  padding: 18px 4px;
+  border-top: 1px solid var(--border-subtle);
+  position: relative;
+  background: transparent;
+  color: var(--fg-default);
+  /* Default = dimmed/scaled. .is-active (set by IO when the band
+   *  enters the reading zone) lifts it to full presence. Binary
+   *  state, not interpolated — IO fires once per crossing, not
+   *  continuously during scroll. */
+  opacity: 0.55;
+  transform: scale(0.97);
+  transform-origin: center center;
+  /* content-visibility: auto was here but caused layout shifts
+   *  cascading up to the toolbar (visible as SpinPill glitch
+   *  during scroll). Dropped — IO + reveal alone is fast enough
+   *  for 22 rows. */
+  transition:
+    background 540ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 540ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 540ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 540ms cubic-bezier(0.16, 1, 0.3, 1),
+    grid-template-rows 540ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 540ms cubic-bezier(0.16, 1, 0.3, 1),
+    margin 540ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 540ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.day-band.is-active-view {
+  opacity: 1;
+  transform: scale(1);
+}
+/* Selected (dark expanded) band always reads as fully active. */
+.day-band.is-selected {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .day-band {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+.day-band:last-of-type {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Hover — paper card lift, solid soft peach. Gradient and grain
+ * stripped; the surface is a calm flat wash that matches the
+ * booking-card body, so a lifted row reads as a sibling of the
+ * header card. Soft inset top-highlight + warm outer shadow,
+ * rounded corners, slight padding bump. */
+.day-band:not(.is-selected):hover {
+  background: hsla(28, 100%, 97%, 1);
+  padding: 22px 24px;
+  margin: 4px -24px;
+  border-radius: 14px;
+  border-top-color: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px hsla(16, 88%, 45%, 0.05),
+    0 10px 28px -10px hsla(16, 88%, 45%, 0.18);
+}
+/* The hovered row's neighbors lose their top-border so the
+ * lifted card doesn't have a hairline poking out underneath it. */
+.day-band:not(.is-selected):hover + .day-band {
+  border-top-color: transparent;
+}
+
+/* Chips inside a hovered row — switch to solid white so they
+ * read clearly against the orange wash. They get a subtle
+ * shadow that feels like they're sitting on the orange surface
+ * rather than punched out of it. */
+.day-band:not(.is-selected):hover .day-band__chip {
+  background: var(--card);
+  border-color: hsla(16, 88%, 55%, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 2px hsla(16, 88%, 45%, 0.06);
+}
+
+/* Chip-level hover — only inside a hovered row, since outside
+ * the row this state can't be reached. Distinct second-level
+ * affordance: the chip itself becomes orange-tinted with a small
+ * lift and a warm shadow. Tells you "this is the slot you're
+ * about to book". */
+.day-band:not(.is-selected):hover .day-band__chip:hover {
+  background: hsla(28, 100%, 95%, 1);
+  border-color: var(--orange-400);
+  color: var(--zinc-900);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 4px 12px -2px hsla(16, 88%, 45%, 0.22);
+}
+.day-band:not(.is-selected):hover .day-band__chip:hover .day-band__chip-meridiem {
+  color: var(--orange-500);
+  opacity: 1;
+}
+
+/* Inverted state — full row flips dark; form row expands 0fr → 1fr.
+ *  Materials: vertical zinc-900 → zinc-800 gradient (subtle sheen,
+ *  "light from above" feel), faint orange radial wash at the
+ *  bottom corner (ambient brand glow), grain texture overlay for
+ *  paper consistency, and a layered shadow stack for depth. */
+.day-band.is-selected {
+  background:
+    /* Grain — same SVG turbulence as the light card. */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    /* Faint orange wash — straight vertical, rising from the
+     *  bottom edge of the card, fading to transparent before
+     *  the midpoint. Subtle ambient warmth, not a corner spot. */
+    linear-gradient(0deg, hsla(16, 88%, 55%, 0.08) 0%, transparent 45%),
+    /* Subtle vertical sheen: lighter top, deeper bottom. */
+    linear-gradient(180deg, #232328 0%, var(--zinc-900) 100%);
+  color: var(--zinc-50);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-top-color: rgba(255, 255, 255, 0.06);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  padding: 24px 28px;
+  margin: 12px -28px;
+  border-radius: var(--radius-xl);
+  grid-template-rows: auto 1fr;
+  box-shadow:
+    /* Inset top highlight — soft "light from above". */
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    /* Inset bottom hairline — deepens the floor of the card. */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    /* Tight shadow for definition. */
+    0 1px 2px rgba(0, 0, 0, 0.22),
+    /* Long dropped shadow for the lift. */
+    0 24px 48px -20px rgba(10, 10, 14, 0.55),
+    /* Faint warm halo so the card connects to the brand. */
+    0 0 0 1px hsla(16, 88%, 55%, 0.04);
+}
+
+/* ─── Top row: date block ←→ chips block, space-between ── */
+.day-band__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  min-width: 0;
+}
+
+/* ─── Date block: FRI / 15 / MAY, right-aligned within itself ── */
+.day-band__head {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto;
+  align-items: center;
+  justify-items: end;
+  row-gap: 2px;
+  min-width: 0;
+  padding: 4px 0;
+  text-align: right;
+  flex: 0 0 auto;
+}
+.day-band__weekday {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  line-height: 1;
+  transition: color var(--motion-medium) cubic-bezier(0.22, 1, 0.36, 1);
+}
+.day-band.is-selected .day-band__weekday { color: var(--zinc-400); }
+.day-band__num {
+  font-family: var(--font-mono);
+  font-size: clamp(48px, 5vw, 66px);
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  color: var(--zinc-700);
+  line-height: 0.95;
+  font-optical-sizing: auto;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--motion-medium) cubic-bezier(0.22, 1, 0.36, 1);
+}
+.day-band.is-selected .day-band__num { color: var(--zinc-50); }
+.day-band__month {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  line-height: 1;
+  transition: color var(--motion-medium) cubic-bezier(0.22, 1, 0.36, 1);
+}
+.day-band.is-selected .day-band__month { color: var(--zinc-400); }
+
+/* ─── Chips block — sits on the right, tight, doesn't stretch ─ */
+.day-band__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.day-band__chip {
+  appearance: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  min-width: 96px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--fg-default);
+  border: 1px solid var(--border-default);
+  box-shadow: none;
+  transition:
+    background 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.day-band__chip-time {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+}
+.day-band__chip-meridiem {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  color: var(--fg-faint);
+  margin-left: 6px;
+  align-self: center;
+  transition: color 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Intelligent dual-time treatment: chip stays single-line at
+ *  rest so the picker reads cleanly when scanning. The organizer
+ *  source time reveals on hover/focus/selection as a quiet
+ *  caption underneath, AND a small "+1d" badge stays always
+ *  visible on date-shift slots (because booking the wrong day
+ *  is the dangerous case). */
+.day-band__chip--dual {
+  position: relative;
+  /* Reserve a tiny extra bit of vertical padding so the hover
+   *  caption doesn't push the chip's height when it fades in. */
+  padding-bottom: 9px;
+}
+.day-band__chip-source {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--fg-faint);
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(-2px);
+  pointer-events: none;
+  transition:
+    opacity 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.day-band__chip:hover .day-band__chip-source,
+.day-band__chip:focus-visible .day-band__chip-source,
+.day-band__chip.is-selected .day-band__chip-source {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Date-shift badge — always visible because the date mismatch
+ *  is the genuine "you might book wrong" case. Subtle orange
+ *  pill in the top-right corner of the chip. */
+.day-band__chip-shift {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+  height: 14px;
+  border-radius: 7px;
+  background: hsla(16, 88%, 55%, 0.14);
+  color: var(--primary-hover);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* Inside a dark (selected) band, the source caption + shift
+ *  badge invert their colorway. */
+.day-band.is-selected .day-band__chip-source {
+  color: rgba(255, 255, 255, 0.42);
+}
+.day-band.is-selected .day-band__chip.is-selected .day-band__chip-source {
+  color: rgba(255, 255, 255, 0.78);
+}
+.day-band.is-selected .day-band__chip-shift {
+  background: hsla(16, 88%, 55%, 0.24);
+  color: var(--orange-300);
+}
+/* AM = cooler, lighter neutral; PM = slightly warmer. Subtle —
+ *  but enough to differentiate morning vs afternoon at a glance.
+ *  Scoped to light bands only so the dark `.is-selected` band's
+ *  own light-on-dark rules below take over inside it. */
+.day-band:not(.is-selected) .day-band__chip--am .day-band__chip-time {
+  color: var(--fg-default);
+}
+.day-band:not(.is-selected) .day-band__chip--pm .day-band__chip-time {
+  color: var(--fg-muted);
+}
+.day-band:not(.is-selected) .day-band__chip--am .day-band__chip-meridiem {
+  color: var(--zinc-400);
+}
+.day-band:not(.is-selected) .day-band__chip--pm .day-band__chip-meridiem {
+  color: var(--orange-400);
+  opacity: 0.85;
+}
+
+.day-band__chip:hover {
+  background: var(--bg-hover-default);
+  border-color: var(--fg-default);
+}
+.day-band__chip:active {
+  transform: translateY(0.5px);
+}
+.day-band__chip:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Chip styling inside an inverted (selected) band — light-on-dark. */
+.day-band.is-selected .day-band__chip {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: var(--zinc-300);
+}
+.day-band.is-selected .day-band__chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: var(--zinc-50);
+}
+.day-band.is-selected .day-band__chip.is-selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--white);
+  box-shadow: 0 8px 20px -6px hsla(16, 88%, 55%, 0.55);
+}
+.day-band.is-selected .day-band__chip-meridiem {
+  color: rgba(255, 255, 255, 0.42);
+}
+.day-band.is-selected .day-band__chip.is-selected .day-band__chip-meridiem {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+
+/* ─── Inline form wrapper — animates open via the parent
+       grid-template-rows: 0fr → 1fr transition.
+       overflow:hidden + min-height:0 are required for the trick. */
+.day-band__form {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  overflow: hidden;
+  min-height: 0;
+}
+.day-band__form-inner {
+  padding-top: 24px;
+  margin-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  /* Stagger after the band finishes its 540ms morph so the form
+     content rises into a finished container, not a moving one. */
+  animation: form-rise 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 220ms;
+}
+@keyframes form-rise {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    filter: blur(3px);
+  }
+  60% {
+    opacity: 0.9;
+    filter: blur(0.5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .day-band__form-inner { animation: none; }
+}
+
+/* ─── InlineSlotForm — content inside the inverted band ─ */
+.inline-slot-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--zinc-50);
+}
+.inline-slot-form__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto;
+  gap: 4px 16px;
+  align-items: baseline;
+}
+.inline-slot-form__eyebrow {
+  grid-column: 1;
+  grid-row: 1;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--zinc-400);
+}
+.inline-slot-form__time-block {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.inline-slot-form__time {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  color: var(--zinc-50);
+  font-variant-numeric: tabular-nums;
+}
+.inline-slot-form__time-tag {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--zinc-400);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+.inline-slot-form__source {
+  grid-column: 1;
+  grid-row: 3;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--zinc-500);
+  font-variant-numeric: tabular-nums;
+}
+.inline-slot-form__source-tag {
+  display: inline-block;
+  margin-left: 4px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--zinc-600);
+}
+.inline-slot-form__close {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  appearance: none;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--zinc-200);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  align-self: start;
+  transition:
+    background var(--motion-short) cubic-bezier(0.22, 1, 0.36, 1),
+    border-color var(--motion-short) cubic-bezier(0.22, 1, 0.36, 1);
+}
+.inline-slot-form__close:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: var(--zinc-50);
+}
+
+.inline-slot-form__form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.inline-slot-form__form .form-field__label {
+  color: var(--zinc-200);
+}
+.inline-slot-form__form .form-field__hint {
+  color: var(--zinc-500);
+}
+.inline-slot-form__form .form-field__error {
+  color: hsl(0, 80%, 70%);
+}
+/* Inputs go dark-on-dark with a hairline border. */
+.inline-slot-form__form .control {
+  background: rgba(255, 255, 255, 0.04);
+  border: 0;
+  color: var(--zinc-50);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+}
+.inline-slot-form__form .control::placeholder {
+  color: var(--zinc-500);
+}
+.inline-slot-form__form .control:hover:not(:disabled):not(:focus) {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+.inline-slot-form__form .control:focus,
+.inline-slot-form__form .control:focus-visible {
+  /* Drop the offset outline ring — the focus state lives on
+   *  the input surface itself: lighter fill (the input lifts
+   *  out of the dark band) + inset orange border + soft inner
+   *  shadow for the "pressed-in active card" feel. */
+  outline: none;
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow:
+    inset 0 0 0 1.5px var(--primary),
+    inset 0 2px 4px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.inline-slot-form__error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(220, 38, 38, 0.18);
+  border: 1px solid rgba(220, 38, 38, 0.40);
+  color: hsl(0, 80%, 88%);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.inline-slot-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+.inline-slot-form__cancel {
+  appearance: none;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--zinc-200);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0 16px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  transition: background var(--motion-short) cubic-bezier(0.22, 1, 0.36, 1);
+}
+.inline-slot-form__cancel:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.inline-slot-form__submit {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  border: 1px solid var(--orange-600);
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0 20px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 8px 20px -8px hsla(16, 88%, 55%, 0.50);
+  transition:
+    background var(--motion-short) cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow var(--motion-medium) cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--motion-micro) cubic-bezier(0.22, 1, 0.36, 1);
+}
+.inline-slot-form__submit:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 12px 28px -8px hsla(16, 88%, 55%, 0.70),
+    0 0 0 4px hsla(16, 88%, 55%, 0.12);
+}
+.inline-slot-form__submit:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+.inline-slot-form__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Conflict + success states */
+.inline-slot-form__conflict {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+.inline-slot-form__conflict-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--zinc-50);
+  letter-spacing: -0.015em;
+  font-variation-settings: 'opsz' 72, 'SOFT' 70;
+}
+.inline-slot-form__conflict-body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--zinc-300);
+}
+
+.inline-slot-form__success {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.inline-slot-form__success-body {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 350;
+  line-height: 1.6;
+  color: var(--zinc-100);
+  font-variation-settings: 'opsz' 16, 'SOFT' 60;
+}
+.inline-slot-form__success-body strong {
+  color: var(--zinc-50);
+  font-weight: 500;
+}
+/* Re-tint the manage-link card for dark band. */
+.inline-slot-form__success .link-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+.inline-slot-form__success .link-card__url {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: var(--zinc-100);
+}
+
+/* ─── Empty (no slots match filter) ─────────────────── */
+.booking__week-empty {
+  padding: 48px 24px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--fg-muted);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+  font-style: italic;
+  font-weight: 350;
+  font-variation-settings: 'opsz' 16, 'SOFT' 60;
+}
+.booking__week-empty p { margin: 4px 0; }
+
+/* ─── Responsive ─────────────────────────────────────── */
+@media (max-width: 880px) {
+  .day-band {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 22px 4px;
+  }
+  .day-band__num {
+    font-size: clamp(56px, 14vw, 96px);
+  }
+  .day-band__head {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 14px;
+  }
+  .day-band.is-selected {
+    padding: 24px 20px;
+    margin: 10px -20px;
+  }
+}
+
+@media (max-width: 540px) {
+  .day-band {
+    padding: 18px 4px;
+    gap: 12px;
+  }
+  .day-band__num { font-size: clamp(48px, 16vw, 80px); }
+  .day-band__chips { grid-template-columns: repeat(auto-fill, minmax(82px, 1fr)); }
+  .day-band__chip { min-height: 44px; }
+}
+
+/* Notes toggle — anchored top-right of the expanded form header,
+   where Close used to live. The whole band is closeable via
+   click-outside or ESC, so this is the only chrome the header
+   needs on the right edge. */
+.inline-slot-form__notes-toggle {
+  appearance: none;
+  cursor: pointer;
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: start;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--zinc-200);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    background var(--motion-short) cubic-bezier(0.22, 1, 0.36, 1),
+    border-color var(--motion-short) cubic-bezier(0.22, 1, 0.36, 1),
+    color var(--motion-short) cubic-bezier(0.22, 1, 0.36, 1);
+}
+.inline-slot-form__notes-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.34);
+  color: var(--zinc-50);
+}
+.inline-slot-form__notes-toggle:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.inline-slot-form__notes-toggle svg { color: var(--zinc-400); }

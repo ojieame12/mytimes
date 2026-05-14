@@ -1,0 +1,69 @@
+/* ═══════════════════════════════════════════════════════════
+   EventHeader — title block on the booking + admin views.
+═══════════════════════════════════════════════════════════ */
+
+.event-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 18px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.event-header__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.event-header__title {
+  margin: 4px 0 2px;
+  font-family: var(--font-body);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: var(--fg-default);
+  line-height: 1.15;
+}
+.event-header__description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  max-width: 56ch;
+}
+.event-header__meta {
+  margin: 6px 0 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+.event-header__meta span[aria-hidden="true"] {
+  color: var(--fg-disabled);
+}
+.event-header__tz-note {
+  margin: 4px 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--fg-subtle);
+}
+.event-header__tz-note code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+
+/* ─── Mobile: tighten ──────────────────────────────────── */
+@media (max-width: 720px) {
+  .event-header__title { font-size: 22px; }
+  .event-header__meta { font-size: 10.5px; }
+}

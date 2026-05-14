@@ -1,0 +1,495 @@
+/* ═══════════════════════════════════════════════════════════
+   ManageBookingPage — participant-facing booking detail.
+
+   Single-column centered card on the calm warm surface. Same
+   peach card material as account-card / booking-card so the
+   landing page from the confirmation email reads as part of
+   the same product. Display title carries the booked time;
+   Geist Mono on the numerals, SF Compact Rounded on the rest.
+═══════════════════════════════════════════════════════════ */
+
+.manage-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+}
+
+/* ─── Card material ────────────────────────────────────── */
+.manage-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 36px 36px 32px;
+  border-radius: var(--radius-xl);
+  background: hsla(28, 100%, 97%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px hsla(16, 88%, 45%, 0.05),
+    0 14px 36px -14px hsla(16, 88%, 45%, 0.18);
+}
+
+/* ─── Header — eyebrow + display title + meta line ─────── */
+.manage-card__head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.manage-card__eyebrow {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-subtle);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.manage-card__eyebrow span {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.manage-card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3.6vw, 40px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--zinc-800);
+  line-height: 1.08;
+}
+.manage-card__title-time {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.manage-card__meta {
+  margin: 6px 0 0;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--fg-muted);
+  line-height: 1.4;
+}
+.manage-card__meta-dot {
+  color: var(--fg-faint);
+}
+.manage-card__meta-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-default);
+}
+.manage-card__meta-organizer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.manage-card__meta-organizer-name {
+  color: var(--fg-default);
+  font-weight: 500;
+}
+
+/* ─── Dual-time block (booked tz vs organizer tz) ──────── */
+.manage-card__tz {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 14px 16px;
+  margin: 0;
+  border-radius: var(--radius-md);
+  background: hsla(30, 50%, 99%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.10);
+}
+.manage-card__tz-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.manage-card__tz-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.manage-card__tz-time {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--zinc-800);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+}
+.manage-card__tz-zone {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+/* ─── Participant note (when present) ──────────────────── */
+.manage-card__note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  margin: 0;
+  border-radius: var(--radius-md);
+  background: hsla(30, 50%, 99%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.10);
+}
+.manage-card__note-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.manage-card__note p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+/* ─── Reference code + status row ──────────────────────── */
+.manage-card__status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+.manage-card__status-row .mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-default);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.manage-card__status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: hsla(140, 60%, 96%, 1);
+  border: 1px solid hsla(140, 50%, 80%, 1);
+  color: hsl(140, 50%, 30%);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.manage-card__status-pill--cancelled {
+  background: var(--intent-danger-soft);
+  border-color: hsla(0, 70%, 85%, 1);
+  color: hsl(0, 60%, 38%);
+}
+.manage-card__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ─── Calendar download card ──────────────────────────── */
+.manage-card__ics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  margin: 0;
+  border-radius: var(--radius-md);
+  background: hsla(30, 50%, 99%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.10);
+  flex-wrap: wrap;
+}
+.manage-card__ics-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.manage-card__ics-label {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--fg-default);
+}
+.manage-card__ics-body {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.manage-card__ics-link {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid var(--border-input);
+  color: var(--fg-default);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  box-shadow: var(--shadow-button-rest);
+  transition:
+    border-color var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press),
+    background var(--motion-short) var(--ease-press);
+}
+.manage-card__ics-link:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--orange-50);
+}
+.manage-card__ics-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ─── Manage actions strip ─────────────────────────────── */
+.manage-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid hsla(16, 88%, 55%, 0.10);
+  flex-wrap: wrap;
+}
+.manage-card__actions-left,
+.manage-card__actions-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.manage-btn {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press),
+    box-shadow var(--motion-medium) var(--ease-out);
+}
+.manage-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.manage-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.manage-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--border-input);
+  color: var(--fg-default);
+}
+.manage-btn--ghost:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--card);
+}
+
+.manage-btn--destructive {
+  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  border: 1px solid var(--orange-600);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-button-primary);
+}
+.manage-btn--destructive:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  box-shadow: var(--glow-primary);
+}
+
+/* ─── Cancellation form (textarea + submit) ─────────────── */
+.manage-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 18px;
+  border-top: 1px solid hsla(16, 88%, 55%, 0.10);
+}
+.manage-card__form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ─── Feedback line (success / error) ──────────────────── */
+.manage-card__feedback {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.manage-card__feedback--success {
+  background: hsla(140, 60%, 96%, 1);
+  border: 1px solid hsla(140, 50%, 80%, 1);
+  color: hsl(140, 50%, 30%);
+}
+.manage-card__feedback--error {
+  background: hsla(0, 70%, 96%, 1);
+  border: 1px solid hsla(0, 70%, 85%, 1);
+  color: hsl(0, 60%, 38%);
+}
+
+/* ─── Already-cancelled state — calm neutral box ───────── */
+.manage-card__cancelled-state {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  margin: 0;
+  border-radius: var(--radius-md);
+  background: hsla(30, 50%, 99%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.10);
+}
+.manage-card__cancelled-state h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  color: var(--zinc-800);
+}
+.manage-card__cancelled-state p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+/* ─── Post-cancel success — vignette + calm message ────── */
+.manage-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 40px 32px;
+  text-align: center;
+  background: hsla(28, 100%, 97%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.12);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px hsla(16, 88%, 45%, 0.05),
+    0 14px 36px -14px hsla(16, 88%, 45%, 0.18);
+}
+.manage-success__vignette {
+  width: 160px;
+  height: 160px;
+  margin-bottom: 4px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+}
+.manage-success__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 2.6vw, 30px);
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  color: var(--zinc-800);
+  line-height: 1.1;
+}
+.manage-success__body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  max-width: 46ch;
+}
+
+/* ─── Placeholder (loading / error) ────────────────────── */
+.manage-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 36px 32px;
+  background: hsla(28, 100%, 97%, 1);
+  border: 1px solid hsla(16, 88%, 55%, 0.12);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px hsla(16, 88%, 45%, 0.05),
+    0 14px 36px -14px hsla(16, 88%, 45%, 0.18);
+}
+.manage-placeholder__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  color: var(--zinc-800);
+}
+.manage-placeholder__body {
+  margin: 0 0 6px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  max-width: 50ch;
+}
+
+/* ─── Responsive ───────────────────────────────────────── */
+@media (max-width: 560px) {
+  .manage-shell {
+    padding: 20px 16px 36px;
+  }
+  .manage-card {
+    padding: 28px 22px 24px;
+  }
+  .manage-card__tz {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .manage-card__actions {
+    align-items: stretch;
+  }
+  .manage-card__actions-left,
+  .manage-card__actions-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

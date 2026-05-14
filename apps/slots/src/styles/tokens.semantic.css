@@ -1,0 +1,177 @@
+/* ═══════════════════════════════════════════════════════════
+   Token Layer 2 — SEMANTIC.
+   Role-based aliases components consume.
+
+   Naming follows shadcn/ui's CSS-variable shape exactly:
+   --background, --foreground, --primary, --muted, --border,
+   --ring, --radius, etc. — so shadcn examples paste in clean
+   without rewriting class names later.
+
+   Components reach for these roles. Never reach for --zinc-N
+   or --orange-N directly in component CSS.
+═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── shadcn-shape variables (the canonical names) ─────── */
+  --background:        var(--white);
+  /* Softened from zinc-900 → zinc-800 — keeps the type from
+     feeling harsh against the warm white card surface. */
+  --foreground:        var(--zinc-800);
+
+  --card:              var(--white);
+  --card-foreground:   var(--zinc-800);
+
+  --popover:           var(--white);
+  --popover-foreground: var(--zinc-800);
+
+  --primary:           var(--orange-500);
+  --primary-foreground: var(--white);
+  --primary-hover:     var(--orange-600);
+  --primary-active:    var(--orange-700);
+  --primary-soft:      var(--orange-50);
+  --primary-ring:      rgba(240, 90, 40, 0.30);
+
+  --secondary:         var(--zinc-100);
+  --secondary-foreground: var(--zinc-900);
+
+  --muted:             var(--zinc-100);
+  --muted-foreground:  var(--zinc-500);
+
+  --accent:            var(--zinc-100);
+  --accent-foreground: var(--zinc-900);
+
+  --destructive:           var(--red-600);
+  --destructive-foreground: var(--white);
+  --destructive-soft:      var(--red-50);
+
+  --border:        var(--zinc-200);
+  --border-strong: var(--zinc-300);
+  --border-input:  var(--zinc-300);
+
+  --ring:          var(--primary-ring);
+  --ring-offset:   var(--background);
+
+  --radius: var(--radius-md);
+
+  /* ── mytimes role aliases — what the existing components
+        consume. Mapped to the shadcn shape above so changing
+        a role only requires editing one mapping. ──────── */
+
+  /* Surfaces */
+  --bg-canvas:   var(--background);
+  --bg-elevated: var(--background);
+  --bg-sunken:   var(--zinc-50);
+  --bg-card:     var(--card);
+
+  --bg-hover-subtle:  var(--zinc-50);
+  --bg-hover-default: var(--zinc-100);
+  --bg-hover-strong:  var(--zinc-200);
+
+  --bg-overlay-scrim: rgba(9, 9, 11, 0.48);
+
+  /* Foreground */
+  --fg-default:   var(--foreground);
+  --fg-muted:     var(--zinc-700);
+  --fg-subdued:   var(--zinc-600);
+  --fg-subtle:    var(--zinc-500);
+  --fg-faint:     var(--zinc-400);
+  --fg-disabled:  var(--zinc-400);
+  --fg-on-accent: var(--primary-foreground);
+
+  /* Borders */
+  --border-subtle:  var(--zinc-100);
+  --border-default: var(--border);
+  --border-dashed:  var(--zinc-200);
+  --border-strong:  var(--zinc-300);
+  --border-focus:   var(--primary);
+
+  /* Intent — primary = brand orange */
+  --intent-primary:        var(--primary);
+  --intent-primary-strong: var(--primary-hover);
+  --intent-primary-soft:   var(--primary-soft);
+  --intent-primary-wash:   var(--primary-soft);
+  --intent-primary-on:     var(--primary-foreground);
+
+  /* Intent — accent (neutral text accent for legacy components) */
+  --intent-accent:      var(--zinc-900);
+  --intent-accent-soft: var(--zinc-100);
+  --intent-accent-ring: var(--zinc-300);
+
+  /* Intent — semantic states */
+  --intent-danger:        var(--destructive);
+  --intent-danger-soft:   var(--destructive-soft);
+  --intent-danger-strong: var(--red-700);
+  --intent-danger-ring:   rgba(220, 38, 38, 0.28);
+
+  --intent-warning:        var(--amber-600);
+  --intent-warning-soft:   var(--amber-50);
+  --intent-warning-strong: var(--amber-700);
+  --intent-warning-ring:   rgba(217, 119, 6, 0.28);
+
+  --intent-info:        var(--blue-600);
+  --intent-info-soft:   var(--blue-50);
+  --intent-info-strong: var(--blue-700);
+  --intent-info-ring:   rgba(37, 99, 235, 0.28);
+
+  --intent-success:        var(--green-600);
+  --intent-success-soft:   var(--green-50);
+  --intent-success-strong: var(--green-700);
+  --intent-success-ring:   rgba(22, 163, 74, 0.28);
+
+  /* Material legacy — kept as roles, mapped to flat values */
+  --frame-mat:           transparent;
+  --frame-mat-thickness: 0px;
+
+  --btn-primary-from: var(--zinc-900);
+  --btn-primary-to:   var(--zinc-900);
+}
+
+/* ─── Dark mode ────────────────────────────────────────────
+   Designed as a peer surface — pure zinc, near-black canvas,
+   white text. Primary orange stays the same — it has enough
+   chroma to pop on dark. */
+
+.dark, [data-theme="dark"] {
+  --background:        var(--zinc-950);
+  --foreground:        var(--zinc-50);
+
+  --card:              var(--zinc-900);
+  --card-foreground:   var(--zinc-50);
+
+  --popover:           var(--zinc-900);
+  --popover-foreground: var(--zinc-50);
+
+  --primary:           var(--orange-500);
+  --primary-foreground: var(--white);
+  --primary-hover:     var(--orange-400);
+  --primary-soft:      rgba(240, 90, 40, 0.12);
+
+  --secondary:         var(--zinc-800);
+  --secondary-foreground: var(--zinc-50);
+
+  --muted:             var(--zinc-800);
+  --muted-foreground:  var(--zinc-400);
+
+  --accent:            var(--zinc-800);
+  --accent-foreground: var(--zinc-50);
+
+  --border:        rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-input:  rgba(255, 255, 255, 0.10);
+
+  --bg-canvas:   var(--background);
+  --bg-elevated: var(--card);
+  --bg-sunken:   var(--zinc-900);
+  --bg-card:     var(--card);
+
+  --bg-hover-subtle:  rgba(255, 255, 255, 0.04);
+  --bg-hover-default: rgba(255, 255, 255, 0.08);
+  --bg-hover-strong:  rgba(255, 255, 255, 0.12);
+
+  --fg-default:   var(--foreground);
+  --fg-muted:     var(--zinc-300);
+  --fg-subdued:   var(--zinc-400);
+  --fg-subtle:    var(--zinc-400);
+  --fg-faint:     var(--zinc-500);
+  --fg-disabled:  var(--zinc-600);
+}
