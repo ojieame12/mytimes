@@ -23,7 +23,7 @@ import {
 } from "./customDomains.js";
 import { sendEmailDesignTestBatch, sendOperationalTestEmail } from "./email.js";
 import { handleEmailProviderWebhook } from "./emailWebhooks.js";
-import { emailReadiness, loadEnv } from "./env.js";
+import { customDomainReadiness, emailReadiness, loadEnv } from "./env.js";
 import { createEvent } from "./events.js";
 import { ApiError, toErrorResponse } from "./errors.js";
 import { idempotencyKeyFromHeaders, runIdempotent } from "./idempotency.js";
@@ -164,6 +164,7 @@ app.get("/readyz", async (c) => {
       database: "ready",
       email: emailReadiness(env),
       billing: readBillingReadiness(),
+      customDomain: customDomainReadiness(env),
     });
   } catch (error) {
     return jsonError(c, error);

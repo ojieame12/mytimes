@@ -82,6 +82,15 @@ export type BillingReadiness = {
   issues: string[];
 };
 
+export type CustomDomainReadiness = {
+  cnameTarget: string;
+  requestAndVerifyConfigured: boolean;
+  activationMode: "ops_manual";
+  selfServeActivation: boolean;
+  publicAppURL: string;
+  issues: string[];
+};
+
 export function loadEnv(): Env {
   const webOrigins = listEnv("SLOTBOARD_WEB_ORIGINS", [
     "http://127.0.0.1:5174",
@@ -264,6 +273,26 @@ export function billingReadiness(env: Env = loadEnv()): BillingReadiness {
       ...(checkoutConfigured ? [] : ["STRIPE_SECRET_KEY or SLOTBOARD_STRIPE_SECRET_KEY is required for Checkout."]),
       ...(webhookConfigured ? [] : ["STRIPE_WEBHOOK_SECRET or SLOTBOARD_STRIPE_WEBHOOK_SECRET is required to fulfill payments safely."]),
     ],
+  };
+}
+
+export function customDomainReadiness(env: Env = loadEnv()): CustomDomainReadiness {
+  const issues = [
+    ...(env.customDomainCnameTarget
+      ? []
+      : ["SLOTBOARD_CUSTOM_DOMAIN_CNAME_TARGET is required for customer DNS instructions."]),
+    ...(env.opsSecret
+      ? []
+      : ["SLOTBOARD_OPS_SECRET is required to activate verified custom domains."]),
+  ];
+
+  return {
+    cnameTarget: env.customDomainCnameTarget,
+    requestAndVerifyConfigured: Boolean(env.customDomainCnameTarget),
+    activationMode: "ops_manual",
+    selfServeActivation: false,
+    publicAppURL: env.publicAppURL,
+    issues,
   };
 }
 

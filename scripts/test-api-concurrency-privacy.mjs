@@ -2,14 +2,23 @@ import pg from "pg";
 
 const { Pool } = pg;
 
-const baseURL = process.env.SLOTBOARD_API_URL || "http://127.0.0.1:3014";
+const providedBaseURL = process.env.SLOTBOARD_API_URL;
+let baseURL = providedBaseURL || "";
 const databaseURL =
   process.env.SLOTBOARD_DATABASE_URL ||
   "postgres://slotboard:slotboard@localhost:5434/slotboard?sslmode=disable";
 const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const pool = new Pool({ connectionString: databaseURL, application_name: "slotboard-concurrency-privacy-test" });
 
+process.env.SLOTBOARD_DATABASE_URL ||= databaseURL;
+const { closePool: closeApiPool } = await import("../apps/slots-api/src/db.ts");
+
+let closeStartedApi;
+
 try {
+  if (!providedBaseURL) {
+    closeStartedApi = await startSourceApi();
+  }
   await request("/healthz");
   await request("/readyz");
 
@@ -186,7 +195,42 @@ try {
     ),
   );
 } finally {
+  if (closeStartedApi) {
+    await closeStartedApi();
+  }
   await pool.end();
+  await closeApiPool();
+}
+
+async function startSourceApi() {
+  const { serve } = await import("@hono/node-server");
+  const { app } = await import("../apps/slots-api/src/app.ts");
+
+  let server;
+  await new Promise((resolve) => {
+    server = serve(
+      {
+        fetch: app.fetch,
+        hostname: "127.0.0.1",
+        port: 0,
+      },
+      (info) => {
+        baseURL = `http://127.0.0.1:${info.port}`;
+        resolve();
+      },
+    );
+  });
+
+  return () =>
+    new Promise((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      });
+    });
 }
 
 async function createBoard({ title, organizerEmail, dayOffset }) {

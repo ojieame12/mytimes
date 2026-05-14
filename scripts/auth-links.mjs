@@ -17,7 +17,7 @@ const links = {
     accountEvents: `${apiURL}/api/slotboard/account/events`,
   },
   railway: {
-    note: "Set SLOTBOARD_PUBLIC_APP_URL to the frontend Railway domain and SLOTBOARD_AUTH_BASE_URL to the API Railway domain, then rerun this command.",
+    note: "Set SLOTBOARD_PUBLIC_APP_URL and SLOTBOARD_AUTH_BASE_URL to the public app origin when the frontend proxies /api, then rerun this command.",
   },
 };
 

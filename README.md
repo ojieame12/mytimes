@@ -137,9 +137,9 @@ Recommended Railway setup:
 5. Set SLOTBOARD_DATABASE_URL or DATABASE_URL from Railway Postgres.
 6. Set SLOTBOARD_TOKEN_PEPPER to a long production secret.
 7. Set `SLOTBOARD_AUTH_SECRET` or `BETTER_AUTH_SECRET` to a separate long production secret.
-8. Set `SLOTBOARD_AUTH_BASE_URL` to the API origin, for example `https://<api-service>.up.railway.app`.
+8. Set `SLOTBOARD_AUTH_BASE_URL` to the public app origin when the frontend proxies `/api`, for example `https://mytimes.co`.
 9. Add the frontend service from this repo and use `railway.slots.toml` as its config file.
-10. Set `VITE_SLOTBOARD_API_URL` on the frontend service to the API origin.
+10. Leave `VITE_SLOTBOARD_API_URL` unset, or set it to the public app origin, so auth and account calls go through same-origin `/api`.
 11. Set SLOTBOARD_WEB_ORIGINS and SLOTBOARD_PUBLIC_APP_URL on the API service to the frontend domain.
 12. Set transactional email vars:
    - `SLOTBOARD_EMAIL_PROVIDER=console`, `resend`, or `postmark`

@@ -3,7 +3,8 @@ import pg from "pg";
 
 const { Pool } = pg;
 
-const baseURL = process.env.SLOTBOARD_API_URL || "http://127.0.0.1:3014";
+const providedBaseURL = process.env.SLOTBOARD_API_URL;
+let baseURL = providedBaseURL || "";
 const databaseURL =
   process.env.SLOTBOARD_DATABASE_URL ||
   "postgres://slotboard:slotboard@localhost:5434/slotboard?sslmode=disable";
@@ -11,9 +12,20 @@ const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const tokenPepper = process.env.SLOTBOARD_TOKEN_PEPPER || "dev-token-pepper-replace-before-production";
 const emailWebhookSecret =
   process.env.SLOTBOARD_EMAIL_WEBHOOK_SECRET || "local-source-webhook-secret-change-me-32chars";
+const xffActorIp = `2001:db8:${randomBytes(2).toString("hex")}::77`;
 const pool = new Pool({ connectionString: databaseURL, application_name: "slotboard-hardening-test" });
 
+process.env.SLOTBOARD_DATABASE_URL ||= databaseURL;
+process.env.SLOTBOARD_TOKEN_PEPPER ||= tokenPepper;
+process.env.SLOTBOARD_EMAIL_WEBHOOK_SECRET ||= emailWebhookSecret;
+const { closePool: closeApiPool } = await import("../apps/slots-api/src/db.ts");
+
+let closeStartedApi;
+
 try {
+  if (!providedBaseURL) {
+    closeStartedApi = await startSourceApi();
+  }
   await request("/healthz");
   await request("/readyz");
   await assertCors();
@@ -288,7 +300,42 @@ try {
     ),
   );
 } finally {
+  if (closeStartedApi) {
+    await closeStartedApi();
+  }
   await pool.end();
+  await closeApiPool();
+}
+
+async function startSourceApi() {
+  const { serve } = await import("@hono/node-server");
+  const { app } = await import("../apps/slots-api/src/app.ts");
+
+  let server;
+  await new Promise((resolve) => {
+    server = serve(
+      {
+        fetch: app.fetch,
+        hostname: "127.0.0.1",
+        port: 0,
+      },
+      (info) => {
+        baseURL = `http://127.0.0.1:${info.port}`;
+        resolve();
+      },
+    );
+  });
+
+  return () =>
+    new Promise((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      });
+    });
 }
 
 async function assertCors() {
@@ -371,7 +418,7 @@ async function assertForwardedHeaderSpoofResistance() {
       method: "POST",
       skipActorHeader: true,
       headers: {
-        "x-forwarded-for": `198.51.100.${index + 1}, 203.0.113.77`,
+        "x-forwarded-for": `198.51.100.${index + 1}, ${xffActorIp}`,
       },
       expectedStatus: 202,
       json: {
@@ -384,7 +431,7 @@ async function assertForwardedHeaderSpoofResistance() {
     method: "POST",
     skipActorHeader: true,
     headers: {
-      "x-forwarded-for": "198.51.100.200, 203.0.113.77",
+      "x-forwarded-for": `198.51.100.200, ${xffActorIp}`,
     },
     expectedStatus: 429,
     expectedError: "rate_limited",
