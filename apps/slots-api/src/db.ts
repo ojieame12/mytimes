@@ -2,6 +2,9 @@ import pg from "pg";
 import { loadEnv } from "./env.js";
 
 const { Pool } = pg;
+const POSTGRES_DATE_OID = 1082;
+
+pg.types.setTypeParser(POSTGRES_DATE_OID, (value) => value);
 
 let pool: pg.Pool | undefined;
 

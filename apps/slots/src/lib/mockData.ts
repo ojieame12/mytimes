@@ -20,6 +20,7 @@ export const MOCK_EVENT: BookingEvent = {
   status: 'active',
   createdAt: new Date().toISOString(),
   avatarStyle: 'notionists',
+  avatarSeed: 'mock-event-avatar',
 };
 
 /** Next N weekdays starting tomorrow (so today's slots aren't past). */

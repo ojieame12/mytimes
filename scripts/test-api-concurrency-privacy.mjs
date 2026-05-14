@@ -25,11 +25,16 @@ try {
   const boardA = await createBoard({
     title: `Concurrency Privacy Board A ${suffix}`,
     organizerEmail: `organizer-a+${suffix}@example.com`,
+    avatarStyle: "lorelei",
     dayOffset: 21,
   });
+  assert(boardA.event.avatarStyle === "lorelei", `expected created board avatar style to persist, got ${boardA.event.avatarStyle}`);
+  assert(typeof boardA.event.avatarSeed === "string" && boardA.event.avatarSeed.length > 0, "expected created board to return stable avatar seed");
   const publicTokenA = tokenFromLink(boardA.links.public);
   const adminTokenA = tokenFromLink(boardA.links.admin);
   const publicBeforeClaim = await request("/api/slotboard/book", { token: publicTokenA });
+  assert(publicBeforeClaim.event.avatarStyle === "lorelei", `expected public board avatar style to persist, got ${publicBeforeClaim.event.avatarStyle}`);
+  assert(publicBeforeClaim.event.avatarSeed === boardA.event.avatarSeed, "expected public board avatar seed to match created event");
   assert(publicBeforeClaim.slots.length === 1, `expected one claimable slot, got ${publicBeforeClaim.slots.length}`);
 
   const slotIdA = publicBeforeClaim.slots[0].id;
@@ -69,6 +74,7 @@ try {
   assertNoRawTokenLeak(publicAfterClaim, [publicTokenA, adminTokenA, manageTokenA]);
 
   const adminA = await request("/api/slotboard/admin", { token: adminTokenA });
+  assert(adminA.event.avatarStyle === "lorelei", `expected admin board avatar style to persist, got ${adminA.event.avatarStyle}`);
   assert(inJson(adminA, claimed.booking.participantEmail), "expected admin dashboard to show participant email");
   assert(inJson(adminA, claimed.booking.notes), "expected admin dashboard to show participant notes");
   assertNoRawTokenLeak(adminA, [publicTokenA, adminTokenA, manageTokenA]);
@@ -140,6 +146,15 @@ try {
     "expected every concurrent cancellation response to show cancelled booking",
   );
   assert((await activeBookingCount(slotIdA)) === 0, "expected no active bookings after participant cancellation");
+  const cancellationDeliveryCounts = await emailDeliveryCounts(claimed.booking.id);
+  assert(
+    cancellationDeliveryCounts.booking_cancellation === 1,
+    `expected exactly one participant cancellation email, got ${cancellationDeliveryCounts.booking_cancellation ?? 0}`,
+  );
+  assert(
+    cancellationDeliveryCounts.organizer_cancellation_notice === 1,
+    `expected exactly one organizer cancellation email, got ${cancellationDeliveryCounts.organizer_cancellation_notice ?? 0}`,
+  );
   const publicAfterCancel = await request("/api/slotboard/book", { token: publicTokenA });
   assert(publicAfterCancel.slots.some((slot) => slot.id === slotIdA), "expected cancelled booking to reopen public slot");
 
@@ -186,6 +201,7 @@ try {
           "cross-admin-slot-rejection",
           "cross-admin-booking-rejection",
           "concurrent-cancel-idempotency",
+          "concurrent-cancel-single-email-side-effect",
           "cancel-reopens-public-slot",
           "deleted-manage-token-rejection",
         ],
@@ -233,7 +249,7 @@ async function startSourceApi() {
     });
 }
 
-async function createBoard({ title, organizerEmail, dayOffset }) {
+async function createBoard({ title, organizerEmail, dayOffset, avatarStyle = "notionists" }) {
   const slotDate = isoDateAfterDays(dayOffset);
   const slotWeekday = new Date(`${slotDate}T00:00:00.000Z`).getUTCDay();
   return request("/api/slotboard/events", {
@@ -244,6 +260,7 @@ async function createBoard({ title, organizerEmail, dayOffset }) {
       description: "Automated concurrency/privacy test.",
       organizerName: "Concurrency Organizer",
       organizerEmail,
+      avatarStyle,
       timezone: "Africa/Johannesburg",
       allowMultipleBookings: false,
       availability: {
@@ -271,6 +288,19 @@ async function activeBookingCount(slotId) {
     [slotId],
   );
   return result.rows[0]?.count ?? 0;
+}
+
+async function emailDeliveryCounts(bookingId) {
+  const result = await pool.query(
+    `
+      select email_type, count(*)::int as count
+      from slotboard.email_delivery_logs
+      where booking_id = $1
+      group by email_type
+    `,
+    [bookingId],
+  );
+  return Object.fromEntries(result.rows.map((row) => [row.email_type, Number(row.count)]));
 }
 
 async function markEventPaymentPending(eventId) {

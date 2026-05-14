@@ -11,6 +11,7 @@ const dryRun = process.env.SLOTBOARD_CUSTOM_DOMAIN_ACTIVATION_DRY_RUN === "true"
 console.log(`Activating custom booking domain "${hostname}".`);
 console.log(`API: ${baseURL}`);
 console.log(`Railway service: ${service}`);
+console.log(`Railway port: ${port}`);
 
 if (dryRun) {
   console.log("Dry run enabled. Railway and API state will not be changed.");
@@ -32,7 +33,13 @@ if (!opsSecret) {
 }
 
 const activated = await activateDomain();
-console.log(JSON.stringify({ ok: true, baseURL, domain: activated.domain }, null, 2));
+console.log("Backend activation accepted.");
+console.log(JSON.stringify({
+  ok: true,
+  activeURL: `https://${hostname}`,
+  api: baseURL,
+  domain: activated.domain,
+}, null, 2));
 
 function attachRailwayDomain() {
   const args = [
@@ -49,6 +56,7 @@ function attachRailwayDomain() {
   if (output) {
     console.log(output);
   }
+  console.log("Railway domain attachment command completed.");
 }
 
 function runRailway(args) {

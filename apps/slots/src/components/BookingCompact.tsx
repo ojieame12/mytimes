@@ -29,7 +29,7 @@ export function BookingCompact({
     >
       <div className="booking-compact__inner">
         <Avatar
-          seed={event.organizerEmail}
+          seed={event.avatarSeed ?? event.organizerEmail}
           style={event.avatarStyle ?? 'notionists'}
           size={28}
         />

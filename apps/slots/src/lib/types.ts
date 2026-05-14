@@ -41,6 +41,8 @@ export interface BookingEvent {
   createdAt: string;             // ISO 8601
   /** Picked during create flow. Defaults to 'notionists'. */
   avatarStyle?: AvatarStyle;
+  /** Stable event-level seed so the board avatar survives organizer email edits. */
+  avatarSeed?: string;
 }
 
 /** Slot state, as derived from {time_slots.status, has-active-booking,

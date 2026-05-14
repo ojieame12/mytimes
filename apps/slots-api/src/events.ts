@@ -3,6 +3,7 @@ import {
   generateAvailabilitySlots,
   type GeneratedSlot,
 } from "@fresh-feel/slotboard-core";
+import { randomBytes } from "node:crypto";
 import type pg from "pg";
 import { recordActivity } from "./activity.js";
 import { ApiError } from "./errors.js";
@@ -29,6 +30,8 @@ export type CreatedEventResponse = {
     description: string;
     organizerName: string;
     organizerEmail: string;
+    avatarStyle: string;
+    avatarSeed: string;
     timezone: string;
     meetingDurationMinutes: number;
     allowMultipleBookings: boolean;
@@ -61,6 +64,7 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
 
   const publicToken = createTokenPair("public", env.tokenPepper);
   const adminToken = createTokenPair("admin", env.tokenPepper);
+  const avatarSeed = randomBytes(12).toString("hex");
 
   const event = await withTransaction(async (client) => {
     await assertWithinFreeActiveBoardLimit(client, input, ownerUserId, entitlement);
@@ -71,6 +75,8 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
           description,
           organizer_name,
           organizer_email,
+          avatar_style,
+          avatar_seed,
           timezone,
           timezone_locked_at,
           meeting_duration_minutes,
@@ -86,13 +92,15 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
           booking_limit,
           slot_limit
         )
-        values ($1, $2, $3, $4, $5, now(), $6, $7, $8::jsonb, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        values ($1, $2, $3, $4, $5, $6, $7, now(), $8, $9, $10::jsonb, $11, $12, $13, $14, $15, $16, $17, $18, $19)
         returning
           id,
           title,
           description,
           organizer_name,
           organizer_email,
+          avatar_style,
+          avatar_seed,
           timezone,
           meeting_duration_minutes,
           allow_multiple_bookings,
@@ -110,6 +118,8 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
         input.description,
         input.organizerName,
         input.organizerEmail,
+        input.avatarStyle,
+        avatarSeed,
         input.timezone,
         input.availability.durationMinutes,
         input.allowMultipleBookings,
@@ -172,6 +182,8 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
       description: event.description,
       organizerName: event.organizer_name,
       organizerEmail: event.organizer_email,
+      avatarStyle: event.avatar_style,
+      avatarSeed: event.avatar_seed ?? avatarSeed,
       timezone: event.timezone,
       meetingDurationMinutes: event.meeting_duration_minutes,
       allowMultipleBookings: event.allow_multiple_bookings,
@@ -321,6 +333,8 @@ type CreatedEventRow = {
   description: string;
   organizer_name: string;
   organizer_email: string;
+  avatar_style: string;
+  avatar_seed: string | null;
   timezone: string;
   meeting_duration_minutes: number;
   allow_multiple_bookings: boolean;

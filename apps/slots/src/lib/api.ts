@@ -3,6 +3,12 @@ import type { WizardDraft } from './wizard';
 
 const CREATED_EVENT_STORAGE_KEY = 'mytimes:slots:last-created-event:v1';
 
+declare global {
+  interface Window {
+    __SLOTBOARD_API_URL__?: string;
+  }
+}
+
 export type CreateEventResponse = {
   event: {
     id: string;
@@ -10,6 +16,8 @@ export type CreateEventResponse = {
     description: string;
     organizerName: string;
     organizerEmail: string;
+    avatarStyle?: BookingEvent['avatarStyle'];
+    avatarSeed?: string;
     timezone: string;
     meetingDurationMinutes: number;
     allowMultipleBookings: boolean;
@@ -276,6 +284,7 @@ export async function createEventFromDraft(draft: WizardDraft): Promise<CreateEv
       description: draft.description,
       organizerName: draft.organizerName,
       organizerEmail: draft.organizerEmail,
+      avatarStyle: draft.avatarStyle,
       timezone: draft.timezone,
       allowMultipleBookings: draft.allowMultipleBookings,
       availability: {
@@ -792,7 +801,15 @@ function requestHeaders(options: {
 }
 
 function apiBaseURL(): string {
-  const configured = import.meta.env.VITE_SLOTBOARD_API_URL as string | undefined;
+  const runtimeConfigured =
+    typeof window === 'undefined' ? undefined : window.__SLOTBOARD_API_URL__;
+  if (runtimeConfigured) {
+    return runtimeConfigured.replace(/\/$/, '');
+  }
+
+  const configured = (import.meta as ImportMeta & {
+    env?: { VITE_SLOTBOARD_API_URL?: string };
+  }).env?.VITE_SLOTBOARD_API_URL;
   if (configured) {
     return configured.replace(/\/$/, '');
   }

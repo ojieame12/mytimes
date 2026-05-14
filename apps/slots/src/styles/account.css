@@ -797,6 +797,12 @@
   font-size: 12.5px;
   line-height: 1.45;
 }
+.account-domain-card__hint {
+  margin: 2px 0 0;
+  color: var(--fg-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
 
 /* ─── Day-band-family board rows ───────────────────────── */
 .account-rows {

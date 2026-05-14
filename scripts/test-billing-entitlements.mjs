@@ -179,6 +179,14 @@ try {
     (await readActiveCustomDomainBaseURL({ ownerUserId, ownerEmail })) === `https://${customDomainHostname}`,
     "expected active Company subscription to enable custom-domain participant links",
   );
+  const rotatedCompanyLink = await request("/api/slotboard/admin/public-link/rotate", {
+    method: "POST",
+    token: tokenFromLink(companyOnly.links.admin),
+  });
+  assert(
+    rotatedCompanyLink.links.public.startsWith(`https://${customDomainHostname}/b/`),
+    `expected rotated participant link to use owner custom domain, got ${rotatedCompanyLink.links.public}`,
+  );
   assert(
     (await isActiveCustomDomainOrigin(`https://${customDomainHostname}`)) === true,
     "expected active Company subscription to enable custom-domain CORS",
@@ -246,6 +254,7 @@ try {
       "event-pass-failure-resets-free",
       "company-standby-subscription-upgrades-owner-events",
       "company-standby-subscription-enables-custom-domain",
+      "custom-domain-links-use-owner-user-id",
       "late-event-pass-webhook-preserves-company-standby",
       "subscription-delete-downgrades-company-only-events",
       "subscription-delete-restores-paid-event-pass-events",

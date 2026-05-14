@@ -35,6 +35,8 @@ export type EventDTO = {
   description: string;
   organizerName: string;
   organizerEmail: string;
+  avatarStyle: "notionists" | "open-peeps" | "lorelei" | "big-smile";
+  avatarSeed?: string | undefined;
   timezone: string;
   durationMinutes: number;
   allowMultipleBookings: boolean;
@@ -437,6 +439,10 @@ async function updateEventById(eventId: string, input: UpdateEventInput): Promis
   if (input.organizerEmail !== undefined) {
     values.push(input.organizerEmail);
     assignments.push(`organizer_email = $${values.length}`);
+  }
+  if (input.avatarStyle !== undefined) {
+    values.push(input.avatarStyle);
+    assignments.push(`avatar_style = $${values.length}`);
   }
 
   if (assignments.length === 0) {
@@ -1096,6 +1102,8 @@ const eventColumns = `
   description,
   organizer_name,
   organizer_email,
+  avatar_style,
+  avatar_seed,
   timezone,
   meeting_duration_minutes,
   allow_multiple_bookings,
@@ -1117,6 +1125,8 @@ function eventColumnsWithAlias(alias: string): string {
     `${alias}.description`,
     `${alias}.organizer_name`,
     `${alias}.organizer_email`,
+    `${alias}.avatar_style`,
+    `${alias}.avatar_seed`,
     `${alias}.timezone`,
     `${alias}.meeting_duration_minutes`,
     `${alias}.allow_multiple_bookings`,
@@ -1523,6 +1533,8 @@ function mapEvent(row: EventRow): EventDTO {
     description: row.description,
     organizerName: row.organizer_name,
     organizerEmail: row.organizer_email,
+    avatarStyle: row.avatar_style,
+    avatarSeed: row.avatar_seed ?? undefined,
     timezone: row.timezone,
     durationMinutes: row.meeting_duration_minutes,
     allowMultipleBookings: row.allow_multiple_bookings,
@@ -1545,6 +1557,8 @@ function mapEventFromBookingRow(row: ManageBookingRow): EventDTO {
     description: row.description,
     organizerName: row.organizer_name,
     organizerEmail: row.organizer_email,
+    avatarStyle: row.avatar_style,
+    avatarSeed: row.avatar_seed ?? undefined,
     timezone: row.timezone,
     durationMinutes: row.meeting_duration_minutes,
     allowMultipleBookings: row.allow_multiple_bookings,
@@ -1633,12 +1647,28 @@ function rowOrThrow<T extends pg.QueryResultRow>(
   return row;
 }
 
-async function buildParticipantURL(path: string, event: Pick<EventDTO, "organizerEmail">): Promise<string> {
+async function buildParticipantURL(path: string, event: Pick<EventDTO, "id" | "organizerEmail">): Promise<string> {
   const env = loadEnv();
+  const ownerUserId = await readEventOwnerUserId(event.id);
   const baseURL = await readActiveCustomDomainBaseURL({
+    ownerUserId,
     ownerEmail: event.organizerEmail,
   }) ?? env.publicAppURL;
   return buildAppURL(path, baseURL);
+}
+
+async function readEventOwnerUserId(eventId: string): Promise<string | null> {
+  const result = await getPool().query<{ owner_user_id: string | null }>(
+    `
+      select owner_user_id
+      from slotboard.booking_events
+      where id = $1
+        and deleted_at is null
+      limit 1
+    `,
+    [eventId],
+  );
+  return result.rows[0]?.owner_user_id ?? null;
 }
 
 function buildAppURL(path: string, baseURL: string): string {
@@ -1709,6 +1739,8 @@ type EventRow = {
   description: string;
   organizer_name: string;
   organizer_email: string;
+  avatar_style: "notionists" | "open-peeps" | "lorelei" | "big-smile";
+  avatar_seed: string | null;
   timezone: string;
   meeting_duration_minutes: number;
   allow_multiple_bookings: boolean;
@@ -1776,6 +1808,8 @@ const joinedBookingColumns = `
   e.description,
   e.organizer_name,
   e.organizer_email,
+  e.avatar_style,
+  e.avatar_seed,
   e.timezone,
   e.meeting_duration_minutes,
   e.allow_multiple_bookings,
@@ -1813,6 +1847,8 @@ type ManageBookingRow = {
   description: string;
   organizer_name: string;
   organizer_email: string;
+  avatar_style: "notionists" | "open-peeps" | "lorelei" | "big-smile";
+  avatar_seed: string | null;
   timezone: string;
   meeting_duration_minutes: number;
   allow_multiple_bookings: boolean;

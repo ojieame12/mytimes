@@ -1,11 +1,16 @@
 import type { AvailabilityInput } from "@fresh-feel/slotboard-core";
 import { ApiError } from "./errors.js";
 
+export type AvatarStyle = "notionists" | "open-peeps" | "lorelei" | "big-smile";
+
+const AVATAR_STYLES: readonly AvatarStyle[] = ["notionists", "open-peeps", "lorelei", "big-smile"];
+
 export type CreateEventInput = {
   title: string;
   description: string;
   organizerName: string;
   organizerEmail: string;
+  avatarStyle: AvatarStyle;
   timezone: string;
   allowMultipleBookings: boolean;
   availability: AvailabilityInput;
@@ -26,6 +31,7 @@ export type UpdateEventInput = {
   description?: string;
   organizerName?: string;
   organizerEmail?: string;
+  avatarStyle?: AvatarStyle;
 };
 
 export type CancelBookingInput = {
@@ -102,6 +108,7 @@ export function toCreateEventInput(value: unknown): CreateEventInput {
   const organizerName = trimmedString(value, "organizerName");
   const organizerEmail = normalizeEmail(stringValue(value, "organizerEmail"));
   const description = optionalString(value, "description", "");
+  const avatarStyle = optionalAvatarStyle(value, "avatarStyle", "notionists");
   const allowMultipleBookings = optionalBoolean(value, "allowMultipleBookings", false);
   const availability = toAvailabilityInput(value.availability);
 
@@ -126,6 +133,7 @@ export function toCreateEventInput(value: unknown): CreateEventInput {
     description,
     organizerName,
     organizerEmail,
+    avatarStyle,
     timezone: availability.timezone,
     allowMultipleBookings,
     availability,
@@ -215,6 +223,10 @@ export function toUpdateEventInput(value: unknown): UpdateEventInput {
       throw new ApiError(400, "invalid_event", "organizerEmail must be a valid email address");
     }
     patch.organizerEmail = organizerEmail;
+  }
+
+  if (value.avatarStyle !== undefined) {
+    patch.avatarStyle = optionalAvatarStyle(value, "avatarStyle", "notionists");
   }
 
   if (Object.keys(patch).length === 0) {
@@ -394,6 +406,14 @@ function optionalBoolean(record: Record<string, unknown>, key: string, fallback:
     throw new ApiError(400, "invalid_request", `${key} must be a boolean`);
   }
   return value;
+}
+
+function optionalAvatarStyle(record: Record<string, unknown>, key: string, fallback: AvatarStyle): AvatarStyle {
+  const value = optionalString(record, key, fallback);
+  if (!AVATAR_STYLES.includes(value as AvatarStyle)) {
+    throw new ApiError(400, "invalid_event", `${key} must be one of: ${AVATAR_STYLES.join(", ")}`);
+  }
+  return value as AvatarStyle;
 }
 
 function optionalStringArray(record: Record<string, unknown>, key: string): string[] | undefined {

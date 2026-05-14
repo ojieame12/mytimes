@@ -820,6 +820,7 @@ export async function sendEmailDesignTestBatch(input: {
     description: "60-minute deep-dive on roadmap and team strategy.",
     organizerName: "Oyani Solis",
     organizerEmail: recipient,
+    avatarStyle: "notionists",
     timezone: "Europe/London",
     durationMinutes: 60,
     allowMultipleBookings: false,

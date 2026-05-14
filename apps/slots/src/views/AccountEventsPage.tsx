@@ -683,6 +683,9 @@ function CustomDomainCard({
               <DnsRow label="TXT value" value={domain.verification.value} />
               <DnsRow label="CNAME name" value={domain.routing.name} />
               <DnsRow label="CNAME value" value={domain.routing.value} />
+              <p className="account-domain-card__hint">
+                Cloudflare note: keep the CNAME set to DNS only while mytimes verifies and activates this host.
+              </p>
               {domain.lastCheckError && (
                 <p className="account-domain-card__error">{domain.lastCheckError}</p>
               )}
@@ -730,7 +733,7 @@ function domainStatusDescription(status: NonNullable<CustomDomainSettingsRespons
     return 'New public booking links and participant manage links use this host. Admin and billing links stay on the main mytimes app.';
   }
   if (status === 'verified_dns') {
-    return 'DNS is verified. The final step is attaching this host to the mytimes Railway frontend service.';
+    return 'DNS is verified. mytimes still needs to attach this host to the Railway frontend before it becomes active.';
   }
   if (status === 'rejected') {
     return 'This request needs review before it can be used for booking links.';

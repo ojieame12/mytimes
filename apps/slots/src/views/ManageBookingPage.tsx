@@ -198,7 +198,7 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
             <span className="manage-card__meta-dot" aria-hidden="true">·</span>
             <span className="manage-card__meta-organizer">
               <Avatar
-                seed={event.organizerEmail}
+                seed={event.avatarSeed ?? event.organizerEmail}
                 style={event.avatarStyle ?? 'notionists'}
                 size={26}
               />

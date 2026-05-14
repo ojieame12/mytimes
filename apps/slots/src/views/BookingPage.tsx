@@ -531,7 +531,7 @@ export function BookingHeaderCard({
           </ul>
         </div>
         <Avatar
-          seed={event.organizerEmail}
+          seed={event.avatarSeed ?? event.organizerEmail}
           style={event.avatarStyle ?? 'notionists'}
           size={44}
         />
