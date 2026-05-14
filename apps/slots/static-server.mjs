@@ -9,10 +9,11 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "dist");
 const port = Number.parseInt(process.env.PORT || "4174", 10);
 const apiOrigin = (process.env.SLOTBOARD_API_ORIGIN || "https://api-production-067c0.up.railway.app").replace(/\/$/, "");
+const includeLocalhostCspSources =
+  process.env.NODE_ENV === "development" || process.env.SLOTBOARD_CSP_INCLUDE_LOCALHOST === "true";
 const cspConnectSources = [
   "'self'",
-  "http://127.0.0.1:3014",
-  "http://localhost:3014",
+  ...(includeLocalhostCspSources ? ["http://127.0.0.1:3014", "http://localhost:3014"] : []),
   ...envSourceList("SLOTBOARD_CSP_CONNECT_SRC"),
   ...envSourceList("VITE_SLOTBOARD_API_URL"),
 ];
