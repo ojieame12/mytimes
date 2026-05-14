@@ -1,4 +1,4 @@
-type Env = {
+export type Env = {
   port: number;
   databaseURL: string | undefined;
   webOrigins: string[];
@@ -36,6 +36,9 @@ type Env = {
   companyStandbyAmount: number;
   companyStandbyAnnualAmount: number;
   customDomainCnameTarget: string;
+  sentryDsn: string | undefined;
+  sentryEnvironment: string;
+  sentryRelease: string | undefined;
 };
 
 export type EmailReadiness = {
@@ -91,6 +94,15 @@ export type CustomDomainReadiness = {
   issues: string[];
 };
 
+export type ObservabilityReadiness = {
+  provider: "sentry";
+  errorTrackingConfigured: boolean;
+  productionReady: boolean;
+  requiredVariables: string[];
+  optionalVariables: string[];
+  issues: string[];
+};
+
 export function loadEnv(): Env {
   const webOrigins = listEnv("SLOTBOARD_WEB_ORIGINS", [
     "http://127.0.0.1:5174",
@@ -142,6 +154,9 @@ export function loadEnv(): Env {
     companyStandbyAmount: numberEnv("SLOTBOARD_COMPANY_STANDBY_AMOUNT", 4900, { min: 100 }),
     companyStandbyAnnualAmount: numberEnv("SLOTBOARD_COMPANY_STANDBY_ANNUAL_AMOUNT", 48000, { min: 100 }),
     customDomainCnameTarget: env("SLOTBOARD_CUSTOM_DOMAIN_CNAME_TARGET", hostnameFromURL(publicAppURL)),
+    sentryDsn: optionalEnv("SENTRY_DSN") ?? optionalEnv("SLOTBOARD_SENTRY_DSN"),
+    sentryEnvironment: env("SENTRY_ENVIRONMENT", process.env.NODE_ENV || "development"),
+    sentryRelease: optionalEnv("SENTRY_RELEASE") ?? optionalEnv("RAILWAY_GIT_COMMIT_SHA"),
   };
 
   validateProductionConfig(config);
@@ -293,6 +308,18 @@ export function customDomainReadiness(env: Env = loadEnv()): CustomDomainReadine
     selfServeActivation: false,
     publicAppURL: env.publicAppURL,
     issues,
+  };
+}
+
+export function observabilityReadiness(env: Env = loadEnv()): ObservabilityReadiness {
+  const errorTrackingConfigured = Boolean(env.sentryDsn);
+  return {
+    provider: "sentry",
+    errorTrackingConfigured,
+    productionReady: errorTrackingConfigured,
+    requiredVariables: ["SENTRY_DSN"],
+    optionalVariables: ["SENTRY_ENVIRONMENT", "SENTRY_RELEASE"],
+    issues: errorTrackingConfigured ? [] : ["Set SENTRY_DSN on the API service to enable production error tracking."],
   };
 }
 

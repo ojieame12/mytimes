@@ -23,11 +23,12 @@ import {
 } from "./customDomains.js";
 import { sendEmailDesignTestBatch, sendOperationalTestEmail } from "./email.js";
 import { handleEmailProviderWebhook } from "./emailWebhooks.js";
-import { customDomainReadiness, emailReadiness, loadEnv } from "./env.js";
+import { customDomainReadiness, emailReadiness, loadEnv, observabilityReadiness } from "./env.js";
 import { createEvent } from "./events.js";
 import { ApiError, toErrorResponse } from "./errors.js";
 import { idempotencyKeyFromHeaders, runIdempotent } from "./idempotency.js";
 import { logError, logInfo, sanitizeRequestPath } from "./logger.js";
+import { captureException } from "./observability.js";
 import { createMyBoardsAdminLink, readMyBoards, requestMyBoardsLink } from "./myBoards.js";
 import { getOrganizerAuth, getOrganizerSession, requireOrganizerSession } from "./organizerAuth.js";
 import { recordProductEvent } from "./productEvents.js";
@@ -164,6 +165,7 @@ const readyzHandler: Handler = async (c) => {
       email: emailReadiness(env),
       billing: readBillingReadiness(),
       customDomain: customDomainReadiness(env),
+      observability: observabilityReadiness(env),
     });
   } catch (error) {
     return jsonError(c, error);
@@ -980,6 +982,11 @@ function uuidParam(c: Context, name: string): string {
 function jsonError(c: Parameters<Handler>[0], error: unknown) {
   const response = toErrorResponse(error);
   if (response.status >= 500) {
+    captureException(error, {
+      method: c.req.method,
+      path: c.req.path,
+      status: response.status,
+    });
     logError(
       "slotboard_request_error",
       {

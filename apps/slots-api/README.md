@@ -193,6 +193,13 @@ unexpected errors. Request paths are redacted for URL-token routes before they
 are logged. The console email provider logs delivery metadata only, not email
 bodies, recipient addresses, notes, or private links.
 
+Sentry error tracking is optional and disabled unless `SENTRY_DSN` or
+`SLOTBOARD_SENTRY_DSN` is set on the API service. Set
+`SENTRY_ENVIRONMENT=production` and `SENTRY_RELEASE=<git-sha-or-release>` when
+available. Captured request URLs are redacted for public/admin/manage token
+routes, auth/reset query tokens, checkout session IDs, cookies, authorization
+headers, and ops secrets before events are sent.
+
 Idempotency:
 
 - `POST /api/slotboard/events` accepts `Idempotency-Key`.

@@ -157,13 +157,18 @@ Recommended Railway setup:
    - `SLOTBOARD_COMPANY_STANDBY_ANNUAL_AMOUNT=48000`
    - `SLOTBOARD_CUSTOM_DOMAIN_CNAME_TARGET=<frontend-service-host>`
 14. Set `SLOTBOARD_OPS_SECRET` to a long secret for protected operational checks.
-15. Optional retention vars:
+15. Optional Sentry error tracking:
+   - API service: `SENTRY_DSN`, `SENTRY_ENVIRONMENT=production`, `SENTRY_RELEASE=<git-sha-or-release>`
+   - Frontend service: `VITE_SENTRY_DSN`, `VITE_SENTRY_ENVIRONMENT=production`, `VITE_SENTRY_RELEASE=<git-sha-or-release>`
+   - Frontend performance tracing is disabled by default. Set `VITE_SENTRY_TRACES_SAMPLE_RATE=0.05` only if you want sampled browser traces.
+   - The frontend CSP automatically allows the Sentry ingest origin when `VITE_SENTRY_DSN` is present.
+16. Optional retention vars:
    - `SLOTBOARD_RETENTION_ARCHIVE_AFTER_DAYS=30`
    - `SLOTBOARD_RETENTION_DELETE_ARCHIVED_AFTER_DAYS=365`
    - `SLOTBOARD_RETENTION_PII_SCRUB_AFTER_DAYS=30`
    - `SLOTBOARD_RETENTION_RATE_LIMIT_AFTER_DAYS=7`
    - `SLOTBOARD_RETENTION_IDEMPOTENCY_AFTER_DAYS=7`
-16. Optional operational tuning:
+17. Optional operational tuning:
    - `SLOTBOARD_DB_POOL_MAX=10`
    - `SLOTBOARD_DB_CONNECTION_TIMEOUT_MS=5000`
    - `SLOTBOARD_DB_IDLE_TIMEOUT_MS=30000`

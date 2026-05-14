@@ -16,6 +16,7 @@ const cspConnectSources = [
   ...(includeLocalhostCspSources ? ["http://127.0.0.1:3014", "http://localhost:3014"] : []),
   ...envSourceList("SLOTBOARD_CSP_CONNECT_SRC"),
   ...envSourceList("VITE_SLOTBOARD_API_URL"),
+  ...sentryDsnOrigins("VITE_SENTRY_DSN"),
 ];
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -166,6 +167,19 @@ function envSourceList(name) {
   return (process.env[name] || "")
     .split(/[\s,]+/)
     .map((value) => value.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+}
+
+function sentryDsnOrigins(name) {
+  return envSourceList(name)
+    .map((value) => {
+      try {
+        const parsed = new URL(value);
+        return parsed.origin;
+      } catch {
+        return undefined;
+      }
+    })
     .filter(Boolean);
 }
 
