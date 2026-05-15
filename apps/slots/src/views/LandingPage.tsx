@@ -34,10 +34,9 @@ import { viewerTimezone } from '../lib/time';
 
 /* ─── LandingPage ─────────────────────────────────────────
  * The landing is its own surface, but its job is to PROVE the
- * product. So we render real booking-page DOM (the same peach
- * card + day-band rows + chips with AM/PM) inline as the demo,
- * not a cartoon. Editorial sections below pair prose with
- * additional real product snippets. */
+ * product. So we render real booking-page DOM inline as the
+ * demo, not a cartoon. Editorial sections below pair prose
+ * with additional real product snippets. */
 
 /* ─── Route-level head ─────────────────────────────────────
  * The site-wide defaults in apps/slots/index.html already
@@ -129,9 +128,9 @@ export function LandingPage() {
 
       <LandingProofStrip />
 
-      {/* ─── Demo — the REAL booking page rendered inline. Same
-       *  peach material, same day-band rows, same chip vocabulary,
-       *  same mono numerals. Not a cartoon. ─── */}
+      {/* ─── Demo — the REAL booking header rendered inline.
+       *  Same peach material, same product vocabulary, not a
+       *  cartoon. ─── */}
       <section className="landing-demo">
         <LandingDemoCard />
       </section>
@@ -504,9 +503,7 @@ function CreationFlowSection() {
  * The actual <BookingHeaderCard> from the booking page,
  * rendered with MOCK_EVENT. If the real product card changes
  * (new field, new layout, different colors), this updates
- * automatically — no drift between landing and product. The
- * day-band rows beneath are presentational because they're
- * tightly coupled to BookingPage's selection state machinery. */
+ * automatically, so the landing does not drift from product. */
 function LandingDemoCard() {
   const detectedTz = useMemo(() => viewerTimezone(), []);
   const [viewerTz, setViewerTz] = useState(detectedTz);
@@ -529,94 +526,6 @@ function LandingDemoCard() {
         openSlotCount={openSlotCount}
         uniqueDays={uniqueDays}
       />
-
-      {/* Presentational day-band rows matching the live booking surface. */}
-      <div className="day-list">
-        <section className="day-band is-active-view">
-          <div className="day-band__top">
-            <div className="day-band__head">
-              <span className="day-band__weekday">FRI</span>
-              <span className="day-band__num">15</span>
-              <span className="day-band__month">MAY</span>
-            </div>
-            <div className="day-band__chips">
-              {[
-                ['09:00', 'am'],
-                ['10:00', 'am'],
-                ['13:00', 'pm'],
-              ].map(([time, m]) => (
-                <button
-                  key={time}
-                  type="button"
-                  className={`day-band__chip day-band__chip--${m}`}
-                  tabIndex={-1}
-                >
-                  <span className="day-band__chip-time mono tabular">{time}</span>
-                  <span className="day-band__chip-meridiem" aria-hidden="true">{m}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="day-band is-active-view">
-          <div className="day-band__top">
-            <div className="day-band__head">
-              <span className="day-band__weekday">MON</span>
-              <span className="day-band__num">18</span>
-              <span className="day-band__month">MAY</span>
-            </div>
-            <div className="day-band__chips">
-              {[
-                ['07:00', 'am'],
-                ['08:00', 'am'],
-                ['09:00', 'am'],
-                ['10:00', 'am'],
-                ['14:00', 'pm'],
-                ['15:00', 'pm'],
-                ['16:00', 'pm'],
-              ].map(([time, m]) => (
-                <button
-                  key={time}
-                  type="button"
-                  className={`day-band__chip day-band__chip--${m}`}
-                  tabIndex={-1}
-                >
-                  <span className="day-band__chip-time mono tabular">{time}</span>
-                  <span className="day-band__chip-meridiem" aria-hidden="true">{m}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="day-band is-active-view">
-          <div className="day-band__top">
-            <div className="day-band__head">
-              <span className="day-band__weekday">TUE</span>
-              <span className="day-band__num">19</span>
-              <span className="day-band__month">MAY</span>
-            </div>
-            <div className="day-band__chips">
-              {[
-                ['09:00', 'am'],
-                ['10:00', 'am'],
-                ['14:00', 'pm'],
-              ].map(([time, m]) => (
-                <button
-                  key={time}
-                  type="button"
-                  className={`day-band__chip day-band__chip--${m}`}
-                  tabIndex={-1}
-                >
-                  <span className="day-band__chip-time mono tabular">{time}</span>
-                  <span className="day-band__chip-meridiem" aria-hidden="true">{m}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-      </div>
     </div>
   );
 }
