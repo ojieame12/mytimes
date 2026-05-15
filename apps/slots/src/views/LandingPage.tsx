@@ -99,9 +99,10 @@ export function LandingPage() {
         <p className="landing-hero__eyebrow">
           <span>For interview rounds</span> · candidate demos · vendor calls
         </p>
+        {/* Phrase blocks keep the headline breaks stable across viewports. */}
         <h1 className="landing-hero__title">
-          Your interview round,<br />
-          on a single page.
+          <span>Your interview round,</span>{' '}
+          <span>on a single page.</span>
         </h1>
         <p className="landing-hero__body">
           Fixed times, one shareable link. No participant accounts,
@@ -352,7 +353,7 @@ const FAQ_ITEMS: Array<{ q: string; a: ReactNode }> = [
     q: 'What counts as a board?',
     a: (
       <>
-        A board is one event &mdash; one interview round, one batch of vendor
+        A board is one event: one interview round, one batch of vendor
         calls, one set of office hours. Each board has its own public link,
         its own admin link, and its own slot list.
       </>
@@ -363,7 +364,7 @@ const FAQ_ITEMS: Array<{ q: string; a: ReactNode }> = [
     a: (
       <>
         Yes, on the Company plan. Participant links can live on a domain like
-        <code> book.company.com</code> while admin, login, and billing stay
+        {' '}<code>book.company.com</code> while admin, login, and billing stay
         on mytimes.co.
       </>
     ),
@@ -373,10 +374,10 @@ const FAQ_ITEMS: Array<{ q: string; a: ReactNode }> = [
     a: (
       <>
         Free is <strong>$0</strong> forever for individuals running small
-        rounds &mdash; capped at 2 active boards, 25 bookings per board, 60
-        slots, and a 60-day window. Company is <strong>$49/month</strong>
-        {' '}(or $480/year) with unlimited boards, 10 seats, custom subdomain,
-        and company-wide admin recovery.
+        rounds, capped at 2 active boards, 25 bookings per board, 60
+        slots, and a 60-day window. Company is <strong>$49 per month</strong>
+        {' '}(or $480 per year) with unlimited boards, 10 seats, custom
+        subdomain, and company-wide admin recovery.
       </>
     ),
   },
@@ -529,9 +530,7 @@ function LandingDemoCard() {
         uniqueDays={uniqueDays}
       />
 
-      {/* Presentational day-band rows — same DOM as the live
-       *  product, no interactivity (they'd need BookingPage's
-       *  selection state to be meaningful). */}
+      {/* Presentational day-band rows matching the live booking surface. */}
       <div className="day-list">
         <section className="day-band is-active-view">
           <div className="day-band__top">
