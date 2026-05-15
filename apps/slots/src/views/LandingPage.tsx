@@ -30,7 +30,6 @@ import { navigate } from '../lib/routing';
 import { BookingHeaderCard } from './BookingPage';
 import { TimezonePicker } from '../components/TimezonePicker';
 import { MOCK_EVENT, MOCK_SLOTS } from '../lib/mockData';
-import { viewerTimezone } from '../lib/time';
 
 /* ─── LandingPage ─────────────────────────────────────────
  * The landing is its own surface, but its job is to PROVE the
@@ -505,8 +504,8 @@ function CreationFlowSection() {
  * (new field, new layout, different colors), this updates
  * automatically, so the landing does not drift from product. */
 function LandingDemoCard() {
-  const detectedTz = useMemo(() => viewerTimezone(), []);
-  const [viewerTz, setViewerTz] = useState(detectedTz);
+  const demoViewerTz = 'America/New_York';
+  const [viewerTz, setViewerTz] = useState(demoViewerTz);
   const openSlotCount = MOCK_SLOTS.filter((s) => s.state === 'open').length;
   const uniqueDays = useMemo(() => {
     const set = new Set<string>();
@@ -521,7 +520,7 @@ function LandingDemoCard() {
       <BookingHeaderCard
         event={MOCK_EVENT}
         viewerTz={viewerTz}
-        detectedViewerTz={detectedTz}
+        detectedViewerTz={demoViewerTz}
         onViewerTzChange={setViewerTz}
         openSlotCount={openSlotCount}
         uniqueDays={uniqueDays}
@@ -567,9 +566,10 @@ function DayBandSnippet() {
 }
 
 /* ─── TzSnippet — real TimezonePicker + a sample participant
- *  strip + two dual-time chips (one with the +1d shift badge). */
+ *  strip + two dual-time chips, including a date-shift badge. */
 function TzSnippet() {
-  const [viewerTz, setViewerTz] = useState('Africa/Johannesburg');
+  const demoViewerTz = 'America/New_York';
+  const [viewerTz, setViewerTz] = useState(demoViewerTz);
   return (
     <div className="landing-snippet landing-snippet--tz">
       <div className="booking__tz-strip">
@@ -577,7 +577,7 @@ function TzSnippet() {
         <TimezonePicker
           value={viewerTz}
           onChange={setViewerTz}
-          detected="Africa/Johannesburg"
+          detected={demoViewerTz}
         />
         <span className="booking__tz-strip-sep" aria-hidden="true">·</span>
         <span className="booking__tz-strip-source">
@@ -591,19 +591,19 @@ function TzSnippet() {
           className="day-band__chip day-band__chip--am day-band__chip--dual"
           tabIndex={-1}
         >
-          <span className="day-band__chip-time mono tabular">11:00</span>
+          <span className="day-band__chip-time mono tabular">09:00</span>
           <span className="day-band__chip-meridiem" aria-hidden="true">am</span>
-          <span className="day-band__chip-source mono" aria-hidden="true">09:00</span>
+          <span className="day-band__chip-source mono" aria-hidden="true">14:00</span>
         </button>
         <button
           type="button"
           className="day-band__chip day-band__chip--pm day-band__chip--dual day-band__chip--date-shift"
           tabIndex={-1}
         >
-          <span className="day-band__chip-time mono tabular">23:30</span>
+          <span className="day-band__chip-time mono tabular">21:30</span>
           <span className="day-band__chip-meridiem" aria-hidden="true">pm</span>
-          <span className="day-band__chip-source mono" aria-hidden="true">21:30</span>
-          <span className="day-band__chip-shift" aria-hidden="true">+1d</span>
+          <span className="day-band__chip-source mono" aria-hidden="true">02:30</span>
+          <span className="day-band__chip-shift" aria-hidden="true">-1d</span>
         </button>
       </div>
     </div>
