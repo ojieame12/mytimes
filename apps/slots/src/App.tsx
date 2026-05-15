@@ -1,23 +1,44 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useRoute, navigate } from './lib/routing';
 import { AppShell } from './components/AppShell';
 import { BookingPage } from './views/BookingPage';
-import { DetailsStep } from './views/create/DetailsStep';
-import { AvailabilityStep } from './views/create/AvailabilityStep';
-import { ReviewStep } from './views/create/ReviewStep';
-import { DoneStep } from './views/create/DoneStep';
-import { ManageBookingPage } from './views/ManageBookingPage';
-import { AdminDashboardPage } from './views/AdminDashboardPage';
-import { RecoverAdminPage } from './views/RecoverAdminPage';
-import { AccountEventsPage } from './views/AccountEventsPage';
 import { AuthPage } from './views/AuthPage';
 import { LandingPage } from './views/LandingPage';
-import { MyBoardsPage } from './views/MyBoardsPage';
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from './views/PasswordResetPage';
 import { PricingPage } from './views/PricingPage';
-import { RequestBoardsLinkPage } from './views/RequestBoardsLinkPage';
 import { ApiClientError, readPublicBoard, type ClaimSlotResponse, type PublicBoardResponse } from './lib/api';
 import { MOCK_EVENT, MOCK_SLOTS } from './lib/mockData';
+
+const DetailsStep = lazy(() =>
+  import('./views/create/DetailsStep').then(({ DetailsStep }) => ({ default: DetailsStep })),
+);
+const AvailabilityStep = lazy(() =>
+  import('./views/create/AvailabilityStep').then(({ AvailabilityStep }) => ({ default: AvailabilityStep })),
+);
+const ReviewStep = lazy(() =>
+  import('./views/create/ReviewStep').then(({ ReviewStep }) => ({ default: ReviewStep })),
+);
+const DoneStep = lazy(() =>
+  import('./views/create/DoneStep').then(({ DoneStep }) => ({ default: DoneStep })),
+);
+const ManageBookingPage = lazy(() =>
+  import('./views/ManageBookingPage').then(({ ManageBookingPage }) => ({ default: ManageBookingPage })),
+);
+const AdminDashboardPage = lazy(() =>
+  import('./views/AdminDashboardPage').then(({ AdminDashboardPage }) => ({ default: AdminDashboardPage })),
+);
+const RecoverAdminPage = lazy(() =>
+  import('./views/RecoverAdminPage').then(({ RecoverAdminPage }) => ({ default: RecoverAdminPage })),
+);
+const AccountEventsPage = lazy(() =>
+  import('./views/AccountEventsPage').then(({ AccountEventsPage }) => ({ default: AccountEventsPage })),
+);
+const MyBoardsPage = lazy(() =>
+  import('./views/MyBoardsPage').then(({ MyBoardsPage }) => ({ default: MyBoardsPage })),
+);
+const RequestBoardsLinkPage = lazy(() =>
+  import('./views/RequestBoardsLinkPage').then(({ RequestBoardsLinkPage }) => ({ default: RequestBoardsLinkPage })),
+);
 
 export function App() {
   const route = useRoute();
@@ -60,15 +81,41 @@ export function App() {
   }
 
   // Create flow — each step manages its own CreateFlowShell wrapper.
-  if (route.type === 'new-basics') return <DetailsStep />;
-  if (route.type === 'new-availability') return <AvailabilityStep />;
-  if (route.type === 'new-review') return <ReviewStep />;
-  if (route.type === 'new-done') return <DoneStep />;
+  if (route.type === 'new-basics') {
+    return (
+      <StandaloneRouteSuspense title="Loading create flow">
+        <DetailsStep />
+      </StandaloneRouteSuspense>
+    );
+  }
+  if (route.type === 'new-availability') {
+    return (
+      <StandaloneRouteSuspense title="Loading availability">
+        <AvailabilityStep />
+      </StandaloneRouteSuspense>
+    );
+  }
+  if (route.type === 'new-review') {
+    return (
+      <StandaloneRouteSuspense title="Loading review">
+        <ReviewStep />
+      </StandaloneRouteSuspense>
+    );
+  }
+  if (route.type === 'new-done') {
+    return (
+      <StandaloneRouteSuspense title="Loading board links">
+        <DoneStep />
+      </StandaloneRouteSuspense>
+    );
+  }
 
   if (route.type === 'manage') {
     return (
       <AppShell>
-        <ManageBookingPage manageToken={route.manageToken} />
+        <RouteSuspense title="Loading booking details">
+          <ManageBookingPage manageToken={route.manageToken} />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -76,7 +123,9 @@ export function App() {
   if (route.type === 'admin') {
     return (
       <AppShell>
-        <AdminDashboardPage adminToken={route.adminToken} />
+        <RouteSuspense title="Loading admin board">
+          <AdminDashboardPage adminToken={route.adminToken} />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -84,7 +133,9 @@ export function App() {
   if (route.type === 'recover') {
     return (
       <AppShell>
-        <RecoverAdminPage />
+        <RouteSuspense title="Loading recovery">
+          <RecoverAdminPage />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -140,7 +191,9 @@ export function App() {
   if (route.type === 'account') {
     return (
       <AppShell>
-        <AccountEventsPage />
+        <RouteSuspense title="Loading account">
+          <AccountEventsPage />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -148,7 +201,9 @@ export function App() {
   if (route.type === 'account-event') {
     return (
       <AppShell>
-        <AdminDashboardPage accountEventId={route.eventId} />
+        <RouteSuspense title="Loading account board">
+          <AdminDashboardPage accountEventId={route.eventId} />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -156,7 +211,9 @@ export function App() {
   if (route.type === 'my-boards') {
     return (
       <AppShell>
-        <MyBoardsPage />
+        <RouteSuspense title="Loading boards">
+          <MyBoardsPage />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -164,7 +221,9 @@ export function App() {
   if (route.type === 'my-boards-request') {
     return (
       <AppShell>
-        <RequestBoardsLinkPage />
+        <RouteSuspense title="Loading board recovery">
+          <RequestBoardsLinkPage />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -183,6 +242,45 @@ export function App() {
     <AppShell>
       <NotFoundPage />
     </AppShell>
+  );
+}
+
+function StandaloneRouteSuspense({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <AppShell>
+          <RouteFallback title={title} />
+        </AppShell>
+      }
+    >
+      {children}
+    </Suspense>
+  );
+}
+
+function RouteSuspense({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Suspense fallback={<RouteFallback title={title} />}>
+      {children}
+    </Suspense>
+  );
+}
+
+function RouteFallback({ title }: { title: string }) {
+  return (
+    <section className="account-shell">
+      <section className="account-placeholder" aria-live="polite">
+        <h1 className="account-placeholder__title">{title}</h1>
+        <p className="account-placeholder__body">Fetching the latest details.</p>
+      </section>
+    </section>
   );
 }
 

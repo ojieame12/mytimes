@@ -9,6 +9,39 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('/node_modules/')) return undefined;
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/react-helmet-async/') ||
+            id.includes('/react-fast-compare/') ||
+            id.includes('/invariant/') ||
+            id.includes('/shallowequal/') ||
+            id.includes('/scheduler/') ||
+            id.includes('/use-sync-external-store/')
+          ) {
+            return 'react-vendor';
+          }
+          if (id.includes('/lucide-react/')) {
+            return 'icon-vendor';
+          }
+          if (id.includes('/@sentry/')) {
+            return 'observability-vendor';
+          }
+          if (id.includes('/@dicebear/core/')) return 'avatar-core';
+          if (id.includes('/@dicebear/open-peeps/')) return 'avatar-open-peeps';
+          if (id.includes('/@dicebear/notionists/')) return 'avatar-notionists';
+          if (id.includes('/@dicebear/lorelei/')) return 'avatar-lorelei';
+          if (id.includes('/@dicebear/big-smile/')) return 'avatar-big-smile';
+          return undefined;
+        },
+      },
+    },
+  },
   resolve: {
     dedupe: ['react', 'react-dom'],
   },
