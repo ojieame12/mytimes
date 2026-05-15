@@ -73,13 +73,28 @@ export function AppShell({ children, topBarRight, postmark = true }: AppShellPro
         </span>
         <span className="app-footer__rule" aria-hidden="true" />
         <span className="app-footer__year">© {new Date().getFullYear()}</span>
-        <a href="#privacy" className="app-footer__link">Privacy</a>
-        <a href="#terms" className="app-footer__link">Terms</a>
+        <FooterRouteLink href="/privacy">Privacy</FooterRouteLink>
+        <FooterRouteLink href="/terms">Terms</FooterRouteLink>
         <a href="mailto:hello@mytimes.co" className="app-footer__link">Contact</a>
         <span className="app-footer__hairline" aria-hidden="true">·</span>
         <span className="app-footer__credit">mytimes booking boards</span>
       </footer>
     </div>
+  );
+}
+
+function FooterRouteLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      className="app-footer__link"
+      onClick={(event) => {
+        event.preventDefault();
+        navigate(href);
+      }}
+    >
+      {children}
+    </a>
   );
 }
 

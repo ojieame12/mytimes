@@ -6,6 +6,7 @@ import { AuthPage } from './views/AuthPage';
 import { LandingPage } from './views/LandingPage';
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from './views/PasswordResetPage';
 import { PricingPage } from './views/PricingPage';
+import { PrivacyPage, TermsPage } from './views/LegalPage';
 import { ApiClientError, readPublicBoard, type ClaimSlotResponse, type PublicBoardResponse } from './lib/api';
 import { MOCK_EVENT, MOCK_SLOTS } from './lib/mockData';
 
@@ -144,6 +145,22 @@ export function App() {
     return (
       <AppShell>
         <PricingPage />
+      </AppShell>
+    );
+  }
+
+  if (route.type === 'privacy') {
+    return (
+      <AppShell>
+        <PrivacyPage />
+      </AppShell>
+    );
+  }
+
+  if (route.type === 'terms') {
+    return (
+      <AppShell>
+        <TermsPage />
       </AppShell>
     );
   }

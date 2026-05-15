@@ -9,6 +9,7 @@ import './styles/effects.css';
 import './styles/app-shell.css';
 import './styles/landing.css';
 import './styles/pricing.css';
+import './styles/legal.css';
 import './styles/my-boards.css';
 import './styles/checkout-return.css';
 import './styles/manage-booking.css';

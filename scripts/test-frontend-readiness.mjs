@@ -24,6 +24,7 @@ assertNoMatches(scannedFiles, [
   { pattern: /https:\/\/mytimes\.app\b|mytimes\.app\//, label: "old mytimes.app public origin" },
   { pattern: /MT-2026-[A-Z0-9]+/, label: "fake receipt id" },
   { pattern: /href="#"/, label: "dead href placeholder" },
+  { pattern: /href="#privacy"|href="#terms"/, label: "placeholder legal footer anchors" },
 ]);
 
 assertFileIncludes("apps/slots/src/views/PricingPage.tsx", [
@@ -42,6 +43,17 @@ assertFileIncludes("apps/slots/src/lib/routing.ts", [
   "/verify-email",
   "/forgot-password",
   "/reset-password",
+  "/privacy",
+  "/terms",
+]);
+assertFileIncludes("apps/slots/src/components/AppShell.tsx", [
+  'href="/privacy"',
+  'href="/terms"',
+]);
+assertFileIncludes("apps/slots/src/views/LegalPage.tsx", [
+  "Privacy Policy",
+  "Terms of Service",
+  "hello@mytimes.co",
 ]);
 assertFileIncludes("apps/slots/src/views/PasswordResetPage.tsx", [
   "Reset your password",
@@ -89,6 +101,8 @@ assertIncludes(bundleText, "Choose a new password", "bundle must include passwor
 assertIncludes(bundleText, "Check your email", "bundle must include verification sent copy");
 assertIncludes(bundleText, "Email verified", "bundle must include email verification success copy");
 assertIncludes(bundleText, "Verification link expired", "bundle must include email verification error copy");
+assertIncludes(bundleText, "Privacy Policy", "bundle must include privacy page copy");
+assertIncludes(bundleText, "Terms of Service", "bundle must include terms page copy");
 assertExcludes(bundleText, "Email previews", "bundle must not include email preview index copy");
 assertExcludes(bundleText, "mytimes.app", "bundle must not include old mytimes.app origin");
 assertExcludes(bundleText, "MT-2026", "bundle must not include fake receipt ids");

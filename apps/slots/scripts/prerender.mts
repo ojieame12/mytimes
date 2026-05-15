@@ -21,6 +21,8 @@ const ssrEntry = resolve(ssrDir, 'entry-ssr.js');
 const routes: Array<{ path: string; out: string }> = [
   { path: '/', out: 'index.html' },
   { path: '/pricing', out: 'pricing/index.html' },
+  { path: '/privacy', out: 'privacy/index.html' },
+  { path: '/terms', out: 'terms/index.html' },
 ];
 
 async function exists(filePath: string): Promise<boolean> {

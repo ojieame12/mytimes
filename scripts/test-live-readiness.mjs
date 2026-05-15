@@ -61,7 +61,7 @@ if (configuredApiURL) {
 await checkApiCustomDomain();
 checkActiveApiTarget(bundleText);
 
-for (const path of ["/pricing", "/b/preview", "/new", "/signin", "/verify-email", "/forgot-password", "/reset-password"]) {
+for (const path of ["/pricing", "/privacy", "/terms", "/b/preview", "/new", "/signin", "/verify-email", "/forgot-password", "/reset-password"]) {
   const response = await fetchText(`${frontendURL}${path}`);
   assertStatus(response, 200, `frontend route ${path} loads`);
   assertFrontendSecurityHeaders(response, `frontend route ${path}`);

@@ -9,6 +9,8 @@ import { useEffect, useState } from 'react';
 export type Route =
   | { type: 'landing' }
   | { type: 'pricing' }
+  | { type: 'privacy' }
+  | { type: 'terms' }
   | { type: 'new-basics' }
   | { type: 'new-availability' }
   | { type: 'new-review' }
@@ -31,6 +33,8 @@ export type Route =
 export function parseRoute(pathname: string): Route {
   if (pathname === '/' || pathname === '') return { type: 'landing' };
   if (pathname === '/pricing') return { type: 'pricing' };
+  if (pathname === '/privacy') return { type: 'privacy' };
+  if (pathname === '/terms') return { type: 'terms' };
   if (pathname === '/new') return { type: 'new-basics' };
   if (pathname === '/new/availability') return { type: 'new-availability' };
   if (pathname === '/new/review') return { type: 'new-review' };
