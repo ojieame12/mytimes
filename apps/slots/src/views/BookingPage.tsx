@@ -34,18 +34,15 @@ import type { ClaimSlotResponse } from '../lib/api';
 
 type TimeFilter = 'all' | 'morning' | 'afternoon' | 'evening';
 
-const COMMON_TIMEZONES = [
-  'Africa/Johannesburg',
-  'Europe/London',
-  'Europe/Helsinki',
-  'America/New_York',
+const DEMO_VIEWER_TIMEZONE = 'America/Los_Angeles';
+const DEMO_COMMON_TIMEZONES = [
   'America/Los_Angeles',
-  'Asia/Singapore',
-  'Australia/Sydney',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Phoenix',
   'UTC',
 ];
-
-const DEMO_VIEWER_TIMEZONE = 'America/Los_Angeles';
 
 export interface BookingPageProps {
   publicToken: string;
@@ -270,6 +267,7 @@ export function BookingPage({
             onViewerTzChange={setViewerTz}
             openSlotCount={openSlotCount}
             uniqueDays={uniqueDays}
+            commonTimezones={demoMode ? DEMO_COMMON_TIMEZONES : undefined}
           />
         </div>
 
@@ -299,6 +297,7 @@ export function BookingPage({
                 detectedViewerTz={detectedViewerTz}
                 sourceTz={event.timezone}
                 onViewerTzChange={setViewerTz}
+                commonTimezones={demoMode ? DEMO_COMMON_TIMEZONES : undefined}
               />
             )}
 
@@ -484,6 +483,7 @@ export function BookingHeaderCard({
   onViewerTzChange,
   openSlotCount,
   uniqueDays,
+  commonTimezones,
 }: {
   event: BookingEvent;
   viewerTz: string;
@@ -491,6 +491,7 @@ export function BookingHeaderCard({
   onViewerTzChange: (timezone: string) => void;
   openSlotCount: number;
   uniqueDays: number;
+  commonTimezones?: string[];
 }) {
   const [open, setOpen] = useState(false);
   const showMytimesFooter = !(
@@ -522,6 +523,7 @@ export function BookingHeaderCard({
                 value={viewerTz}
                 onChange={onViewerTzChange}
                 detected={detectedViewerTz}
+                commonZones={commonTimezones}
                 showLabel
               />
             </li>
@@ -645,11 +647,13 @@ function ParticipantTzStrip({
   detectedViewerTz,
   sourceTz,
   onViewerTzChange,
+  commonTimezones,
 }: {
   viewerTz: string;
   detectedViewerTz: string;
   sourceTz: string;
   onViewerTzChange: (tz: string) => void;
+  commonTimezones?: string[];
 }) {
   return (
     <div className="booking__tz-strip" role="region" aria-label="Timezone context">
@@ -658,6 +662,7 @@ function ParticipantTzStrip({
         value={viewerTz}
         onChange={onViewerTzChange}
         detected={detectedViewerTz}
+        commonZones={commonTimezones}
       />
       <span className="booking__tz-strip-sep" aria-hidden="true">·</span>
       <span className="booking__tz-strip-source">

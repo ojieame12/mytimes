@@ -44,6 +44,8 @@ function listIanaTimezones(): string[] {
 export interface TimezonePickerProps {
   value: string;
   onChange: (tz: string) => void;
+  /** Optional visible shortcuts for the popover. Search still uses all IANA zones. */
+  commonZones?: string[];
   /** The system-detected zone. Pinned at the top of the popover
    *  for one-tap return-to-default. */
   detected?: string;
@@ -57,6 +59,7 @@ export interface TimezonePickerProps {
 export function TimezonePicker({
   value,
   onChange,
+  commonZones = COMMON_ZONES,
   detected,
   triggerClassName,
   showLabel = false,
@@ -146,7 +149,7 @@ export function TimezonePicker({
           </div>
 
           <div className="tz-picker__pop-list">
-            {(query ? filtered : COMMON_ZONES).map((tz) => {
+            {(query ? filtered : commonZones).map((tz) => {
               const isActive = tz === value;
               return (
                 <button
@@ -171,7 +174,7 @@ export function TimezonePicker({
 
           {!query && (
             <p className="tz-picker__pop-foot">
-              {allZones.length > COMMON_ZONES.length
+              {allZones.length > commonZones.length
                 ? `Search ${allZones.length} timezones`
                 : 'Common timezones'}
             </p>

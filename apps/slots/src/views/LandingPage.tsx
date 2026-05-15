@@ -47,6 +47,14 @@ const LANDING_TITLE = 'mytimes — Scheduling for one-off interview rounds';
 const LANDING_DESCRIPTION =
   'One-off interview rounds, candidate demos, and vendor calls. Fixed times, one shareable link. No participant accounts, no calendar OAuth. Live in five minutes.';
 const LANDING_URL = 'https://mytimes.co/';
+const US_DEMO_TIMEZONES = [
+  'America/Los_Angeles',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Phoenix',
+  'UTC',
+];
 
 const LANDING_JSON_LD = {
   '@context': 'https://schema.org',
@@ -524,6 +532,7 @@ function LandingDemoCard() {
         onViewerTzChange={setViewerTz}
         openSlotCount={openSlotCount}
         uniqueDays={uniqueDays}
+        commonTimezones={US_DEMO_TIMEZONES}
       />
     </div>
   );
@@ -578,6 +587,7 @@ function TzSnippet() {
           value={viewerTz}
           onChange={setViewerTz}
           detected={demoViewerTz}
+          commonZones={US_DEMO_TIMEZONES}
         />
         <span className="booking__tz-strip-sep" aria-hidden="true">·</span>
         <span className="booking__tz-strip-source">
