@@ -37,7 +37,7 @@ const baseEvent: EventDTO = {
   id: eventId,
   title: 'Vision Assessment',
   description: '60-minute deep-dive on your roadmap and team strategy.',
-  organizerName: 'Oyani Solis',
+  organizerName: 'Emily Carter',
   organizerEmail: recipient,
   timezone: 'Europe/London',
   durationMinutes: 60,

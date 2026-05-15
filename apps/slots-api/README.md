@@ -338,8 +338,8 @@ Create-event request shape:
 {
   "title": "Vision Assessment",
   "description": "Optional plain-text details.",
-  "organizerName": "Oyani Solis",
-  "organizerEmail": "oyani@example.com",
+  "organizerName": "Emily Carter",
+  "organizerEmail": "emily@example.com",
   "timezone": "Africa/Johannesburg",
   "allowMultipleBookings": false,
   "availability": {

@@ -819,7 +819,7 @@ export async function sendEmailDesignTestBatch(input: {
     id: eventId,
     title: "Vision Assessment",
     description: "60-minute deep-dive on roadmap and team strategy.",
-    organizerName: "Oyani Solis",
+    organizerName: "Emily Carter",
     organizerEmail: recipient,
     avatarStyle: "notionists",
     timezone: "Europe/London",
@@ -1450,7 +1450,7 @@ function renderTimeBlock(data: TimeBlockData, style: TimeBlockStyle): string {
   const timeColor = isMuted ? COLOR_MUTED : COLOR_BODY;
 
   // Primary row is the hero (date + time). Secondary row is a single muted
-  // line beneath ("9:00 BST for Oyani").
+  // line beneath ("9:00 BST for Emily").
   const primary = data.primary;
   const secondaryLine = data.secondary
     ? `<div style="font-family:${FONT_BODY};font-size:13px;color:${COLOR_MUTED};line-height:1.45;mso-line-height-rule:exactly"><span style="font-family:${FONT_MONO};color:${isMuted ? COLOR_MUTED : COLOR_BODY}">${escapeHtml(data.secondary.timeRange.split("–")[0] ?? data.secondary.timeRange)}&nbsp;${escapeHtml(data.secondary.timezone)}</span> · ${escapeHtml(data.secondary.label.toLowerCase())}</div>`

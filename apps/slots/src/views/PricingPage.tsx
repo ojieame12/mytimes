@@ -481,7 +481,7 @@ export function PricingPage() {
       {/* ─── Founder note ───────────────────────────────── */}
       <section className="pricing-founder" aria-label="A note from the founder">
         <Avatar
-          seed="ojieame@mytimes.co"
+          seed="james.miller@mytimes.co"
           style="notionists"
           size={56}
         />
@@ -493,12 +493,12 @@ export function PricingPage() {
             per-seat math before you have a real team."
           </p>
           <p className="pricing-founder__sign">
-            Ojieame, founder ·{' '}
+            James Miller, founder ·{' '}
             <a
               className="pricing-founder__email mono"
-              href="mailto:ojieame@mytimes.co"
+              href="mailto:hello@mytimes.co"
             >
-              ojieame@mytimes.co
+              hello@mytimes.co
             </a>
           </p>
         </div>

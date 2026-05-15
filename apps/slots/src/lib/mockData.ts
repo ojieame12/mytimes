@@ -12,8 +12,8 @@ export const MOCK_EVENT: BookingEvent = {
   title: 'Vision Assessment',
   description:
     'Half-hour intro to scope the assessment. Pick a time that works for you. We send a calendar file after you confirm.',
-  organizerName: 'Oyani Solis',
-  organizerEmail: 'oyani@vision.studio',
+  organizerName: 'Emily Carter',
+  organizerEmail: 'emily@vision.studio',
   timezone: 'Europe/London',
   durationMinutes: 60,
   allowMultipleBookings: false,
@@ -78,7 +78,7 @@ const days = nextWeekdays(22);
 
 /* Mock admin-only metadata seeded into booked slots. */
 const BOOKED_PEOPLE = [
-  { initials: 'NO', name: 'Nathan Ojie', email: 'nathan@ojieame.design', notes: 'On a phone for the first 5 minutes.' },
+  { initials: 'MR', name: 'Mark Reynolds', email: 'mark@reynolds.design', notes: 'On a phone for the first 5 minutes.' },
   { initials: 'AG', name: 'Anya Gupta', email: 'anya@protonmail.com', notes: '' },
   { initials: 'TM', name: 'Tomás Marín', email: 'tomas@stack.studio', notes: 'May join from the road, audio only.' },
   { initials: 'RS', name: 'Rin Sato', email: 'rin@studio-r.jp', notes: '' },
