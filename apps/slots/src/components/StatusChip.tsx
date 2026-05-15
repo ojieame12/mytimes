@@ -7,6 +7,7 @@ export type StatusChipKind =
   | 'open'
   | 'booked'
   | 'closed'
+  | 'blocked'
   | 'cancelled'
   | 'just-claimed'
   | 'active'
@@ -17,6 +18,7 @@ const LABEL: Record<StatusChipKind, string> = {
   open: 'Open',
   booked: 'Booked',
   closed: 'Closed',
+  blocked: 'Blocked',
   cancelled: 'Cancelled',
   'just-claimed': 'Confirmed',
   active: 'Active',

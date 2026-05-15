@@ -20,6 +20,7 @@ export type CreateEventResponse = {
     avatarSeed?: string;
     timezone: string;
     meetingDurationMinutes: number;
+    intervalMinutes: number;
     allowMultipleBookings: boolean;
     status: 'active';
     planKey?: 'free' | 'event_pass' | 'company_standby';
@@ -310,8 +311,10 @@ export async function createEventFromDraft(draft: WizardDraft): Promise<CreateEv
         dailyStart: draft.dailyStart,
         dailyEnd: draft.dailyEnd,
         durationMinutes: draft.durationMinutes,
+        intervalMinutes: draft.intervalMinutes,
         timezone: draft.timezone,
         blockedRanges: draft.blockedRanges,
+        excludedSlotStarts: draft.excludedSlotStarts,
       },
     },
   });

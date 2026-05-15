@@ -34,6 +34,7 @@ export type CreatedEventResponse = {
     avatarSeed: string;
     timezone: string;
     meetingDurationMinutes: number;
+    intervalMinutes: number;
     allowMultipleBookings: boolean;
     status: "active";
     planKey: "free" | "event_pass" | "company_standby";
@@ -80,6 +81,7 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
           timezone,
           timezone_locked_at,
           meeting_duration_minutes,
+          interval_minutes,
           allow_multiple_bookings,
           availability_config,
           public_token_hash,
@@ -92,7 +94,7 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
           booking_limit,
           slot_limit
         )
-        values ($1, $2, $3, $4, $5, $6, $7, now(), $8, $9, $10::jsonb, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        values ($1, $2, $3, $4, $5, $6, $7, now(), $8, $9, $10, $11::jsonb, $12, $13, $14, $15, $16, $17, $18, $19, $20)
         returning
           id,
           title,
@@ -103,6 +105,7 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
           avatar_seed,
           timezone,
           meeting_duration_minutes,
+          interval_minutes,
           allow_multiple_bookings,
           status,
           plan_key,
@@ -122,6 +125,7 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
         avatarSeed,
         input.timezone,
         input.availability.durationMinutes,
+        input.availability.intervalMinutes ?? input.availability.durationMinutes,
         input.allowMultipleBookings,
         JSON.stringify(input.availability),
         publicToken.tokenHash,
@@ -186,6 +190,7 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
       avatarSeed: event.avatar_seed ?? avatarSeed,
       timezone: event.timezone,
       meetingDurationMinutes: event.meeting_duration_minutes,
+      intervalMinutes: event.interval_minutes,
       allowMultipleBookings: event.allow_multiple_bookings,
       status: "active",
       planKey: event.plan_key,
@@ -337,6 +342,7 @@ type CreatedEventRow = {
   avatar_seed: string | null;
   timezone: string;
   meeting_duration_minutes: number;
+  interval_minutes: number;
   allow_multiple_bookings: boolean;
   status: "active";
   plan_key: "free" | "event_pass" | "company_standby";

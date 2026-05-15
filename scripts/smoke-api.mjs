@@ -21,6 +21,17 @@ const fullPreview = await request("/api/slotboard/availability/preview", {
   json: exclusionAvailability,
 });
 assert(fullPreview.slots.length === 2, `expected preview to generate 2 slots, got ${fullPreview.slots.length}`);
+const intervalPreview = await request("/api/slotboard/availability/preview", {
+  method: "POST",
+  json: {
+    ...exclusionAvailability,
+    intervalMinutes: 30,
+  },
+});
+assert(
+  intervalPreview.slots.length === 3,
+  `expected interval preview to generate 3 overlapping starts, got ${intervalPreview.slots.length}`,
+);
 const excludedStart = fullPreview.slots[0].startsAt;
 const excludedPreview = await request("/api/slotboard/availability/preview", {
   method: "POST",

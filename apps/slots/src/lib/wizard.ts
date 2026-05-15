@@ -8,6 +8,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 export type DurationMinutes = 15 | 30 | 45 | 60 | 90;
 export const ALLOWED_DURATIONS: DurationMinutes[] = [15, 30, 45, 60, 90];
+export type IntervalMinutes = DurationMinutes;
+export const ALLOWED_INTERVALS: IntervalMinutes[] = ALLOWED_DURATIONS;
 
 export interface BlockedRangeDraft {
   /** HH:mm */
@@ -23,6 +25,7 @@ export interface WizardDraft {
   organizerEmail: string;
   timezone: string;
   durationMinutes: DurationMinutes;
+  intervalMinutes: IntervalMinutes;
   allowMultipleBookings: boolean;
   avatarStyle: import('./types').AvatarStyle;
 
@@ -33,6 +36,7 @@ export interface WizardDraft {
   dailyStart: string;  // HH:mm
   dailyEnd: string;
   blockedRanges: BlockedRangeDraft[];
+  excludedSlotStarts: string[];
 }
 
 const STORAGE_KEY = 'mytimes:slots:wizard-draft:v1';
@@ -59,6 +63,7 @@ export function defaultDraft(): WizardDraft {
     organizerEmail: '',
     timezone: detectedTimezone(),
     durationMinutes: 30,
+    intervalMinutes: 30,
     allowMultipleBookings: false,
     avatarStyle: 'notionists',
     startDate: isoToday(),
@@ -67,6 +72,7 @@ export function defaultDraft(): WizardDraft {
     dailyStart: '09:00',
     dailyEnd: '17:00',
     blockedRanges: [],
+    excludedSlotStarts: [],
   };
 }
 
@@ -141,6 +147,7 @@ export function validateDetails(d: WizardDraft): FieldErrors {
   else if (d.organizerName.length > 160) errors.organizerName = 'Name must be 160 characters or fewer.';
   if (!EMAIL_RE.test(d.organizerEmail)) errors.organizerEmail = 'Use a valid email like name@company.com.';
   if (!ALLOWED_DURATIONS.includes(d.durationMinutes)) errors.durationMinutes = 'Pick a duration.';
+  if (!ALLOWED_INTERVALS.includes(d.intervalMinutes)) errors.intervalMinutes = 'Pick a start cadence.';
   return errors;
 }
 
@@ -153,6 +160,7 @@ export function validateAvailability(d: WizardDraft): FieldErrors {
   if (!/^\d{2}:\d{2}$/.test(d.dailyStart)) errors.dailyStart = 'Pick a start time.';
   if (!/^\d{2}:\d{2}$/.test(d.dailyEnd)) errors.dailyEnd = 'Pick an end time.';
   if (d.dailyStart >= d.dailyEnd) errors.dailyEnd = 'Daily end must be after daily start.';
+  if (!ALLOWED_INTERVALS.includes(d.intervalMinutes)) errors.intervalMinutes = 'Pick a start cadence.';
   for (let i = 0; i < d.blockedRanges.length; i += 1) {
     const r = d.blockedRanges[i];
     if (r.start >= r.end) errors[`blockedRanges.${i}`] = 'Break end must be after its start.';

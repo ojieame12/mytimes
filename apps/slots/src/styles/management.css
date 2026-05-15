@@ -936,12 +936,14 @@ a.material-stamp-dark {
 }
 .status-chip--booked .status-chip__dot { background: var(--primary); }
 
-.status-chip--closed {
+.status-chip--closed,
+.status-chip--blocked {
   background: var(--zinc-100);
   border-color: var(--zinc-200);
   color: var(--zinc-600);
 }
-.status-chip--closed .status-chip__dot { background: var(--zinc-400); }
+.status-chip--closed .status-chip__dot,
+.status-chip--blocked .status-chip__dot { background: var(--zinc-400); }
 
 .status-chip--cancelled {
   background: var(--red-50);

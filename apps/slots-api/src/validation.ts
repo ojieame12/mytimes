@@ -92,6 +92,7 @@ export function toAvailabilityInput(value: unknown): AvailabilityInput {
     dailyStart: stringValue(value, "dailyStart") as AvailabilityInput["dailyStart"],
     dailyEnd: stringValue(value, "dailyEnd") as AvailabilityInput["dailyEnd"],
     durationMinutes: numberValue(value, "durationMinutes"),
+    intervalMinutes: optionalNumber(value, "intervalMinutes"),
     timezone: stringValue(value, "timezone"),
   };
 
@@ -509,6 +510,17 @@ export function stringValue(record: Record<string, unknown>, key: string): strin
 
 function numberValue(record: Record<string, unknown>, key: string): number {
   const value = record[key];
+  if (typeof value !== "number") {
+    throw new ApiError(400, "invalid_request", `${key} must be a number`);
+  }
+  return value;
+}
+
+function optionalNumber(record: Record<string, unknown>, key: string): number | undefined {
+  const value = record[key];
+  if (value === undefined || value === null) {
+    return undefined;
+  }
   if (typeof value !== "number") {
     throw new ApiError(400, "invalid_request", `${key} must be a number`);
   }

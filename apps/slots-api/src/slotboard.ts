@@ -40,6 +40,7 @@ export type EventDTO = {
   avatarSeed?: string | undefined;
   timezone: string;
   durationMinutes: number;
+  intervalMinutes: number;
   allowMultipleBookings: boolean;
   status: "active" | "archived" | "deleted";
   planKey: "free" | "event_pass" | "company_standby";
@@ -60,7 +61,7 @@ export type SlotDTO = {
   sourceDate?: string | undefined;
   sourceStartTime?: string | undefined;
   sourceEndTime?: string | undefined;
-  state: "open" | "booked" | "closed" | "just-claimed" | "cancelled";
+  state: "open" | "booked" | "closed" | "blocked" | "just-claimed" | "cancelled";
   closeAfterBooking?: boolean | undefined;
   bookingId?: string | undefined;
   bookedInitials?: string | undefined;
@@ -161,16 +162,16 @@ export async function claimSlot(
       );
     }
 
-    const slot = await lockSlot(client, event.id, input.slotId);
+    const slot = await lockSlotAndOverlaps(client, event.id, input.slotId);
     await assertSlotWithinPublishedLimit(client, event, input.slotId);
 
     if (slot.status !== "open") {
       throw new ApiError(409, "slot_unavailable", "This slot is not open");
     }
 
-    const activeCount = await activeBookingCount(client, input.slotId);
-    if (activeCount >= slot.capacity) {
-      throw new ApiError(409, "slot_unavailable", "This slot has already been booked");
+    const activeOverlapCount = await activeOverlappingBookingCount(client, event.id, slot);
+    if (activeOverlapCount > 0) {
+      throw new ApiError(409, "slot_unavailable", "This slot overlaps a booking that has already been claimed");
     }
 
     const dedupeEmail = event.allowMultipleBookings ? null : input.participantEmail;
@@ -258,7 +259,10 @@ export async function readManagedRescheduleOptions(rawToken: string): Promise<{
 }> {
   const current = await readManageBooking(rawToken);
   const slots = current.booking.status === "active" && isEventPubliclyBookable(current.event)
-    ? await readOpenSlots(current.event.id, current.event.slotLimit)
+    ? await readOpenSlots(current.event.id, current.event.slotLimit, {
+      excludeBookingId: current.booking.id,
+      excludeSlotId: current.slot.id,
+    })
     : [];
   return {
     ...current,
@@ -390,15 +394,15 @@ export async function rescheduleManagedBooking(
       );
     }
 
-    const targetSlot = await lockSlot(client, event.id, input.slotId);
+    const targetSlot = await lockSlotAndOverlaps(client, event.id, input.slotId);
     await assertSlotWithinPublishedLimit(client, event, input.slotId);
     if (targetSlot.status !== "open") {
       throw new ApiError(409, "slot_unavailable", "This slot is not open");
     }
 
-    const activeCount = await activeBookingCount(client, input.slotId);
-    if (activeCount >= targetSlot.capacity) {
-      throw new ApiError(409, "slot_unavailable", "This slot has already been booked");
+    const activeOverlapCount = await activeOverlappingBookingCount(client, event.id, targetSlot, locked.booking_id);
+    if (activeOverlapCount > 0) {
+      throw new ApiError(409, "slot_unavailable", "This slot overlaps a booking that has already been claimed");
     }
 
     if (!event.allowMultipleBookings) {
@@ -1263,6 +1267,7 @@ const eventColumns = `
   avatar_seed,
   timezone,
   meeting_duration_minutes,
+  interval_minutes,
   allow_multiple_bookings,
   status,
   plan_key,
@@ -1286,6 +1291,7 @@ function eventColumnsWithAlias(alias: string): string {
     `${alias}.avatar_seed`,
     `${alias}.timezone`,
     `${alias}.meeting_duration_minutes`,
+    `${alias}.interval_minutes`,
     `${alias}.allow_multiple_bookings`,
     `${alias}.status`,
     `${alias}.plan_key`,
@@ -1338,7 +1344,11 @@ async function resolveEventByOwner(
   return mapEvent(rowOrThrow(result, "event_not_found", "Event not found"));
 }
 
-async function readOpenSlots(eventId: string, slotLimit: number): Promise<SlotDTO[]> {
+async function readOpenSlots(
+  eventId: string,
+  slotLimit: number,
+  options: { excludeBookingId?: string; excludeSlotId?: string } = {},
+): Promise<SlotDTO[]> {
   const result = await getPool().query<SlotStatusRow>(
     `
       with ranked_slots as (
@@ -1360,15 +1370,20 @@ async function readOpenSlots(eventId: string, slotLimit: number): Promise<SlotDT
       from ranked_slots s
       where s.publish_rank <= $2
         and s.status = 'open'
+        and ($3::uuid is null or s.id <> $3::uuid)
         and not exists (
           select 1
           from slotboard.bookings b
-          where b.slot_id = s.id
+          join slotboard.time_slots booked_slot on booked_slot.id = b.slot_id
+          where b.event_id = s.event_id
             and b.cancelled_at is null
+            and ($4::uuid is null or b.id <> $4::uuid)
+            and s.starts_at < booked_slot.ends_at
+            and s.ends_at > booked_slot.starts_at
         )
       order by starts_at asc, id asc
     `,
-    [eventId, slotLimit],
+    [eventId, slotLimit, options.excludeSlotId ?? null, options.excludeBookingId ?? null],
   );
   return result.rows.map((row) => ({
     id: row.id,
@@ -1405,7 +1420,19 @@ async function readAdminSlots(eventId: string): Promise<SlotDTO[]> {
           where l.booking_id = b.id
             and l.recipient_email = b.participant_email
             and l.status = 'bounced'
-        ) as email_bounced
+        ) as email_bounced,
+        (
+          select overlap_booking.id
+          from slotboard.bookings overlap_booking
+          join slotboard.time_slots overlap_slot on overlap_slot.id = overlap_booking.slot_id
+          where overlap_booking.event_id = s.event_id
+            and overlap_booking.cancelled_at is null
+            and overlap_booking.slot_id <> s.id
+            and s.starts_at < overlap_slot.ends_at
+            and s.ends_at > overlap_slot.starts_at
+          order by overlap_slot.starts_at asc, overlap_slot.id asc
+          limit 1
+        ) as overlap_booking_id
       from slotboard.time_slots s
       left join slotboard.bookings b on b.slot_id = s.id and b.cancelled_at is null
       where s.event_id = $1
@@ -1415,13 +1442,14 @@ async function readAdminSlots(eventId: string): Promise<SlotDTO[]> {
   );
   return result.rows.map((row) => {
     const booked = Boolean(row.booking_id);
+    const blocked = !booked && row.status === "open" && Boolean(row.overlap_booking_id);
     return {
       id: row.id,
       eventId: row.event_id,
       startsAt: row.starts_at.toISOString(),
       endsAt: row.ends_at.toISOString(),
       ...sourceSlotFields(row),
-      state: booked ? "booked" : row.status,
+      state: booked ? "booked" : blocked ? "blocked" : row.status,
       closeAfterBooking: row.close_after_booking,
       bookingId: row.booking_id ?? undefined,
       bookedInitials: row.participant_name ? initials(row.participant_name) : undefined,
@@ -1448,15 +1476,65 @@ async function lockSlot(client: pg.PoolClient, eventId: string, slotId: string):
   return rowOrThrow(result, "slot_not_found", "Slot not found");
 }
 
-async function activeBookingCount(client: pg.PoolClient, slotId: string): Promise<number> {
+async function lockSlotAndOverlaps(
+  client: pg.PoolClient,
+  eventId: string,
+  slotId: string,
+): Promise<LockedSlotRow> {
+  const result = await client.query<LockedSlotRow>(
+    `
+      with target as (
+        select starts_at, ends_at
+        from slotboard.time_slots
+        where event_id = $1
+          and id = $2
+      )
+      select
+        s.id,
+        s.event_id,
+        s.starts_at,
+        s.ends_at,
+        s.source_date,
+        s.source_start_time,
+        s.source_end_time,
+        s.capacity,
+        s.status,
+        s.close_after_booking
+      from slotboard.time_slots s
+      join target t on true
+      where s.event_id = $1
+        and s.starts_at < t.ends_at
+        and s.ends_at > t.starts_at
+      order by s.starts_at asc, s.id asc
+      for update of s
+    `,
+    [eventId, slotId],
+  );
+  const target = result.rows.find((row) => row.id === slotId);
+  if (!target) {
+    throw new ApiError(404, "slot_not_found", "Slot not found");
+  }
+  return target;
+}
+
+async function activeOverlappingBookingCount(
+  client: pg.PoolClient,
+  eventId: string,
+  slot: Pick<LockedSlotRow, "starts_at" | "ends_at">,
+  excludeBookingId?: string,
+): Promise<number> {
   const result = await client.query<{ count: string }>(
     `
       select count(*)::text as count
-      from slotboard.bookings
-      where slot_id = $1
-        and cancelled_at is null
+      from slotboard.bookings b
+      join slotboard.time_slots booked_slot on booked_slot.id = b.slot_id
+      where b.event_id = $1
+        and b.cancelled_at is null
+        and booked_slot.starts_at < $3
+        and booked_slot.ends_at > $2
+        and ($4::uuid is null or b.id <> $4::uuid)
     `,
-    [slotId],
+    [eventId, slot.starts_at, slot.ends_at, excludeBookingId ?? null],
   );
   return Number(result.rows[0]?.count ?? 0);
 }
@@ -1700,6 +1778,7 @@ function mapEvent(row: EventRow): EventDTO {
     avatarSeed: row.avatar_seed ?? undefined,
     timezone: row.timezone,
     durationMinutes: row.meeting_duration_minutes,
+    intervalMinutes: row.interval_minutes,
     allowMultipleBookings: row.allow_multiple_bookings,
     status: row.status,
     planKey: row.plan_key,
@@ -1724,6 +1803,7 @@ function mapEventFromBookingRow(row: ManageBookingRow): EventDTO {
     avatarSeed: row.avatar_seed ?? undefined,
     timezone: row.timezone,
     durationMinutes: row.meeting_duration_minutes,
+    intervalMinutes: row.interval_minutes,
     allowMultipleBookings: row.allow_multiple_bookings,
     status: row.event_status,
     planKey: row.plan_key,
@@ -1908,6 +1988,7 @@ type EventRow = {
   avatar_seed: string | null;
   timezone: string;
   meeting_duration_minutes: number;
+  interval_minutes: number;
   allow_multiple_bookings: boolean;
   status: "active" | "archived" | "deleted";
   plan_key: "free" | "event_pass" | "company_standby";
@@ -1966,6 +2047,7 @@ type AdminSlotRow = SlotStatusRow & {
   notes: string | null;
   booked_at: Date | null;
   email_bounced: boolean;
+  overlap_booking_id: string | null;
 };
 
 const joinedBookingColumns = `
@@ -1978,6 +2060,7 @@ const joinedBookingColumns = `
   e.avatar_seed,
   e.timezone,
   e.meeting_duration_minutes,
+  e.interval_minutes,
   e.allow_multiple_bookings,
   e.status as event_status,
   e.plan_key,
@@ -2018,6 +2101,7 @@ type ManageBookingRow = {
   avatar_seed: string | null;
   timezone: string;
   meeting_duration_minutes: number;
+  interval_minutes: number;
   allow_multiple_bookings: boolean;
   event_status: "active" | "archived" | "deleted";
   plan_key: "free" | "event_pass" | "company_standby";

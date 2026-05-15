@@ -12,6 +12,7 @@ create table if not exists slotboard.booking_events (
   timezone text not null,
   timezone_locked_at timestamptz,
   meeting_duration_minutes int not null,
+  interval_minutes int not null default 30,
   allow_multiple_bookings boolean not null default false,
   availability_config jsonb not null default '{}'::jsonb,
   public_token_hash text not null unique,
@@ -23,6 +24,7 @@ create table if not exists slotboard.booking_events (
   updated_at timestamptz not null default now(),
   constraint booking_events_status_check check (status in ('active', 'archived', 'deleted')),
   constraint booking_events_duration_check check (meeting_duration_minutes in (15, 30, 45, 60, 90)),
+  constraint booking_events_interval_check check (interval_minutes in (15, 30, 45, 60, 90)),
   constraint booking_events_avatar_style_check check (avatar_style in ('notionists', 'open-peeps', 'lorelei', 'big-smile'))
 );
 
@@ -261,6 +263,20 @@ alter table slotboard.booking_events
 
 alter table slotboard.booking_events
   add column if not exists timezone_locked_at timestamptz;
+
+alter table slotboard.booking_events
+  add column if not exists interval_minutes int not null default 30;
+
+update slotboard.booking_events
+set interval_minutes = coalesce((availability_config->>'intervalMinutes')::int, meeting_duration_minutes)
+where availability_config ? 'intervalMinutes'
+   or interval_minutes = 30;
+
+alter table slotboard.booking_events
+  drop constraint if exists booking_events_interval_check;
+
+alter table slotboard.booking_events
+  add constraint booking_events_interval_check check (interval_minutes in (15, 30, 45, 60, 90));
 
 alter table slotboard.booking_events
   add column if not exists avatar_style text not null default 'notionists',

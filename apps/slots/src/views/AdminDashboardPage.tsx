@@ -948,6 +948,12 @@ function SlotActionPanel({
         </button>
       )}
 
+      {slot.state === 'blocked' && (
+        <p className="admin-slot-panel__empty">
+          This start time overlaps an active booking. It will reopen automatically if that booking is cancelled or moved.
+        </p>
+      )}
+
       {slot.state === 'booked' && (
         <div className="admin-slot-panel__cancel">
           <div className="admin-slot-panel__email">
@@ -1155,7 +1161,7 @@ function dashboardStats(slots: TimeSlot[]) {
       acc.total += 1;
       if (slot.state === 'open') acc.open += 1;
       if (slot.state === 'booked') acc.booked += 1;
-      if (slot.state === 'closed') acc.closed += 1;
+      if (slot.state === 'closed' || slot.state === 'blocked') acc.closed += 1;
       return acc;
     },
     { open: 0, booked: 0, closed: 0, total: 0 },

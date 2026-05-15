@@ -13,6 +13,7 @@ export type AvailabilityInput = {
   dailyStart: ClockTime;
   dailyEnd: ClockTime;
   durationMinutes: number;
+  intervalMinutes?: number | undefined;
   timezone: string;
   blockedRanges?: BlockedRangeInput[];
   excludedSlotStarts?: string[];

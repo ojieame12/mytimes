@@ -9,6 +9,7 @@ import { formatTimeInTz, formatTzAbbrev } from '../lib/time';
  *   booked         warm wax · initials below · admin only
  *                  (public view excludes booked slots entirely)
  *   closed         hatched grey · struck-through · not clickable
+ *   blocked        computed unavailable because it overlaps a booking
  *   just-claimed   warm wax + checkmark · your own confirmation
  *   cancelled      historical, ghosted; shown only in admin filter
  *
@@ -66,7 +67,7 @@ export function SlotChip({
       {mode === 'admin' && state === 'booked' && initials && (
         <span className="slot-chip__initials">{initials}</span>
       )}
-      {state === 'closed' && (
+      {(state === 'closed' || state === 'blocked') && (
         <span className="slot-chip__strike" aria-hidden="true" />
       )}
       {emailBounced && mode === 'admin' && (

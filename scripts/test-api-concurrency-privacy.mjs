@@ -110,6 +110,71 @@ try {
     },
   });
 
+  const overlapBoard = await createBoard({
+    title: `Concurrency Privacy Overlap Board ${suffix}`,
+    organizerEmail: `organizer-overlap+${suffix}@example.com`,
+    dayOffset: 27,
+    dailyEnd: "11:00",
+    intervalMinutes: 30,
+  });
+  const overlapPublicToken = tokenFromLink(overlapBoard.links.public);
+  const overlapAdminToken = tokenFromLink(overlapBoard.links.admin);
+  const overlapPublicBefore = await request("/api/slotboard/book", { token: overlapPublicToken });
+  assert(
+    overlapPublicBefore.slots.length === 3,
+    `expected three overlapping slots, got ${overlapPublicBefore.slots.length}`,
+  );
+  const overlapClaim = await request("/api/slotboard/book/claim", {
+    method: "POST",
+    token: overlapPublicToken,
+    expectedStatus: 201,
+    json: {
+      slotId: overlapPublicBefore.slots[1].id,
+      participantName: "Overlap Participant",
+      participantEmail: `overlap-participant+${suffix}@example.com`,
+      notes: "Middle slot should make neighbouring overlaps unavailable.",
+    },
+  });
+  const overlapManageToken = tokenFromLink(overlapClaim.links.manage);
+  const overlapRescheduleOptions = await request("/api/slotboard/manage/reschedule", { token: overlapManageToken });
+  assert(
+    overlapRescheduleOptions.slots.length === 2,
+    `expected overlapping neighbours to be available as reschedule targets, got ${overlapRescheduleOptions.slots.length}`,
+  );
+  assert(
+    !overlapRescheduleOptions.slots.some((slot) => slot.id === overlapPublicBefore.slots[1].id),
+    "expected current booking slot to be excluded from reschedule options",
+  );
+  const overlapPublicAfter = await request("/api/slotboard/book", { token: overlapPublicToken });
+  assert(overlapPublicAfter.slots.length === 0, "expected overlapping neighbours to be hidden from public availability");
+  const overlapAdmin = await request("/api/slotboard/admin", { token: overlapAdminToken });
+  assert(
+    overlapAdmin.slots.filter((slot) => slot.state === "blocked").length === 2,
+    "expected admin dashboard to mark neighbouring overlapping starts as blocked",
+  );
+  await request("/api/slotboard/book/claim", {
+    method: "POST",
+    token: overlapPublicToken,
+    expectedStatus: 409,
+    expectedError: "slot_unavailable",
+    json: {
+      slotId: overlapPublicBefore.slots[0].id,
+      participantName: "Overlap Loser",
+      participantEmail: `overlap-loser+${suffix}@example.com`,
+      notes: "Overlapping slot should not be claimable after middle slot is booked.",
+    },
+  });
+  await request("/api/slotboard/manage/cancel", {
+    method: "POST",
+    token: tokenFromLink(overlapClaim.links.manage),
+    json: { reason: "Overlap release check." },
+  });
+  const overlapPublicReleased = await request("/api/slotboard/book", { token: overlapPublicToken });
+  assert(
+    overlapPublicReleased.slots.length === 3,
+    `expected all overlapping starts to return after cancellation, got ${overlapPublicReleased.slots.length}`,
+  );
+
   const boardB = await createBoard({
     title: `Concurrency Privacy Board B ${suffix}`,
     organizerEmail: `organizer-b+${suffix}@example.com`,
@@ -281,6 +346,10 @@ try {
           "wrong-token-purpose-reschedule-rejection",
           "pending-payment-public-slots-hidden",
           "pending-payment-claim-rejection",
+          "overlapping-interval-slots-hidden",
+          "overlapping-interval-reschedule-options",
+          "overlapping-interval-admin-blocked-state",
+          "overlapping-interval-cancel-reopens",
           "cross-admin-slot-rejection",
           "cross-admin-booking-rejection",
           "concurrent-reschedule-single-winner",
@@ -335,7 +404,14 @@ async function startSourceApi() {
     });
 }
 
-async function createBoard({ title, organizerEmail, dayOffset, avatarStyle = "notionists", dailyEnd = "10:00" }) {
+async function createBoard({
+  title,
+  organizerEmail,
+  dayOffset,
+  avatarStyle = "notionists",
+  dailyEnd = "10:00",
+  intervalMinutes,
+}) {
   const slotDate = isoDateAfterDays(dayOffset);
   const slotWeekday = new Date(`${slotDate}T00:00:00.000Z`).getUTCDay();
   return request("/api/slotboard/events", {
@@ -356,6 +432,7 @@ async function createBoard({ title, organizerEmail, dayOffset, avatarStyle = "no
         dailyStart: "09:00",
         dailyEnd,
         durationMinutes: 60,
+        ...(intervalMinutes ? { intervalMinutes } : {}),
         timezone: "Africa/Johannesburg",
         blockedRanges: [],
       },

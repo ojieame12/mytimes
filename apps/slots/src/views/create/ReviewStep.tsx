@@ -33,6 +33,7 @@ export function ReviewStep() {
       organizerEmail: draft.organizerEmail || 'you@example.com',
       timezone: draft.timezone,
       durationMinutes: draft.durationMinutes,
+      intervalMinutes: draft.intervalMinutes,
       allowMultipleBookings: draft.allowMultipleBookings,
       status: 'active',
       createdAt: new Date().toISOString(),
@@ -49,11 +50,13 @@ export function ReviewStep() {
         dailyStart: draft.dailyStart as `${number}:${number}`,
         dailyEnd: draft.dailyEnd as `${number}:${number}`,
         durationMinutes: draft.durationMinutes,
+        intervalMinutes: draft.intervalMinutes,
         timezone: draft.timezone,
         blockedRanges: draft.blockedRanges.map((r) => ({
           start: r.start as `${number}:${number}`,
           end: r.end as `${number}:${number}`,
         })),
+        excludedSlotStarts: draft.excludedSlotStarts,
       });
       return generated.map((g, i) => ({
         id: `preview-${i}`,
@@ -131,6 +134,10 @@ export function ReviewStep() {
               <dd>
                 <span className="mono">{draft.durationMinutes}</span> minutes
               </dd>
+              <dt>Starts every</dt>
+              <dd>
+                <span className="mono">{draft.intervalMinutes}</span> minutes
+              </dd>
               <dt>Organizer</dt>
               <dd>
                 {draft.organizerName || '—'}
@@ -176,6 +183,14 @@ export function ReviewStep() {
                         <span className="mono">{r.start}</span> – <span className="mono">{r.end}</span>
                       </div>
                     ))}
+                  </dd>
+                </>
+              )}
+              {draft.excludedSlotStarts.length > 0 && (
+                <>
+                  <dt>Removed slots</dt>
+                  <dd>
+                    <span className="mono">{draft.excludedSlotStarts.length}</span>
                   </dd>
                 </>
               )}

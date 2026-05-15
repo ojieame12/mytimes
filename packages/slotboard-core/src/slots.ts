@@ -13,6 +13,7 @@ const MAX_SLOTS = 1000;
 export function generateAvailabilitySlots(input: AvailabilityInput): GeneratedSlot[] {
   validateAvailabilityInput(input);
 
+  const intervalMinutes = input.intervalMinutes ?? input.durationMinutes;
   const weekdays = new Set(input.weekdays);
   const blockedRanges = normalizeBlockedRanges(input.blockedRanges ?? []);
   const excludedSlotStarts = new Set(input.excludedSlotStarts ?? []);
@@ -30,7 +31,7 @@ export function generateAvailabilitySlots(input: AvailabilityInput): GeneratedSl
     for (
       let startMinute = dayStart;
       startMinute + input.durationMinutes <= dayEnd;
-      startMinute += input.durationMinutes
+      startMinute += intervalMinutes
     ) {
       const endMinute = startMinute + input.durationMinutes;
       if (overlapsAnyBlockedRange(startMinute, endMinute, blockedRanges)) {
@@ -78,6 +79,10 @@ function validateAvailabilityInput(input: AvailabilityInput): void {
   }
   if (!DEFAULT_ALLOWED_DURATIONS.has(input.durationMinutes)) {
     throw new Error("durationMinutes must be one of 15, 30, 45, 60, or 90");
+  }
+  const intervalMinutes = input.intervalMinutes ?? input.durationMinutes;
+  if (!DEFAULT_ALLOWED_DURATIONS.has(intervalMinutes)) {
+    throw new Error("intervalMinutes must be one of 15, 30, 45, 60, or 90");
   }
   if (input.weekdays.length === 0 || input.weekdays.some((day) => !Number.isInteger(day) || day < 0 || day > 6)) {
     throw new Error("weekdays must contain integers from 0 (Sunday) to 6 (Saturday)");

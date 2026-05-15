@@ -824,6 +824,7 @@ export async function sendEmailDesignTestBatch(input: {
     avatarStyle: "notionists",
     timezone: "Europe/London",
     durationMinutes: 60,
+    intervalMinutes: 60,
     allowMultipleBookings: false,
     status: "active",
     planKey: "event_pass",

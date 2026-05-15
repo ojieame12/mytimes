@@ -109,20 +109,23 @@
 }
 
 /* ─── State: CLOSED ───────────────────────────────────── */
-.slot-chip--closed {
+.slot-chip--closed,
+.slot-chip--blocked {
   background: var(--muted);
   border-color: var(--border-subtle);
   color: var(--fg-faint);
   cursor: not-allowed;
   box-shadow: none;
 }
-.slot-chip--closed .slot-chip__time {
+.slot-chip--closed .slot-chip__time,
+.slot-chip--blocked .slot-chip__time {
   color: var(--fg-faint);
   font-weight: 400;
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
-.slot-chip--closed .slot-chip__tz {
+.slot-chip--closed .slot-chip__tz,
+.slot-chip--blocked .slot-chip__tz {
   color: var(--fg-faint);
 }
 

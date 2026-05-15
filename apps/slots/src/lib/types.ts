@@ -30,6 +30,7 @@ export interface BookingEvent {
   organizerEmail: string;
   timezone: string;              // IANA, e.g. "Europe/London"
   durationMinutes: number;       // 15 | 30 | 45 | 60 | 90
+  intervalMinutes?: number;      // Slot starts every N minutes; defaults to duration.
   allowMultipleBookings: boolean;
   status: EventStatus;
   planKey?: EventPlanKey;
@@ -52,6 +53,7 @@ export type SlotState =
   | 'booked'            // status='open' (or 'closed' + close_after_booking),
                         // has active booking. Public view hides; admin reveals.
   | 'closed'            // status='closed', no booking
+  | 'blocked'           // open in source grid but overlaps an active booking
   | 'just-claimed'      // ephemeral — your own confirmation
   | 'cancelled';        // historical, shown only when filter is on
 
