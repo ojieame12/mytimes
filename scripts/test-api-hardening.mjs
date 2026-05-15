@@ -221,6 +221,129 @@ try {
   });
   assert((await activeBookingCount(publicBoard.slots[0].id)) === 1, "expected idempotent claim to write one active booking");
 
+  const rescheduleFixtureBody = boardBody({
+    title: `Idempotency Reschedule ${suffix}`,
+    organizerEmail: `idem-reschedule+${suffix}@example.com`,
+    dayOffset: 35,
+  });
+  const rescheduleFixture = await request("/api/slotboard/events", {
+    method: "POST",
+    expectedStatus: 201,
+    json: {
+      ...rescheduleFixtureBody,
+      availability: {
+        ...rescheduleFixtureBody.availability,
+        dailyEnd: "12:00",
+      },
+    },
+  });
+  const reschedulePublicToken = tokenFromLink(rescheduleFixture.links.public);
+  const rescheduleAdminToken = tokenFromLink(rescheduleFixture.links.admin);
+  const reschedulePublicBoard = await request("/api/slotboard/book", {
+    token: reschedulePublicToken,
+  });
+  assert(reschedulePublicBoard.slots.length === 3, `expected three reschedule slots, got ${reschedulePublicBoard.slots.length}`);
+  const rescheduleClaim = await request("/api/slotboard/book/claim", {
+    method: "POST",
+    token: reschedulePublicToken,
+    expectedStatus: 201,
+    json: {
+      slotId: reschedulePublicBoard.slots[0].id,
+      participantName: "Idempotent Rescheduler",
+      participantEmail: `idem-rescheduler+${suffix}@example.com`,
+      notes: "Original reschedule notes.",
+    },
+  });
+  const rescheduleManageToken = tokenFromLink(rescheduleClaim.links.manage);
+  await request("/api/slotboard/manage/reschedule", {
+    token: reschedulePublicToken,
+    expectedStatus: 404,
+    expectedError: "booking_not_found",
+  });
+  await request("/api/slotboard/manage/reschedule", {
+    method: "POST",
+    token: rescheduleAdminToken,
+    expectedStatus: 404,
+    expectedError: "booking_not_found",
+    json: {
+      slotId: reschedulePublicBoard.slots[1].id,
+    },
+  });
+  const rescheduleOptions = await request("/api/slotboard/manage/reschedule", {
+    token: rescheduleManageToken,
+  });
+  assert(rescheduleOptions.slots.length === 2, `expected two replacement slots, got ${rescheduleOptions.slots.length}`);
+  assert(!JSON.stringify(rescheduleOptions).includes(reschedulePublicToken), "expected reschedule options not to leak public token");
+  assert(!JSON.stringify(rescheduleOptions).includes(rescheduleAdminToken), "expected reschedule options not to leak admin token");
+  await request("/api/slotboard/manage/reschedule", {
+    method: "POST",
+    token: rescheduleManageToken,
+    expectedStatus: 409,
+    expectedError: "same_slot",
+    json: {
+      slotId: reschedulePublicBoard.slots[0].id,
+    },
+  });
+  const rescheduleKey = `reschedule-${suffix}`;
+  const rescheduleBody = {
+    slotId: rescheduleOptions.slots[0].id,
+    participantTimezone: "Africa/Johannesburg",
+    participantLocale: "en-ZA",
+    participantOffsetAtBooking: "+02:00",
+    notes: "Moved once with an idempotency key.",
+  };
+  const rescheduled = await request("/api/slotboard/manage/reschedule", {
+    method: "POST",
+    token: rescheduleManageToken,
+    idempotencyKey: rescheduleKey,
+    expectedStatus: 200,
+    json: rescheduleBody,
+  });
+  assert(rescheduled.booking.id === rescheduleClaim.booking.id, "expected reschedule to keep booking id stable");
+  assert(rescheduled.booking.icsSequence > rescheduleClaim.booking.icsSequence, "expected reschedule to increment calendar sequence");
+  assert((await activeBookingCount(reschedulePublicBoard.slots[0].id)) === 0, "expected original slot to have no active booking after reschedule");
+  assert((await activeBookingCount(rescheduleOptions.slots[0].id)) === 1, "expected replacement slot to have one active booking after reschedule");
+  await request("/api/slotboard/manage/reschedule", {
+    method: "POST",
+    token: rescheduleManageToken,
+    idempotencyKey: rescheduleKey,
+    expectedStatus: 409,
+    expectedError: "idempotency_request_replayed",
+    json: rescheduleBody,
+  });
+  await request("/api/slotboard/manage/reschedule", {
+    method: "POST",
+    token: rescheduleManageToken,
+    idempotencyKey: rescheduleKey,
+    expectedStatus: 409,
+    expectedError: "idempotency_key_reused",
+    json: {
+      ...rescheduleBody,
+      slotId: rescheduleOptions.slots[1].id,
+    },
+  });
+  await request("/api/slotboard/manage/cancel", {
+    method: "POST",
+    token: rescheduleManageToken,
+    expectedStatus: 200,
+    json: {
+      reason: "Cancel after reschedule hardening check.",
+    },
+  });
+  const cancelledRescheduleOptions = await request("/api/slotboard/manage/reschedule", {
+    token: rescheduleManageToken,
+  });
+  assert(cancelledRescheduleOptions.slots.length === 0, "expected cancelled booking to expose no reschedule options");
+  await request("/api/slotboard/manage/reschedule", {
+    method: "POST",
+    token: rescheduleManageToken,
+    expectedStatus: 409,
+    expectedError: "booking_cancelled",
+    json: {
+      slotId: rescheduleOptions.slots[1].id,
+    },
+  });
+
   const csvFixture = await request("/api/slotboard/events", {
     method: "POST",
     expectedStatus: 201,
@@ -291,6 +414,13 @@ try {
           "idempotent-claim-single-write",
           "idempotent-claim-replay-conflict",
           "idempotent-claim-body-reuse-conflict",
+          "reschedule-token-purpose-rejection",
+          "reschedule-options-token-redaction",
+          "reschedule-same-slot-rejection",
+          "idempotent-reschedule-single-write",
+          "idempotent-reschedule-replay-conflict",
+          "idempotent-reschedule-body-reuse-conflict",
+          "cancelled-reschedule-rejection",
           "paid-csv-export",
           "csv-formula-injection-mitigation",
         ],

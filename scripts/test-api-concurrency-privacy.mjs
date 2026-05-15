@@ -82,6 +82,8 @@ try {
 
   await request("/api/slotboard/manage", { token: publicTokenA, expectedStatus: 404 });
   await request("/api/slotboard/manage", { token: adminTokenA, expectedStatus: 404 });
+  await request("/api/slotboard/manage/reschedule", { token: publicTokenA, expectedStatus: 404 });
+  await request("/api/slotboard/manage/reschedule", { token: adminTokenA, expectedStatus: 404 });
   await request("/api/slotboard/admin", { token: publicTokenA, expectedStatus: 404 });
   await request("/api/slotboard/book", { token: adminTokenA, expectedStatus: 404 });
 
@@ -182,6 +184,7 @@ try {
   await request("/api/slotboard/book", { token: deletePublicToken, expectedStatus: 404 });
   await request("/api/slotboard/admin", { token: deleteAdminToken, expectedStatus: 404 });
   await request("/api/slotboard/manage", { token: deleteManageToken, expectedStatus: 404 });
+  await request("/api/slotboard/manage/reschedule", { token: deleteManageToken, expectedStatus: 404 });
 
   console.log(
     JSON.stringify(
@@ -196,6 +199,7 @@ try {
           "public-booking-pii-redaction",
           "admin-token-redaction",
           "wrong-token-purpose-rejection",
+          "wrong-token-purpose-reschedule-rejection",
           "pending-payment-public-slots-hidden",
           "pending-payment-claim-rejection",
           "cross-admin-slot-rejection",
@@ -204,6 +208,7 @@ try {
           "concurrent-cancel-single-email-side-effect",
           "cancel-reopens-public-slot",
           "deleted-manage-token-rejection",
+          "deleted-manage-reschedule-token-rejection",
         ],
       },
       null,
