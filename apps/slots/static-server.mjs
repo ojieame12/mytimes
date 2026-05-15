@@ -21,8 +21,8 @@ const cspConnectSources = [
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
   "img-src 'self' data:",
   `connect-src ${dedupe(cspConnectSources).join(" ")}`,
   "object-src 'none'",
@@ -41,6 +41,7 @@ const contentTypes = new Map([
   [".jpeg", "image/jpeg"],
   [".svg", "image/svg+xml"],
   [".webp", "image/webp"],
+  [".otf", "font/otf"],
   [".woff2", "font/woff2"],
 ]);
 

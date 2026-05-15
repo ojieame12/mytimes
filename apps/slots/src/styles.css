@@ -1,9 +1,8 @@
 /* ═══════════════════════════════════════════════════════════
    mytimes — foundation.
 
-   Modern B2B language modeled on Cal.com (shadcn + Radix +
-   Zinc + Lucide) with a Linear/Cron-grade typographic
-   hierarchy (Inter Variable + Geist Mono on numerals) and
+   Compact, tangible booking-board language with SF Compact
+   Rounded for brand/UI text, Geist Mono on numerals, and
    mytimes orange as the single sparing accent.
 
    Tokens are split into two layers:
@@ -19,14 +18,18 @@
 @import './styles/paywall.css';
 
 /* SF Compact Rounded — Apple's softened sans, used here for
-   both headers and body text (anything non-numeric). Single
-   regular weight; numerals still go through Geist Mono. */
+   both headers and body text (anything non-numeric). All
+   requested weights resolve through this face; numerals still
+   go through Geist Mono. */
 @font-face {
   font-family: 'SF Compact Rounded';
-  src: url('/fonts/SF-Compact-Rounded-Regular.otf') format('opentype');
-  font-weight: 400;
+  src:
+    local('SF Compact Rounded'),
+    local('SFCompactRounded-Regular'),
+    url('/fonts/SF-Compact-Rounded-Regular.otf') format('opentype');
+  font-weight: 100 900;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 /* ─── Page reset ────────────────────────────────────────── */
