@@ -45,6 +45,8 @@ const COMMON_TIMEZONES = [
   'UTC',
 ];
 
+const DEMO_VIEWER_TIMEZONE = 'America/Los_Angeles';
+
 export interface BookingPageProps {
   publicToken: string;
   event?: BookingEvent;
@@ -67,7 +69,10 @@ export function BookingPage({
   onConflict,
   demoMode = publicToken === 'preview' && !onClaimed,
 }: BookingPageProps) {
-  const detectedViewerTz = useMemo(() => viewerTimezone(), []);
+  const detectedViewerTz = useMemo(
+    () => (demoMode ? DEMO_VIEWER_TIMEZONE : viewerTimezone()),
+    [demoMode],
+  );
   const [viewerTz, setViewerTz] = useState(detectedViewerTz);
   const [filter, setFilter] = useState<TimeFilter>('all');
   /* Selected-slot ID — when set, that day-band inverts and the
@@ -80,7 +85,8 @@ export function BookingPage({
   useEffect(() => {
     setSelectedSlotId(undefined);
     setBookingDraft(EMPTY_INLINE_SLOT_FORM_DRAFT);
-  }, [publicToken]);
+    setViewerTz(detectedViewerTz);
+  }, [detectedViewerTz, publicToken]);
 
   const isArchived = event.status === 'archived';
   const isExpired = Boolean(event.expiresAt && Date.parse(event.expiresAt) <= Date.now());

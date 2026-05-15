@@ -504,7 +504,7 @@ function CreationFlowSection() {
  * (new field, new layout, different colors), this updates
  * automatically, so the landing does not drift from product. */
 function LandingDemoCard() {
-  const demoViewerTz = 'America/New_York';
+  const demoViewerTz = 'America/Los_Angeles';
   const [viewerTz, setViewerTz] = useState(demoViewerTz);
   const openSlotCount = MOCK_SLOTS.filter((s) => s.state === 'open').length;
   const uniqueDays = useMemo(() => {
@@ -568,7 +568,7 @@ function DayBandSnippet() {
 /* ─── TzSnippet — real TimezonePicker + a sample participant
  *  strip + two dual-time chips, including a date-shift badge. */
 function TzSnippet() {
-  const demoViewerTz = 'America/New_York';
+  const demoViewerTz = 'America/Los_Angeles';
   const [viewerTz, setViewerTz] = useState(demoViewerTz);
   return (
     <div className="landing-snippet landing-snippet--tz">
@@ -582,7 +582,7 @@ function TzSnippet() {
         <span className="booking__tz-strip-sep" aria-hidden="true">·</span>
         <span className="booking__tz-strip-source">
           <span className="booking__tz-strip-label">Organizer in</span>
-          <span className="booking__tz-strip-source-value mono">Europe/London</span>
+          <span className="booking__tz-strip-source-value mono">America/New_York</span>
         </span>
       </div>
       <div className="landing-snippet__chips">
@@ -593,7 +593,7 @@ function TzSnippet() {
         >
           <span className="day-band__chip-time mono tabular">09:00</span>
           <span className="day-band__chip-meridiem" aria-hidden="true">am</span>
-          <span className="day-band__chip-source mono" aria-hidden="true">14:00</span>
+          <span className="day-band__chip-source mono" aria-hidden="true">12:00</span>
         </button>
         <button
           type="button"
@@ -705,7 +705,7 @@ function OperationsSection() {
             <span className="brand-dot" aria-hidden="true" />
             Organizer dashboard
           </span>
-          <strong>Europe/London</strong>
+          <strong>America/New_York</strong>
         </div>
 
         <div className="landing-ops__stats">

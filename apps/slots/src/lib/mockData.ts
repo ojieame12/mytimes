@@ -13,8 +13,8 @@ export const MOCK_EVENT: BookingEvent = {
   description:
     'Half-hour intro to scope the assessment. Pick a time that works for you. We send a calendar file after you confirm.',
   organizerName: 'Emily Carter',
-  organizerEmail: 'emily@vision.studio',
-  timezone: 'Europe/London',
+  organizerEmail: 'emily@northstar.example',
+  timezone: 'America/New_York',
   durationMinutes: 60,
   allowMultipleBookings: false,
   status: 'active',
@@ -36,21 +36,29 @@ function nextWeekdays(count: number, from: Date = new Date()): Date[] {
   return out;
 }
 
-/** Build a slot starting at HH:00 BST on the given local date. */
+/** Build a slot starting at HH:00 Eastern Time on the given local date. */
 function buildSlot(
   eventId: string,
   date: Date,
-  hourBST: number,
+  hourEastern: number,
   state: TimeSlot['state'],
   extras: Partial<TimeSlot> = {},
 ): TimeSlot {
-  // Slots are stored as UTC ISO. BST = UTC+1, GMT = UTC+0. May is BST.
-  const start = new Date(date);
-  start.setHours(hourBST - 1, 0, 0, 0); // UTC hour
+  // Slots are stored as UTC ISO. The demo covers May/June, when
+  // America/New_York is EDT (UTC-4).
+  const start = new Date(Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    hourEastern + 4,
+    0,
+    0,
+    0,
+  ));
   const end = new Date(start);
   end.setHours(end.getHours() + 1);
   return {
-    id: `slot_${date.getFullYear()}${pad2(date.getMonth() + 1)}${pad2(date.getDate())}_${pad2(hourBST)}`,
+    id: `slot_${date.getFullYear()}${pad2(date.getMonth() + 1)}${pad2(date.getDate())}_${pad2(hourEastern)}`,
     eventId,
     startsAt: start.toISOString(),
     endsAt: end.toISOString(),
@@ -63,7 +71,7 @@ function pad2(n: number): string {
   return n < 10 ? `0${n}` : String(n);
 }
 
-/* Full availability — every working hour 8am→7pm BST open. The
+/* Full availability: every working hour 8am-7pm Eastern open. The
  * old "all-day" variant became this: a day where every time slot
  * is bookable, so the picker shows a wall of time chips. */
 const FULL_HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
