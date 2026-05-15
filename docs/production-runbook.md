@@ -33,8 +33,8 @@ ignored by git. Store long-lived copies in an encrypted location only.
 Before launch, record:
 
 ```txt
-Last production backup:
-Last restore-check result:
+Last production backup: 2026-05-15T08:22:12Z, `/Users/ojieame/caboo-slots-mini/backups/mytimes-railway-2026-05-15T08-22-12-741Z.dump`, 220004 bytes
+Last restore-check result: passed on 2026-05-15T08:22Z, restored into temporary local database `slotboard_restore_1778833351979_r988tq`, verified 19 slotboard tables, 119 booking events, 227 time slots, 93 bookings, then dropped temporary database
 Encrypted storage location:
 Railway snapshot/backups enabled:
 Restore owner:
@@ -46,6 +46,16 @@ Run the billing readiness probe against the live app:
 
 ```sh
 npm run billing:ready
+```
+
+Latest production check:
+
+```txt
+2026-05-15T08:23Z: `SLOTBOARD_API_URL=https://mytimes.co npm run billing:ready` passed.
+Stripe production ready: true.
+Event Pass: $19, `price_1TWzwLEyVU0foL2MNuKxT2C0`.
+Company monthly: $49, `price_1TWzwLEyVU0foL2MraZv8dCi`.
+Company annual: $480, `price_1TWzwMEyVU0foL2MRpfg03kO`.
 ```
 
 Then test the actual Stripe flows:
@@ -76,6 +86,17 @@ mailbox:
 SLOTBOARD_TEST_EMAIL=you@example.com npm run email:test
 ```
 
+Latest production check:
+
+```txt
+2026-05-15T08:23Z: `SLOTBOARD_API_URL=https://mytimes.co npm run email:ready` passed.
+Provider: resend.
+Sender: mytimes <bookings@mytimes.co>.
+Delivery configured: true.
+Webhook configured: true.
+Bounce tracking configured: true.
+```
+
 Confirm:
 
 ```txt
@@ -94,6 +115,13 @@ Run the live readiness suite:
 
 ```sh
 npm run security:ready
+```
+
+Latest production check:
+
+```txt
+2026-05-15T08:23Z: `npm run security:ready` passed.
+Root domain, www domain, security headers, live bundles, billing readiness, email readiness, and CORS all passed.
 ```
 
 Then manually exercise:
@@ -117,6 +145,20 @@ Retention must run as a separate Railway cron service. The service should use:
 Config file: /railway.retention.toml
 Schedule: 0 2 * * * (02:00 UTC daily)
 Command: npm run retention:prod --workspace @fresh-feel/slots-api
+```
+
+## 6. Observability
+
+Frontend and API Sentry code is present, but production is not complete until
+the Railway services have DSNs configured.
+
+Latest production check:
+
+```txt
+2026-05-15T08:24Z: `https://mytimes.co/readyz` reported observability.productionReady=false.
+Missing API variable: SENTRY_DSN.
+Recommended API variables: SENTRY_DSN, SENTRY_ENVIRONMENT=production, SENTRY_RELEASE=<git sha or Railway commit sha>.
+Recommended frontend variables: VITE_SENTRY_DSN, VITE_SENTRY_ENVIRONMENT=production, VITE_SENTRY_RELEASE=<git sha or Railway commit sha>.
 ```
 
 After creating or changing the service, trigger one manual deployment/run and
