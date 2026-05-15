@@ -1597,19 +1597,20 @@ async function readBookingByManageToken(rawToken: string, client: Queryable = ge
 }
 
 async function lockBookingByManageToken(client: pg.PoolClient, rawToken: string): Promise<ManageBookingRow> {
-  const result = await client.query<ManageBookingRow>(
+  const result = await client.query<{ booking_id: string; event_id: string; slot_id: string }>(
     `
-      select ${joinedBookingColumns}
+      select b.id as booking_id, b.event_id, b.slot_id
       from slotboard.bookings b
       join slotboard.booking_events e on e.id = b.event_id
-      join slotboard.time_slots s on s.id = b.slot_id
       where b.manage_token_hash = $1
         and e.deleted_at is null
-      for update of b, s
+      for update of b
     `,
     [tokenHash(rawToken)],
   );
-  return rowOrThrow(result, "booking_not_found", "Booking not found");
+  const locked = rowOrThrow(result, "booking_not_found", "Booking not found");
+  await lockSlot(client, locked.event_id, locked.slot_id);
+  return readBookingById(client, locked.event_id, locked.booking_id);
 }
 
 async function lockActiveBookingByParticipantEmail(
@@ -1638,18 +1639,22 @@ async function lockActiveBookingByParticipantEmail(
 }
 
 async function lockBookingById(client: pg.PoolClient, eventId: string, bookingId: string): Promise<AdminBookingLockRow> {
-  const result = await client.query<AdminBookingLockRow>(
+  const result = await client.query<{ id: string; slot_id: string; cancelled_at: Date | null }>(
     `
-      select b.id, b.slot_id, b.cancelled_at, s.close_after_booking
+      select b.id, b.slot_id, b.cancelled_at
       from slotboard.bookings b
-      join slotboard.time_slots s on s.id = b.slot_id
       where b.event_id = $1
         and b.id = $2
-      for update of b, s
+      for update of b
     `,
     [eventId, bookingId],
   );
-  return rowOrThrow(result, "booking_not_found", "Booking not found");
+  const locked = rowOrThrow(result, "booking_not_found", "Booking not found");
+  const slot = await lockSlot(client, eventId, locked.slot_id);
+  return {
+    ...locked,
+    close_after_booking: slot.close_after_booking,
+  };
 }
 
 async function readBookingById(client: Queryable, eventId: string, bookingId: string): Promise<ManageBookingRow> {

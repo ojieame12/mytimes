@@ -130,6 +130,85 @@ try {
   const adminB = await request("/api/slotboard/admin", { token: adminTokenB });
   assertNoParticipantLeak(adminB, [claimed.booking.participantEmail, claimed.booking.notes]);
 
+  const rescheduleBoard = await createBoard({
+    title: `Concurrency Privacy Reschedule Board ${suffix}`,
+    organizerEmail: `organizer-reschedule+${suffix}@example.com`,
+    dayOffset: 25,
+    dailyEnd: "12:00",
+  });
+  const reschedulePublicToken = tokenFromLink(rescheduleBoard.links.public);
+  const reschedulePublicBefore = await request("/api/slotboard/book", { token: reschedulePublicToken });
+  assert(reschedulePublicBefore.slots.length === 3, `expected three reschedule slots, got ${reschedulePublicBefore.slots.length}`);
+  const rescheduleClaim = await request("/api/slotboard/book/claim", {
+    method: "POST",
+    token: reschedulePublicToken,
+    expectedStatus: 201,
+    json: {
+      slotId: reschedulePublicBefore.slots[0].id,
+      participantName: "Concurrent Reschedule Participant",
+      participantEmail: `reschedule-participant+${suffix}@example.com`,
+      notes: "Private notes before concurrent reschedule.",
+    },
+  });
+  const rescheduleManageToken = tokenFromLink(rescheduleClaim.links.manage);
+  const rescheduleDeliveryBefore = await emailDeliveryCounts(rescheduleClaim.booking.id);
+  const replacementSlotId = reschedulePublicBefore.slots[1].id;
+  const rescheduleAttempts = await Promise.all(
+    Array.from({ length: 6 }, () =>
+      requestRaw("/api/slotboard/manage/reschedule", {
+        method: "POST",
+        token: rescheduleManageToken,
+        json: {
+          slotId: replacementSlotId,
+          participantTimezone: "Africa/Johannesburg",
+          participantLocale: "en-ZA",
+          participantOffsetAtBooking: "+02:00",
+          notes: "Concurrent reschedule target.",
+        },
+      }),
+    ),
+  );
+  const successfulReschedules = rescheduleAttempts.filter((item) => item.status === 200);
+  const conflictedReschedules = rescheduleAttempts.filter((item) => item.status === 409);
+  const rescheduleAttemptSummary = summarizeResponses(rescheduleAttempts);
+  assert(
+    successfulReschedules.length === 1,
+    `expected exactly one successful concurrent reschedule, got ${successfulReschedules.length}: ${rescheduleAttemptSummary}`,
+  );
+  assert(
+    conflictedReschedules.length === 5,
+    `expected five conflicted concurrent reschedules, got ${conflictedReschedules.length}: ${rescheduleAttemptSummary}`,
+  );
+  assert(
+    conflictedReschedules.every((item) => item.json?.error === "same_slot"),
+    "expected concurrent duplicate reschedules to fail as same-slot conflicts",
+  );
+  assert((await activeBookingCount(reschedulePublicBefore.slots[0].id)) === 0, "expected original reschedule slot to reopen");
+  assert((await activeBookingCount(replacementSlotId)) === 1, "expected replacement slot to hold exactly one active booking");
+  const reschedulePublicAfter = await request("/api/slotboard/book", { token: reschedulePublicToken });
+  assert(
+    reschedulePublicAfter.slots.some((slot) => slot.id === reschedulePublicBefore.slots[0].id),
+    "expected original slot to be public after concurrent reschedule",
+  );
+  assert(
+    !reschedulePublicAfter.slots.some((slot) => slot.id === replacementSlotId),
+    "expected replacement slot to be hidden after concurrent reschedule",
+  );
+  assertNoParticipantLeak(reschedulePublicAfter, [
+    rescheduleClaim.booking.participantEmail,
+    rescheduleClaim.booking.notes,
+    "Concurrent reschedule target.",
+  ]);
+  const rescheduleDeliveryAfter = await emailDeliveryCounts(rescheduleClaim.booking.id);
+  assert(
+    (rescheduleDeliveryAfter.booking_confirmation ?? 0) === (rescheduleDeliveryBefore.booking_confirmation ?? 0) + 1,
+    `expected exactly one extra reschedule confirmation email, got ${rescheduleDeliveryAfter.booking_confirmation ?? 0}`,
+  );
+  assert(
+    (rescheduleDeliveryAfter.organizer_booking_notice ?? 0) === (rescheduleDeliveryBefore.organizer_booking_notice ?? 0) + 1,
+    `expected exactly one extra organizer reschedule notice, got ${rescheduleDeliveryAfter.organizer_booking_notice ?? 0}`,
+  );
+
   const cancelAttempts = await Promise.all(
     Array.from({ length: 6 }, () =>
       requestRaw("/api/slotboard/manage/cancel", {
@@ -204,6 +283,8 @@ try {
           "pending-payment-claim-rejection",
           "cross-admin-slot-rejection",
           "cross-admin-booking-rejection",
+          "concurrent-reschedule-single-winner",
+          "concurrent-reschedule-single-email-side-effect",
           "concurrent-cancel-idempotency",
           "concurrent-cancel-single-email-side-effect",
           "cancel-reopens-public-slot",
@@ -254,7 +335,7 @@ async function startSourceApi() {
     });
 }
 
-async function createBoard({ title, organizerEmail, dayOffset, avatarStyle = "notionists" }) {
+async function createBoard({ title, organizerEmail, dayOffset, avatarStyle = "notionists", dailyEnd = "10:00" }) {
   const slotDate = isoDateAfterDays(dayOffset);
   const slotWeekday = new Date(`${slotDate}T00:00:00.000Z`).getUTCDay();
   return request("/api/slotboard/events", {
@@ -273,7 +354,7 @@ async function createBoard({ title, organizerEmail, dayOffset, avatarStyle = "no
         endDate: slotDate,
         weekdays: [slotWeekday],
         dailyStart: "09:00",
-        dailyEnd: "10:00",
+        dailyEnd,
         durationMinutes: 60,
         timezone: "Africa/Johannesburg",
         blockedRanges: [],
@@ -365,6 +446,12 @@ function parseJson(text, path) {
   } catch {
     throw new Error(`${path} returned non-JSON response: ${text}`);
   }
+}
+
+function summarizeResponses(responses) {
+  return responses
+    .map((response) => `${response.status}:${response.json?.error ?? "ok"}`)
+    .join(",");
 }
 
 function tokenFromLink(link) {
