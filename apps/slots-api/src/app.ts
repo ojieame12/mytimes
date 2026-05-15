@@ -126,6 +126,33 @@ app.use("*", async (c, next) => {
   }
 });
 
+app.use("/api/slotboard/account/*", async (c, next) => {
+  try {
+    assertTrustedCookieOriginForUnsafeRequest(c);
+    await next();
+  } catch (error) {
+    return jsonError(c, error);
+  }
+});
+
+app.use("/api/slotboard/billing/company-standby/checkout", async (c, next) => {
+  try {
+    assertTrustedCookieOriginForUnsafeRequest(c);
+    await next();
+  } catch (error) {
+    return jsonError(c, error);
+  }
+});
+
+app.use("/api/slotboard/billing/customer-portal", async (c, next) => {
+  try {
+    assertTrustedCookieOriginForUnsafeRequest(c);
+    await next();
+  } catch (error) {
+    return jsonError(c, error);
+  }
+});
+
 app.use(
   "/api/*",
   bodyLimit({
@@ -1047,6 +1074,9 @@ function jsonError(c: Parameters<Handler>[0], error: unknown) {
   if (response.status === 402) {
     return c.json(response.body, 402);
   }
+  if (response.status === 403) {
+    return c.json(response.body, 403);
+  }
   if (response.status === 404) {
     return c.json(response.body, 404);
   }
@@ -1060,6 +1090,68 @@ function jsonError(c: Parameters<Handler>[0], error: unknown) {
     return c.json(response.body, 501);
   }
   return c.json(response.body, 500);
+}
+
+function assertTrustedCookieOriginForUnsafeRequest(c: Context): void {
+  if (isSafeMethod(c.req.method) || !c.req.raw.headers.get("cookie")) {
+    return;
+  }
+  const origin = originFromHeaders(c.req.raw.headers);
+  if (!origin) {
+    throw new ApiError(403, "csrf_origin_missing", "A trusted Origin or Referer header is required");
+  }
+  if (!trustedAccountOrigins().has(origin)) {
+    throw new ApiError(403, "csrf_origin_untrusted", "This account request came from an untrusted origin");
+  }
+}
+
+function isSafeMethod(method: string): boolean {
+  return method === "GET" || method === "HEAD" || method === "OPTIONS";
+}
+
+function originFromHeaders(headers: Headers): string | undefined {
+  const source = headers.get("origin") || headers.get("referer");
+  if (!source || source === "null") {
+    return undefined;
+  }
+  try {
+    return new URL(source).origin.toLowerCase();
+  } catch {
+    return undefined;
+  }
+}
+
+function trustedAccountOrigins(): Set<string> {
+  return new Set(
+    [env.publicAppURL, env.authBaseURL, ...env.webOrigins]
+      .flatMap((value) => [value, wwwOriginVariant(value)])
+      .map((value) => normalizeOrigin(value))
+      .filter((value): value is string => Boolean(value)),
+  );
+}
+
+function wwwOriginVariant(value: string): string | undefined {
+  try {
+    const url = new URL(value);
+    if (url.hostname === "localhost" || /^\d+\.\d+\.\d+\.\d+$/.test(url.hostname)) {
+      return undefined;
+    }
+    url.hostname = url.hostname.startsWith("www.") ? url.hostname.slice(4) : `www.${url.hostname}`;
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+function normalizeOrigin(value: string | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  try {
+    return new URL(value).origin.toLowerCase();
+  } catch {
+    return undefined;
+  }
 }
 
 async function corsOrigin(origin: string): Promise<string | null> {

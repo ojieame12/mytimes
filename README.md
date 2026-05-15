@@ -438,11 +438,16 @@ optional `Idempotency-Key` header. Replayed keys are rejected with `409` after
 the first successful write instead of storing raw private links for response
 replay.
 
-Run retention as a separate Railway cron or one-off worker using the same API
-image:
+Run retention as a separate Railway cron service using the same API image. In
+Railway, create or select a `retention` service, point its config-as-code file
+to `/railway.retention.toml`, and keep its cron schedule at `0 2 * * *`
+(02:00 UTC). The command must exit after each run; `retention:prod` closes the
+database pool before exiting.
+
+For a production-equivalent one-off run:
 
 ```sh
-npm run retention:prod --workspace @fresh-feel/slots-api
+npm run retention:prod
 ```
 
 Retention archives expired boards, soft-deletes old archived boards, scrubs PII

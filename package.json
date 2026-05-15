@@ -33,6 +33,7 @@
     "db:backup:railway": "SLOTBOARD_BACKUP_SOURCE=railway node scripts/db-backup.mjs",
     "db:restore-check": "node scripts/db-restore-check.mjs",
     "retention": "npm run retention --workspace @fresh-feel/slots-api",
+    "retention:prod": "npm run retention:prod --workspace @fresh-feel/slots-api",
     "smoke:api": "node scripts/smoke-api.mjs",
     "smoke:auth": "node scripts/smoke-auth.mjs",
     "smoke:billing-live": "node scripts/smoke-billing-live.mjs",

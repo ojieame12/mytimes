@@ -109,7 +109,53 @@ account sign in
 Company checkout entry point
 ```
 
-## 5. Monitoring
+## 5. Retention Cron
+
+Retention must run as a separate Railway cron service. The service should use:
+
+```txt
+Config file: /railway.retention.toml
+Schedule: 0 2 * * * (02:00 UTC daily)
+Command: npm run retention:prod --workspace @fresh-feel/slots-api
+```
+
+After creating or changing the service, trigger one manual deployment/run and
+confirm the logs contain:
+
+```txt
+slotboard_retention_completed
+```
+
+Daily operational check:
+
+```txt
+Retention service last successful run:
+Retention service last failure:
+Retention owner:
+```
+
+If retention has not completed in 48 hours, run it manually from the same image
+or through Railway with:
+
+```sh
+npm run retention:prod
+```
+
+Then inspect the logs and rerun `npm run smoke:retention` locally before making
+more retention changes.
+
+## 6. Webhook Recovery
+
+Stripe retries webhook delivery for a limited window. If the API was down or a
+delivery failed repeatedly, replay the affected events from the Stripe
+dashboard after the API is healthy. Confirm the board or subscription state in
+the app, then rerun:
+
+```sh
+npm run billing:ready
+```
+
+## 7. Monitoring
 
 Minimum launch alerts:
 

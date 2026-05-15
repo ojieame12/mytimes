@@ -108,6 +108,13 @@ const ownerDashboard = await request(`/api/slotboard/account/events/${created.ev
 assert(ownerDashboard.slots.length === 1, `expected one owned dashboard slot, got ${ownerDashboard.slots.length}`);
 const slotId = ownerDashboard.slots[0].id;
 
+await request(`/api/slotboard/account/events/${created.event.id}/slots/${slotId}/close`, {
+  method: "POST",
+  jar: ownerJar,
+  origin: "https://evil.example",
+  expectedStatus: 403,
+});
+
 await request(`/api/slotboard/account/events/${created.event.id}`, {
   method: "PATCH",
   jar: ownerJar,
@@ -234,6 +241,7 @@ console.log(
         "authenticated-create-ownership",
         "account-event-list",
         "account-dashboard",
+        "account-csrf-origin-rejection",
         "account-update",
         "account-close-slot",
         "account-reopen-slot",
@@ -301,8 +309,11 @@ function headers(options) {
   if (options.json !== undefined) {
     result["content-type"] = "application/json";
   }
+  const method = options.method || "GET";
   if (options.origin) {
     result.origin = options.origin;
+  } else if (options.jar?.size && method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
+    result.origin = frontendOrigin;
   }
   if (options.token) {
     result.authorization = `Bearer ${options.token}`;
