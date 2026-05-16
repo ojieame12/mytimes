@@ -61,7 +61,6 @@ body {
   line-height: 1.5;
   color: var(--fg-default);
   background: var(--bg-canvas);
-  font-feature-settings: 'cv11', 'ss01', 'ss03';
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
