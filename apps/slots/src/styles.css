@@ -3,7 +3,8 @@
 
    Compact, tangible booking-board language with SF Compact
    Rounded for brand/UI text, Geist Mono on numerals, and
-   mytimes orange as the single sparing accent.
+   mytimes teal ink as the action axis, with warm paper and
+   a small retained stamp-orange accent for material warmth.
 
    Tokens are split into two layers:
      1. tokens.primitives.css — raw value scales
@@ -159,7 +160,7 @@ a {
   pointer-events: none;
 }
 
-/* Primary CTA — brand orange with internal gradient, ambient
+/* Primary CTA — teal brand action with internal gradient, ambient
    glow on hover. The default for primary actions across the
    product. Use .is-dark when you specifically need a near-black
    non-brand button (rare). */
@@ -172,7 +173,7 @@ a {
   height: 36px;
   border-radius: var(--radius-md);
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   font-family: var(--font-sans);
   font-size: 14px;
@@ -187,7 +188,7 @@ a {
     transform var(--motion-micro) var(--ease-press);
 }
 .material-stamp-dark:hover {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   border-color: var(--orange-700);
   box-shadow: var(--glow-primary);
 }
@@ -225,13 +226,13 @@ a {
 /* .is-primary — kept as alias for explicit "this is THE primary CTA". */
 .material-stamp-dark.is-primary,
 .btn-primary {
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   border-color: var(--orange-600);
   color: var(--primary-foreground);
 }
 .material-stamp-dark.is-primary:hover,
 .btn-primary:hover {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   border-color: var(--orange-700);
   box-shadow: var(--glow-primary);
 }

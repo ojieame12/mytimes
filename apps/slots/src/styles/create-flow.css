@@ -354,7 +354,7 @@
   height: 36px;
   border-radius: var(--radius-md);
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   font-family: var(--font-sans);
   font-size: 13.5px;
@@ -367,7 +367,7 @@
     transform var(--motion-micro) var(--ease-press);
 }
 .create-step__nav-next:hover {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   box-shadow: var(--glow-primary);
 }
 .create-step__nav-next:active {
@@ -1071,7 +1071,7 @@
   height: 40px;
   border-radius: var(--radius-md);
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   font-family: var(--font-sans);
   font-size: 14px;
@@ -1085,7 +1085,7 @@
     transform var(--motion-micro) var(--ease-press);
 }
 .done-actions__primary:hover {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   box-shadow: var(--glow-primary);
 }
 .done-actions__primary:active {
@@ -1218,7 +1218,7 @@
   height: 36px;
   border-radius: var(--radius-md);
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   font-family: var(--font-sans);
   font-size: 13px;
@@ -1232,7 +1232,7 @@
     transform var(--motion-micro) var(--ease-press);
 }
 .suggested-message__copy:hover {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   box-shadow: var(--glow-primary);
 }
 .suggested-message__copy:active {
@@ -1482,7 +1482,7 @@
   padding: 0 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   font-family: var(--font-sans);
   font-size: 13.5px;
@@ -1490,7 +1490,7 @@
   box-shadow: var(--shadow-button-primary);
 }
 .event-pass-card__button:hover:not(:disabled) {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   box-shadow: var(--glow-primary);
 }
 .event-pass-card__button:disabled {

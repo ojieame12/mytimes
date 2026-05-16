@@ -12,7 +12,7 @@
 /* ─── 1 ▸ UpgradePrompt — modal ───────────────────────────
    Centered card on a dark scrim. Same peach surface as the
    wizard's .create-step, scaled to ~440px and floated over
-   a backdrop. The board unlock primary uses the orange-gradient
+   a backdrop. The board unlock primary uses the action gradient
    button language we've established elsewhere. */
 
 .upgrade-prompt {
@@ -186,7 +186,7 @@
   padding: 0 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   font-family: var(--font-sans);
   font-size: 14px;
@@ -199,7 +199,7 @@
     transform var(--motion-micro) var(--ease-press);
 }
 .upgrade-prompt__primary:hover {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   box-shadow: var(--glow-primary);
 }
 .upgrade-prompt__primary:active { transform: translateY(0.5px); }
@@ -496,7 +496,7 @@
   padding: 6px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   font-family: var(--font-sans);
   font-size: 12.5px;
@@ -508,7 +508,7 @@
     box-shadow var(--motion-medium) var(--ease-out);
 }
 .limit-banner__cta:hover {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   box-shadow: var(--glow-primary);
 }
 .limit-banner__cta:focus-visible {

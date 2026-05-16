@@ -49,13 +49,13 @@
   outline-offset: 2px;
 }
 
-/* Brand mark — small orange dot, not a wax seal */
+/* Brand mark — a small retained stamp accent, not a CTA color. */
 .app-bar__brand-seal {
   position: relative;
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: var(--intent-primary);
+  background: var(--intent-stamp);
   box-shadow: none;
 }
 .app-bar__brand-seal-inner { display: none; }
@@ -128,7 +128,7 @@
   padding: 0 14px;
   border-radius: var(--radius-md);
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   font-family: var(--font-body);
   font-size: 13.5px;
@@ -142,7 +142,7 @@
     transform var(--motion-micro) var(--ease-press);
 }
 .app-bar__cta:hover {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   box-shadow: var(--glow-primary);
 }
 .app-bar__cta:active { transform: translateY(0.5px); }
@@ -171,7 +171,7 @@
   padding: 0 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
-  background: var(--bg-canvas);
+  background: color-mix(in srgb, var(--bg-canvas) 92%, var(--teal-50) 8%);
   color: var(--fg-default);
   font-family: var(--font-body);
   font-size: 13.5px;

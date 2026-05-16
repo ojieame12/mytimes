@@ -80,7 +80,7 @@
   padding: 0 22px;
   border-radius: var(--radius-md);
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   font-family: var(--font-sans);
   font-size: 15px;
@@ -93,7 +93,7 @@
     transform var(--motion-micro) var(--ease-press);
 }
 .landing-hero__primary:hover {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   box-shadow: var(--glow-primary);
 }
 .landing-hero__primary:active { transform: translateY(0.5px); }

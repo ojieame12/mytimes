@@ -14,39 +14,37 @@
 :root {
   /* ── shadcn-shape variables (the canonical names) ─────── */
   --background:        var(--white);
-  /* Softened from zinc-900 → zinc-800 — keeps the type from
-     feeling harsh against the warm white card surface. */
-  --foreground:        var(--zinc-800);
+  --foreground:        var(--teal-900);
 
   --card:              var(--white);
-  --card-foreground:   var(--zinc-800);
+  --card-foreground:   var(--teal-900);
 
   --popover:           var(--white);
-  --popover-foreground: var(--zinc-800);
+  --popover-foreground: var(--teal-900);
 
-  --primary:           var(--orange-500);
+  --primary:           var(--teal-600);
   --primary-foreground: var(--white);
-  --primary-hover:     var(--orange-600);
-  --primary-active:    var(--orange-700);
-  --primary-soft:      var(--orange-50);
-  --primary-ring:      rgba(240, 90, 40, 0.30);
+  --primary-hover:     var(--teal-700);
+  --primary-active:    var(--teal-800);
+  --primary-soft:      var(--teal-50);
+  --primary-ring:      rgba(62, 177, 200, 0.34);
 
-  --secondary:         var(--zinc-100);
-  --secondary-foreground: var(--zinc-900);
+  --secondary:         var(--sand-100);
+  --secondary-foreground: var(--teal-900);
 
-  --muted:             var(--zinc-100);
-  --muted-foreground:  var(--zinc-500);
+  --muted:             var(--sand-100);
+  --muted-foreground:  color-mix(in srgb, var(--teal-800) 58%, var(--sand-600) 42%);
 
-  --accent:            var(--zinc-100);
-  --accent-foreground: var(--zinc-900);
+  --accent:            var(--teal-50);
+  --accent-foreground: var(--teal-900);
 
   --destructive:           var(--red-600);
   --destructive-foreground: var(--white);
   --destructive-soft:      var(--red-50);
 
-  --border:        var(--zinc-200);
-  --border-strong: var(--zinc-300);
-  --border-input:  var(--zinc-300);
+  --border:        color-mix(in srgb, var(--sand-300) 72%, var(--teal-200) 28%);
+  --border-strong: color-mix(in srgb, var(--sand-400) 58%, var(--teal-300) 42%);
+  --border-input:  color-mix(in srgb, var(--sand-400) 68%, var(--teal-300) 32%);
 
   --ring:          var(--primary-ring);
   --ring-offset:   var(--background);
@@ -60,32 +58,32 @@
   /* Surfaces */
   --bg-canvas:   var(--background);
   --bg-elevated: var(--background);
-  --bg-sunken:   var(--zinc-50);
+  --bg-sunken:   var(--sand-100);
   --bg-card:     var(--card);
 
-  --bg-hover-subtle:  var(--zinc-50);
-  --bg-hover-default: var(--zinc-100);
-  --bg-hover-strong:  var(--zinc-200);
+  --bg-hover-subtle:  color-mix(in srgb, var(--sand-100) 80%, var(--teal-50) 20%);
+  --bg-hover-default: color-mix(in srgb, var(--sand-100) 58%, var(--teal-50) 42%);
+  --bg-hover-strong:  color-mix(in srgb, var(--sand-200) 58%, var(--teal-100) 42%);
 
-  --bg-overlay-scrim: rgba(9, 9, 11, 0.48);
+  --bg-overlay-scrim: rgba(5, 20, 23, 0.54);
 
   /* Foreground */
   --fg-default:   var(--foreground);
-  --fg-muted:     var(--zinc-700);
-  --fg-subdued:   var(--zinc-600);
-  --fg-subtle:    var(--zinc-500);
-  --fg-faint:     var(--zinc-400);
-  --fg-disabled:  var(--zinc-400);
+  --fg-muted:     color-mix(in srgb, var(--teal-900) 76%, var(--sand-600) 24%);
+  --fg-subdued:   color-mix(in srgb, var(--teal-900) 64%, var(--sand-600) 36%);
+  --fg-subtle:    color-mix(in srgb, var(--teal-900) 48%, var(--sand-600) 52%);
+  --fg-faint:     color-mix(in srgb, var(--teal-900) 34%, var(--sand-500) 66%);
+  --fg-disabled:  color-mix(in srgb, var(--teal-900) 28%, var(--sand-500) 72%);
   --fg-on-accent: var(--primary-foreground);
 
   /* Borders */
-  --border-subtle:  var(--zinc-100);
+  --border-subtle:  color-mix(in srgb, var(--sand-200) 80%, var(--teal-100) 20%);
   --border-default: var(--border);
-  --border-dashed:  var(--zinc-200);
-  --border-strong:  var(--zinc-300);
+  --border-dashed:  color-mix(in srgb, var(--sand-300) 75%, var(--teal-200) 25%);
+  --border-strong:  color-mix(in srgb, var(--sand-400) 58%, var(--teal-300) 42%);
   --border-focus:   var(--primary);
 
-  /* Intent — primary = brand orange */
+  /* Intent — primary = teal brand action */
   --intent-primary:        var(--primary);
   --intent-primary-strong: var(--primary-hover);
   --intent-primary-soft:   var(--primary-soft);
@@ -93,9 +91,15 @@
   --intent-primary-on:     var(--primary-foreground);
 
   /* Intent — accent (neutral text accent for legacy components) */
-  --intent-accent:      var(--zinc-900);
-  --intent-accent-soft: var(--zinc-100);
-  --intent-accent-ring: var(--zinc-300);
+  --intent-accent:      var(--teal-900);
+  --intent-accent-soft: var(--teal-50);
+  --intent-accent-ring: var(--teal-200);
+
+  /* Retained warmth for small trust marks, warning-adjacent
+     stamps, and places where teal would read too corporate. */
+  --intent-stamp:        var(--stamp-500);
+  --intent-stamp-strong: var(--stamp-600);
+  --intent-stamp-soft:   var(--stamp-50);
 
   /* Intent — semantic states */
   --intent-danger:        var(--destructive);
@@ -122,38 +126,40 @@
   --frame-mat:           transparent;
   --frame-mat-thickness: 0px;
 
-  --btn-primary-from: var(--zinc-900);
-  --btn-primary-to:   var(--zinc-900);
+  --btn-primary-from: var(--primary);
+  --btn-primary-to:   var(--teal-400);
+  --action-gradient:       var(--gradient-primary-action);
+  --action-gradient-hover: var(--gradient-primary-action-hover);
+  --private-gradient:      var(--gradient-private-surface);
 }
 
 /* ─── Dark mode ────────────────────────────────────────────
-   Designed as a peer surface — pure zinc, near-black canvas,
-   white text. Primary orange stays the same — it has enough
-   chroma to pop on dark. */
+   Designed as a peer surface, deep teal instead of generic
+   graphite. Primary teal lightens so active states still read. */
 
 .dark, [data-theme="dark"] {
-  --background:        var(--zinc-950);
-  --foreground:        var(--zinc-50);
+  --background:        var(--teal-950);
+  --foreground:        var(--sand-50);
 
-  --card:              var(--zinc-900);
-  --card-foreground:   var(--zinc-50);
+  --card:              var(--teal-900);
+  --card-foreground:   var(--sand-50);
 
-  --popover:           var(--zinc-900);
-  --popover-foreground: var(--zinc-50);
+  --popover:           var(--teal-900);
+  --popover-foreground: var(--sand-50);
 
-  --primary:           var(--orange-500);
-  --primary-foreground: var(--white);
-  --primary-hover:     var(--orange-400);
-  --primary-soft:      rgba(240, 90, 40, 0.12);
+  --primary:           var(--teal-400);
+  --primary-foreground: var(--teal-950);
+  --primary-hover:     var(--teal-300);
+  --primary-soft:      rgba(62, 177, 200, 0.14);
 
-  --secondary:         var(--zinc-800);
-  --secondary-foreground: var(--zinc-50);
+  --secondary:         var(--teal-800);
+  --secondary-foreground: var(--sand-50);
 
-  --muted:             var(--zinc-800);
-  --muted-foreground:  var(--zinc-400);
+  --muted:             var(--teal-800);
+  --muted-foreground:  var(--sand-300);
 
-  --accent:            var(--zinc-800);
-  --accent-foreground: var(--zinc-50);
+  --accent:            var(--teal-800);
+  --accent-foreground: var(--sand-50);
 
   --border:        rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.14);

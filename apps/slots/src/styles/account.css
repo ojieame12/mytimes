@@ -449,7 +449,7 @@
   padding: 8px 14px 8px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   font-family: var(--font-sans);
   font-size: 13px;
@@ -461,7 +461,7 @@
     box-shadow var(--motion-medium) var(--ease-out);
 }
 .account-card__new:hover {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   box-shadow: var(--glow-primary);
 }
 
@@ -539,7 +539,7 @@
   padding: 0 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   font-family: var(--font-sans);
   font-size: 13.5px;
@@ -553,7 +553,7 @@
   box-shadow: var(--shadow-button-rest);
 }
 .account-billing-card__button:hover:not(:disabled) {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   box-shadow: var(--glow-primary);
 }
 .account-billing-card__button--quiet:hover:not(:disabled) {
@@ -737,12 +737,12 @@
 .account-domain-card__button {
   padding: 0 14px;
   border: 1px solid var(--orange-600);
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   color: var(--white);
   box-shadow: var(--shadow-button-primary);
 }
 .account-domain-card__button:hover:not(:disabled) {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
 }
 .account-domain-card__button:disabled,
 .account-domain-card__verify:disabled {

@@ -2,11 +2,13 @@
 name: mytimes
 description: A compact, tangible booking-board system for one-off interview rounds.
 colors:
-  brand-orange: "#F05A28"
-  brand-orange-hover: "#D04415"
-  brand-orange-soft: "#FFF4EE"
-  warm-paper: "#FEFCFA"
-  peach-paper: "#FFF7F0"
+  brand-primary: "#005F83"
+  brand-primary-hover: "#174751"
+  brand-accent: "#3EB1C8"
+  brand-soft: "#E8F7F9"
+  stamp-orange: "#F05A28"
+  warm-paper: "#FEFCF8"
+  sand-paper: "#EBE5DB"
   zinc-50: "#FAFAFA"
   zinc-100: "#F4F4F5"
   zinc-200: "#E4E4E7"
@@ -15,7 +17,7 @@ colors:
   zinc-500: "#71717A"
   zinc-700: "#3F3F46"
   zinc-800: "#27272A"
-  ink: "#18181B"
+  ink: "#091E22"
   success: "#16A34A"
   danger: "#DC2626"
   warning: "#D97706"
@@ -73,7 +75,7 @@ spacing:
   page: "96px"
 components:
   button-primary:
-    backgroundColor: "{colors.brand-orange}"
+    backgroundColor: "{colors.brand-primary}"
     textColor: "{colors.warm-paper}"
     rounded: "{rounded.md}"
     padding: "0 22px"
@@ -91,8 +93,8 @@ components:
     textColor: "{colors.zinc-800}"
     rounded: "{rounded.lg}"
     padding: "24px"
-  card-peach:
-    backgroundColor: "{colors.peach-paper}"
+  card-sand:
+    backgroundColor: "{colors.sand-paper}"
     textColor: "{colors.zinc-800}"
     rounded: "{rounded.xl}"
     padding: "24px"
@@ -113,43 +115,46 @@ components:
 
 mytimes should feel like a warm, physical packet prepared for a specific interview round: compact, useful, and easy to hand to someone else. The interface borrows from letterpress, small receipts, admin stamps, paper cards, and tidy calendar ephemera without becoming decorative. It is a booking board, not calendar software.
 
-The system favors restrained surfaces, one decisive orange accent, dense but calm information, and real product fragments over abstract SaaS illustration. Every screen should answer one job quickly: create the board, claim the slot, recover the link, export the records, or decide whether to pay.
+The system favors restrained surfaces, a decisive deep-teal action axis, dense but calm information, and real product fragments over abstract SaaS illustration. Every screen should answer one job quickly: create the board, claim the slot, recover the link, export the records, or decide whether to pay.
 
 **Key Characteristics:**
-- Warm near-white canvas with peach paper surfaces and orange-tinted borders.
+- Warm near-white canvas with sand paper surfaces and teal-ink action states.
 - Rounded, compact controls: default radius is 6px, with 8px for cards and 12px for hero-scale surfaces.
-- Orange is a stamp, not a flood. It marks primary action, paid upgrade, active state, or trust detail.
+- Teal is the operating color. Orange survives only as a small stamp accent, never the default action color.
 - Mono type is for numerals, times, dates, IDs, prices, and URLs. It is not the brand voice by itself.
 - Real product UI is the imagery. Booking cards, day bands, link cards, admin desks, and receipt panels prove the product.
 
 ## 2. Colors
 
-The palette is warm paper plus one confident orange accent, with zinc neutrals for legibility and small semantic colors for operational state.
+The palette is warm paper plus a two-tone teal axis, with sand neutrals for tactility and small semantic colors for operational state.
 
 ### Primary
-- **Stamp Orange** (#F05A28): The brand anchor. Use for primary CTA backgrounds, active paid states, small seals, section stamps, and included checkmarks.
-- **Pressed Orange** (#D04415): Hover and strong border state for primary controls.
-- **Orange Wash** (#FFF4EE): Soft accent surface behind icons, selected paid cards, and gentle upgrade emphasis.
+- **Deep Teal** (#005F83): The brand anchor. Use for primary CTA backgrounds, active paid states, selected states, links, and serious action.
+- **Bright Teal** (#3EB1C8): The energy accent. Use for gradients, focus glow, highlights, and small proof details.
+- **Teal Ink** (#091E22 to #174751): Private/admin surfaces, selected day bands, dark product proof, and footer-weight sections.
+- **Stamp Orange** (#F05A28): A retained warmth accent for brand seals, tiny trust marks, and occasional paid/attention stamps. It is not the CTA color.
 
 ### Secondary
 - **Success Green** (#16A34A): Open or active status only.
 - **Danger Red** (#DC2626): Destructive action and validation errors only.
 - **Warning Amber** (#D97706): Waiting, caution, or setup attention.
-- **Info Blue** (#2563EB): Rare informational status where orange would imply purchase or action.
+- **Info Blue** (#2563EB): Rare informational status where teal would imply primary action.
 
 ### Neutral
-- **Warm Paper** (#FEFCFA): The perceived canvas, equivalent to the warm `--white` token.
-- **Peach Paper** (#FFF7F0): Marketing and pricing surfaces that need tangible warmth.
+- **Warm Paper** (#FEFCF8): The perceived canvas, equivalent to the warm `--white` token.
+- **Sand Paper** (#EBE5DB): Marketing and pricing surfaces that need tangible warmth.
 - **Zinc Mist** (#F4F4F5): Sunken or quiet background.
 - **Zinc Hairline** (#E4E4E7): Default divider and border.
 - **Muted Ink** (#71717A): Secondary labels and support text.
 - **Body Ink** (#3F3F46): Main body copy.
 - **Deep Ink** (#27272A): Heading text and strong UI text.
-- **Night Ink** (#18181B): Dark admin cards, custom-domain cards, and selected slot surfaces.
+- **Night Ink** (#091E22): Dark admin cards, custom-domain cards, and selected slot surfaces.
 
 ### Named Rules
 
-**The Orange Stamp Rule.** Orange must mark intent, not decorate empty space. If more than one orange CTA appears in a local region, the hierarchy is broken.
+**The Teal Action Rule.** Teal marks the one action or selected state in a local region. If every control is teal, the hierarchy is broken.
+
+**The Orange Stamp Rule.** Orange is a retained material accent. If it starts carrying primary actions again, the system has regressed.
 
 **The Warm Neutral Rule.** Never introduce pure white or pure black. Near-white and near-black must keep the existing warm bias.
 
@@ -177,19 +182,19 @@ The palette is warm paper plus one confident orange accent, with zinc neutrals f
 
 ## 4. Elevation
 
-mytimes uses tactile, orange-tinted elevation. Depth should feel like paper lifted from a warm desk: diffuse, low contrast, and never neutral gray. Controls often use inset highlights to read as pressed material.
+mytimes uses tactile, teal-ink-tinted elevation over warm paper. Depth should feel like paper lifted from a warm desk: diffuse, low contrast, and never neutral gray. Controls often use inset highlights to read as pressed material.
 
 ### Shadow Vocabulary
 - **Flat** (`none`): Default for text, nav links, rules, and dense list rows.
-- **Card** (`0 1px 2px hsla(16, 40%, 30%, 0.05), 0 2px 4px hsla(16, 40%, 30%, 0.04), 0 4px 8px hsla(16, 40%, 30%, 0.04), 0 8px 16px hsla(16, 40%, 30%, 0.03)`): Standard paper cards and repeated panels.
-- **Elevated Card** (`0 1px 2px hsla(16, 40%, 30%, 0.06), 0 2px 4px hsla(16, 40%, 30%, 0.06), 0 4px 8px hsla(16, 40%, 30%, 0.05), 0 8px 16px hsla(16, 40%, 30%, 0.05), 0 16px 32px hsla(16, 40%, 30%, 0.04)`): Important containers, dialogs, and surfaces that need more presence.
-- **Button Rest** (`0 1px 2px hsla(16, 40%, 30%, 0.05), 0 2px 4px hsla(16, 40%, 30%, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6)`): Quiet buttons and material controls.
-- **Primary Button** (`0 1px 2px hsla(16, 88%, 35%, 0.18), 0 4px 8px hsla(16, 88%, 35%, 0.14), 0 8px 16px -4px hsla(16, 88%, 35%, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.22)`): Orange action buttons only.
-- **Primary Glow** (`0 0 0 4px hsla(16, 88%, 55%, 0.10), 0 10px 24px -8px hsla(16, 88%, 55%, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.25)`): Hover state for the single primary action.
+- **Card** (`0 1px 2px hsla(194, 44%, 18%, 0.05), 0 2px 4px hsla(194, 44%, 18%, 0.04), 0 4px 8px hsla(194, 44%, 18%, 0.04), 0 8px 16px hsla(194, 44%, 18%, 0.03)`): Standard paper cards and repeated panels.
+- **Elevated Card** (`0 1px 2px hsla(194, 44%, 18%, 0.06), 0 2px 4px hsla(194, 44%, 18%, 0.06), 0 4px 8px hsla(194, 44%, 18%, 0.05), 0 8px 16px hsla(194, 44%, 18%, 0.05), 0 16px 32px hsla(194, 44%, 18%, 0.04)`): Important containers, dialogs, and surfaces that need more presence.
+- **Button Rest** (`0 1px 2px hsla(194, 44%, 18%, 0.05), 0 2px 4px hsla(194, 44%, 18%, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6)`): Quiet buttons and material controls.
+- **Primary Button** (`0 1px 2px hsla(194, 100%, 22%, 0.22), 0 4px 8px hsla(194, 100%, 22%, 0.16), 0 8px 16px -4px hsla(194, 100%, 22%, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.22)`): Teal action buttons only.
+- **Primary Glow** (`0 0 0 4px hsla(188, 55%, 52%, 0.14), 0 10px 24px -8px hsla(188, 55%, 52%, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.25)`): Hover state for the single primary action.
 
 ### Named Rules
 
-**The Warm Shadow Rule.** Shadows must be orange-tinted or deep-ink tinted. Neutral gray shadows are prohibited.
+**The Warm Shadow Rule.** Shadows must be teal-ink tinted or warm-paper tinted. Neutral gray shadows are prohibited.
 
 **The Lift Has Meaning Rule.** Elevation appears for focus, hover, selected state, or important containers. Do not add floating cards for decoration.
 
@@ -198,9 +203,9 @@ mytimes uses tactile, orange-tinted elevation. Depth should feel like paper lift
 ### Buttons
 
 - **Shape:** Compact material stamp, default 6px radius.
-- **Primary:** Orange gradient from #F87A45 to #F05A28, white warm text, 44-48px height, medium weight, warm shadow.
-- **Hover / Focus:** Primary buttons darken toward #D04415 and gain a soft orange glow. Focus uses a clear 2px orange outline or an inset focus surface on form controls.
-- **Quiet:** White or warm-paper background, zinc text, 1px border, button-rest shadow. Use for secondary actions.
+- **Primary:** Diagonal teal gradient from #005F83 toward #3EB1C8, warm light text, 44-48px height, medium weight, teal-ink shadow.
+- **Hover / Focus:** Primary buttons darken toward #174751 and gain a soft teal glow. Focus uses a clear 2px teal outline or an inset focus surface on form controls.
+- **Quiet:** Warm-paper background, teal-ink text, 1px border, button-rest shadow. Use for secondary actions.
 - **Danger:** Keep destructive actions quiet unless the action is the only task on the screen. Red text on a light button is usually enough.
 
 ### Chips
@@ -212,16 +217,16 @@ mytimes uses tactile, orange-tinted elevation. Depth should feel like paper lift
 ### Cards / Containers
 
 - **Corner Style:** 8px for normal cards, 12px for hero or warm marketing cards.
-- **Background:** Warm paper for product cards, peach paper for marketing and pricing proof surfaces, night ink for admin/private/custom-domain cards.
+- **Background:** Warm paper for product cards, sand paper for marketing and pricing proof surfaces, night ink for admin/private/custom-domain cards.
 - **Shadow Strategy:** Use `--shadow-card` by default. Reserve stronger shadows for primary CTA, modal, or selected state.
-- **Border:** 1px warm or zinc hairline. Orange borders signal paid, selected, or product proof, not decoration.
+- **Border:** 1px warm or teal-tinted hairline. Teal borders signal paid, selected, or product proof, not decoration.
 - **Internal Padding:** 16-24px for normal cards, 24-32px for major marketing panels.
 
 ### Inputs / Fields
 
 - **Style:** 44px minimum height, 6px radius, warm paper fill, inset border, body font.
-- **Focus:** No extra decorative glow. Focus lives on the control surface: peach-tinted fill, 1.5px orange inset border, and subtle pressed shadow.
-- **Error / Disabled:** Error uses red inset border and red helper text with dot marker. Disabled uses zinc mist and muted text.
+- **Focus:** No extra decorative glow. Focus lives on the control surface: teal-tinted fill, 1.5px teal inset border, and subtle pressed shadow.
+- **Error / Disabled:** Error uses red inset border and red helper text with dot marker. Disabled uses sand mist and muted text.
 
 ### Navigation
 
@@ -231,7 +236,7 @@ mytimes uses tactile, orange-tinted elevation. Depth should feel like paper lift
 
 ### Booking Card
 
-The booking card is the proof object. It uses a peach-tinted paper surface, a compact stamp eyebrow, display title, factual icon metadata, and a bottom strip for counts, reference, trust, and expansion. It should look like the real board, not an illustration of a board.
+The booking card is the proof object. It uses a sand-tinted paper surface, a compact stamp eyebrow, display title, factual icon metadata, and a bottom strip for counts, reference, trust, and expansion. It should look like the real board, not an illustration of a board.
 
 ### Day Band
 
@@ -239,14 +244,14 @@ The day band is the signature interaction. The date block is the visual anchor; 
 
 ### Link Card
 
-Public and admin links are shown as tangible cards. Public links stay light. Admin/private/custom-domain cards use night ink with orange labels and mono URLs. Long URLs must wrap with `overflow-wrap: anywhere`.
+Public and admin links are shown as tangible cards. Public links stay light. Admin/private/custom-domain cards use night ink with teal labels and mono URLs. Long URLs must wrap with `overflow-wrap: anywhere`.
 
 ## 6. Do's and Don'ts
 
 ### Do:
 
 - **Do** keep the product focused on fixed interview times, one public booking link, and one private organizer/admin link.
-- **Do** use orange for the one primary action, paid upgrade state, or active status in a local region.
+- **Do** use teal for the one primary action, paid upgrade state, or active status in a local region.
 - **Do** show real product fragments on marketing pages: booking card, day band, link card, admin desk, receipt, pricing plan.
 - **Do** keep controls compact: 6px radius, 44px minimum touch target, and readable 13-15px text.
 - **Do** use mono for times, dates, counts, IDs, prices, and links.
@@ -261,5 +266,5 @@ Public and admin links are shown as tangible cards. Public links stay light. Adm
 - **Don't** compete as "another scheduler." The landing should sell a one-off interview booking board and the subscription as company operating mode.
 - **Don't** put custom domains into the $9 Event Pass framing. Custom domains are Company Standby territory.
 - **Don't** use mono as a costume for technical credibility.
-- **Don't** make orange decorative. If orange does not identify action, state, or trust, remove it.
+- **Don't** make orange decorative. It is now a small retained stamp accent, not the action system.
 - **Don't** nest cards inside cards unless the nested object is a real repeated item, modal, or framed tool.

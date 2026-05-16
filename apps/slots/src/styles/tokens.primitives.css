@@ -5,9 +5,11 @@
    which alias these. Never reach for --color-* directly in
    component CSS.
 
-   Palette: Zinc neutrals (shadcn default, modern B2B SOTA) +
-   warm orange brand accent (kept because Cal-blue / Linear-
-   purple / Calendly-blue all own cool — warm is open).
+   Palette: warm paper + deep teal brand axis. The teal
+   scale borrows the Symetri move: serious ink, bright cyan
+   lift, and a warm sand counterweight. The old --orange-*
+   names remain as action-color aliases so legacy components
+   pick up the new brand without broad repaint churn.
 ═══════════════════════════════════════════════════════════ */
 
 :root {
@@ -24,18 +26,58 @@
   --zinc-900: #18181B;
   --zinc-950: #09090B;
 
-  /* ── Orange — mytimes brand, OKLCH-balanced 11-step scale ── */
-  --orange-50:  #FFF4EE;
-  --orange-100: #FFE4D4;
-  --orange-200: #FFC4A3;
-  --orange-300: #FF9F6E;
-  --orange-400: #F87A45;
-  --orange-500: #F05A28;  /* brand anchor */
-  --orange-600: #D04415;
-  --orange-700: #A8340F;
-  --orange-800: #82290D;
-  --orange-900: #5F1F0A;
-  --orange-950: #361007;
+  /* ── Teal — mytimes brand axis, Symetri-inspired ─────── */
+  --teal-50:  #E8F7F9;
+  --teal-100: #D2EEF3;
+  --teal-200: #A8DEE7;
+  --teal-300: #76C9D8;
+  --teal-400: #3EB1C8;  /* bright accent */
+  --teal-500: #168DA8;
+  --teal-600: #005F83;  /* brand primary */
+  --teal-700: #174751;
+  --teal-800: #0E2930;
+  --teal-900: #091E22;
+  --teal-950: #051417;
+
+  /* ── Sand — warm paper counterweight ─────────────────── */
+  --sand-50:  #FEFCF8;
+  --sand-100: #F8F3EA;
+  --sand-200: #EBE5DB;  /* architectural cream */
+  --sand-300: #DCD2C4;
+  --sand-400: #C6B8A6;
+  --sand-500: #A89682;
+  --sand-600: #7D6C5C;
+  --sand-700: #5F5146;
+  --sand-800: #413832;
+  --sand-900: #28231F;
+
+  /* ── Stamp orange — retained as a tiny warmth accent ─── */
+  --stamp-50:  #FFF4EE;
+  --stamp-100: #FFE4D4;
+  --stamp-200: #FFC4A3;
+  --stamp-300: #FF9F6E;
+  --stamp-400: #F87A45;
+  --stamp-500: #F05A28;
+  --stamp-600: #D04415;
+  --stamp-700: #A8340F;
+  --stamp-800: #82290D;
+  --stamp-900: #5F1F0A;
+  --stamp-950: #361007;
+
+  /* Legacy action aliases. Components should prefer semantic
+     roles, but these keep older orange-wired buttons and chips
+     aligned with the new teal action system. */
+  --orange-50:  var(--teal-50);
+  --orange-100: var(--teal-100);
+  --orange-200: var(--teal-200);
+  --orange-300: var(--teal-300);
+  --orange-400: var(--teal-400);
+  --orange-500: var(--teal-600);
+  --orange-600: var(--teal-700);
+  --orange-700: var(--teal-800);
+  --orange-800: var(--teal-900);
+  --orange-900: var(--teal-950);
+  --orange-950: #020B0D;
 
   /* ── Semantic intent — Radix-style 12-step references ── */
   --red-50:  #FEF2F2;
@@ -63,10 +105,9 @@
   --green-600: #16A34A;
   --green-700: #15803D;
 
-  /* Tinted neutrals — impeccable ban on pure #fff / #000.
-     Tiny orange bias (chroma ~0.005) keeps them warm and on-brand. */
-  --white: oklch(0.995 0.003 50);   /* near-white with warm orange tint */
-  --black: oklch(0.10 0.012 50);    /* near-black with warm orange tint */
+  /* Tinted neutrals — never pure white / black. */
+  --white: var(--sand-50);
+  --black: var(--teal-950);
 
   /* ── Radius — Cal.com / Linear / shadcn convergence ──── */
   --radius-xs:   2px;
@@ -142,43 +183,42 @@
   --motion-long:   var(--duration-long);
 
   /* ── Elevation — multi-layer, tinted shadows ─────────────
-     Tinted with the brand hue (orange ≈ hsl 16 88% 55%) at
-     very low saturation. NEVER pure neutral gray — that's
-     the "cheap" tell research called out. */
+     Shadows are teal-ink tinted with enough warmth from the
+     sand surfaces to keep the material-paper feeling. */
   --shadow-flat: none;
 
   /* Surface shadows — diffuse, doubling-radius stack. */
   --shadow-card:
-    0 1px 2px   hsla(16, 40%, 30%, 0.05),
-    0 2px 4px   hsla(16, 40%, 30%, 0.04),
-    0 4px 8px   hsla(16, 40%, 30%, 0.04),
-    0 8px 16px  hsla(16, 40%, 30%, 0.03);
+    0 1px 2px   hsla(194, 44%, 18%, 0.05),
+    0 2px 4px   hsla(194, 44%, 18%, 0.04),
+    0 4px 8px   hsla(194, 44%, 18%, 0.04),
+    0 8px 16px  hsla(194, 44%, 18%, 0.03);
   --shadow-card-elevated:
-    0 1px 2px   hsla(16, 40%, 30%, 0.06),
-    0 2px 4px   hsla(16, 40%, 30%, 0.06),
-    0 4px 8px   hsla(16, 40%, 30%, 0.05),
-    0 8px 16px  hsla(16, 40%, 30%, 0.05),
-    0 16px 32px hsla(16, 40%, 30%, 0.04);
+    0 1px 2px   hsla(194, 44%, 18%, 0.06),
+    0 2px 4px   hsla(194, 44%, 18%, 0.06),
+    0 4px 8px   hsla(194, 44%, 18%, 0.05),
+    0 8px 16px  hsla(194, 44%, 18%, 0.05),
+    0 16px 32px hsla(194, 44%, 18%, 0.04);
 
   /* Button shadows — sculpted with inset highlight on top. */
   --shadow-button-rest:
-    0 1px 2px   hsla(16, 40%, 30%, 0.05),
-    0 2px 4px   hsla(16, 40%, 30%, 0.04),
+    0 1px 2px   hsla(194, 44%, 18%, 0.05),
+    0 2px 4px   hsla(194, 44%, 18%, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
   --shadow-button-primary:
-    0 1px 2px   hsla(16, 88%, 35%, 0.18),
-    0 4px 8px   hsla(16, 88%, 35%, 0.14),
-    0 8px 16px -4px hsla(16, 88%, 35%, 0.20),
+    0 1px 2px   hsla(194, 100%, 22%, 0.22),
+    0 4px 8px   hsla(194, 100%, 22%, 0.16),
+    0 8px 16px -4px hsla(194, 100%, 22%, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
 
   /* Ambient hover glow — colored halo around the button. */
   --glow-primary:
-    0 0 0 4px hsla(16, 88%, 55%, 0.10),
-    0 10px 24px -8px hsla(16, 88%, 55%, 0.42),
+    0 0 0 4px hsla(188, 55%, 52%, 0.14),
+    0 10px 24px -8px hsla(188, 55%, 52%, 0.44),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
   --glow-primary-soft:
-    0 0 0 3px hsla(16, 88%, 55%, 0.10),
-    0 6px 16px -6px hsla(16, 88%, 55%, 0.28);
+    0 0 0 3px hsla(188, 55%, 52%, 0.12),
+    0 6px 16px -6px hsla(188, 55%, 52%, 0.30);
 
   --shadow-popover:
     0 4px 8px  hsla(220, 30%, 12%, 0.06),
@@ -188,12 +228,12 @@
     0 8px 16px  hsla(220, 30%, 12%, 0.08),
     0 24px 48px hsla(220, 30%, 12%, 0.16);
 
-  /* ── Mesh gradient — orange / rose / violet, desaturated ── */
+  /* ── Mesh gradient — teal / cyan / warm paper, quiet ───── */
   --mesh-hero:
-    radial-gradient(40% 55% at 20% 30%, hsla(16, 88%, 70%, 0.30) 0%, transparent 60%),
-    radial-gradient(45% 60% at 80% 20%, hsla(335, 80%, 75%, 0.28) 0%, transparent 65%),
-    radial-gradient(50% 55% at 60% 90%, hsla(265, 65%, 78%, 0.24) 0%, transparent 60%),
-    radial-gradient(35% 45% at 95% 80%, hsla(40, 90%, 75%, 0.20) 0%, transparent 60%);
+    radial-gradient(40% 55% at 20% 30%, hsla(194, 100%, 34%, 0.20) 0%, transparent 60%),
+    radial-gradient(45% 60% at 80% 20%, hsla(188, 55%, 52%, 0.22) 0%, transparent 65%),
+    radial-gradient(50% 55% at 60% 90%, hsla(38, 35%, 78%, 0.26) 0%, transparent 60%),
+    radial-gradient(35% 45% at 95% 80%, hsla(16, 88%, 65%, 0.08) 0%, transparent 60%);
 
   /* ── Time-of-day rim hues (HSL — subtle, used at 30% alpha) ── */
   --tod-morning-hue:   200;   /* cool cyan */
@@ -206,7 +246,12 @@
   --noise-overlay: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 
   /* ── Card surface — subtle vertical gradient (bevel feel) ── */
-  --gradient-card-surface: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  --gradient-card-surface: linear-gradient(180deg, var(--sand-50) 0%, var(--sand-100) 100%);
+
+  /* ── Brand gradients ───────────────────────────────────── */
+  --gradient-primary-action: linear-gradient(130deg, var(--teal-600) 50%, var(--teal-400) 150%);
+  --gradient-primary-action-hover: linear-gradient(130deg, var(--teal-700) 45%, var(--teal-600) 130%);
+  --gradient-private-surface: linear-gradient(180deg, var(--teal-800) 0%, var(--teal-900) 100%);
 
   /* ── Breakpoint references ────────────────────────────── */
   --bp-sm:  480px;

@@ -326,13 +326,13 @@
 }
 
 .manage-btn--destructive {
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   border: 1px solid var(--orange-600);
   color: var(--primary-foreground);
   box-shadow: var(--shadow-button-primary);
 }
 .manage-btn--destructive:hover:not(:disabled) {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   box-shadow: var(--glow-primary);
 }
 

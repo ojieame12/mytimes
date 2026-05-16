@@ -88,7 +88,7 @@
 
 /* ─── State: BOOKED (admin view) — solid orange with glow ── */
 .slot-chip--booked {
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   border-color: var(--orange-600);
   color: var(--primary-foreground);
   box-shadow:
@@ -101,7 +101,7 @@
   color: var(--primary-foreground);
 }
 .slot-chip--booked.is-interactive:hover {
-  background: linear-gradient(180deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  background: var(--action-gradient-hover);
   border-color: var(--orange-700);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
@@ -131,7 +131,7 @@
 
 /* ─── State: JUST-CLAIMED ──────────────────────────────── */
 .slot-chip--just-claimed {
-  background: linear-gradient(180deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  background: var(--action-gradient);
   border-color: var(--orange-600);
   color: var(--primary-foreground);
   box-shadow:
