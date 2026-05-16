@@ -1,0 +1,24 @@
+{
+  "name": "mytimes",
+  "short_name": "mytimes",
+  "description": "Scheduling for one-off interview rounds, candidate demos, and vendor calls.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FEFCF8",
+  "theme_color": "#FEFCF8",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

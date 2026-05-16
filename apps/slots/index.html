@@ -20,9 +20,7 @@
 
     <!-- ─── Canonical + icons ────────────────────────────────────
          Helmet overrides the canonical per route; this is the
-         default for the marketing root. apple-touch-icon path is
-         declared even though the file is not yet authored — see
-         TODO in the agent report. -->
+         default for the marketing root. -->
     <link rel="canonical" href="https://mytimes.co/" />
     <link
       rel="preload"
@@ -32,9 +30,12 @@
       crossorigin
       fetchpriority="high"
     />
-    <link rel="icon" type="image/svg+xml" href="/assets/brand/wordmark-dark.svg" />
-    <link rel="alternate icon" type="image/png" href="/assets/brand/wordmark-dark.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/logo-icon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     <!-- ─── Open Graph ────────────────────────────────────────────
          Drives Slack / iMessage / Discord / LinkedIn / Facebook
