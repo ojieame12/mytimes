@@ -1,0 +1,52 @@
+/* -----------------------------------------------------------
+   Typography guardrails.
+
+   The heading face is intentionally broad: h1-h4 and existing
+   --font-display title classes pick it up. Figure-like content
+   stays on Geist Mono even when it appears inside a heading.
+----------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4,
+[role='heading'] {
+  font-family: var(--font-heading);
+}
+
+.mono,
+.tabular,
+code,
+time,
+[class*='__price'],
+[class*='__amount'],
+[class*='__num'],
+[class*='__count'],
+[class*='__time'],
+[class*='__date'],
+[class*='__reference'],
+[class*='__code'],
+[class*='__url'],
+[class*='__token'],
+.pricing-head__price,
+.pricing-head__period,
+.pricing-head__anchor,
+.landing-proof__stat-value,
+.landing-pricing-card__price,
+.landing-kpi__value,
+.management-metric__value,
+.account-stat__value,
+.day-band__num,
+.date-strip__cell-num,
+.date-strip__cell-count,
+.slot-chip__time,
+.slot-chip__ampm,
+.claim-modal__slot-times-primary,
+.manage-card__title-time,
+.manage-card__time-main,
+.manage-card__tz-zone,
+.my-boards-card__strip-num,
+.my-boards-row__num {
+  font-family: var(--font-figure);
+  font-variant-numeric: tabular-nums;
+}

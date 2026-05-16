@@ -153,19 +153,17 @@
   --font-size-hero:     76px;   /* marketing only */
 
   /* ── Fonts ───────────────────────────────────────────────
-     - SF Compact Rounded — used for both display/headings AND
-       body text. Apple's softened sans-rounded; warmer than
-       SF Compact, friendlier than Geist, still tight enough to
-       read as confident at large sizes.
-     - Geist Mono — reserved for numerals only (times, dates,
-       IDs, reference codes). Anything non-numeric goes through
-       --font-sans (= SF Compact Rounded). */
-  --font-display: 'SF Compact Rounded', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+     - Mytimes Heading — poster-weight face for real headings.
+     - SF Compact Rounded — body text and product controls.
+     - Geist Mono — reserved for figures (times, dates, prices,
+       counts, IDs, reference codes, and URLs). */
+  --font-heading: 'Mytimes Heading', 'SF Compact Rounded', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: var(--font-heading);
   --font-sans:    'SF Compact Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --font-mono:    'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, Monaco, monospace;
+  --font-figure:  var(--font-mono);
 
-  /* Default body font — SF Compact Rounded. Same family as
-     display, so headers and body share their letterforms. */
+  /* Default body font — SF Compact Rounded. */
   --font-body: var(--font-sans);
 
   /* ── Motion ───────────────────────────────────────────── */

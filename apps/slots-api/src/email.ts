@@ -141,7 +141,7 @@ export async function sendBookingClaimedEmails(input: {
             name: input.event.organizerName,
             email: input.event.organizerEmail,
           },
-          body: `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em"><strong style="font-weight:600">${input.event.durationMinutes} minutes</strong> on <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>. A calendar invite is attached. Drop it in and you're set.</p>`,
+          body: `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em"><strong style="font-weight:600">${input.event.durationMinutes} minutes</strong> on <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>. A calendar invite is attached. Drop it in and you're set.</p>`,
           pullQuote: input.booking.notes
             ? { text: input.booking.notes, attribution: "your note, on booking" }
             : undefined,
@@ -193,7 +193,7 @@ export async function sendBookingClaimedEmails(input: {
             name: input.booking.participantName,
             email: input.booking.participantEmail,
           },
-          body: `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Someone just claimed a time on your <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong> board.</p>`,
+          body: `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Someone just claimed a time on your <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong> board.</p>`,
           pullQuote: input.booking.notes
             ? { text: input.booking.notes, attribution: `from ${firstName(input.booking.participantName)}` }
             : undefined,
@@ -249,7 +249,7 @@ export async function sendEventCreatedEmail(input: {
           "share the public one, save the admin one",
         ]),
         body: [
-          `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Two links below. The first is public; share it with anyone who needs to book a time. The second is yours.</p>`,
+          `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Two links below. The first is public; share it with anyone who needs to book a time. The second is yours.</p>`,
           renderLinkCard({
             variant: "public",
             label: "Public participant link",
@@ -432,7 +432,7 @@ export async function sendBookingCancellationEmails(input: {
               name: input.booking.participantName,
               email: input.booking.participantEmail,
             },
-            body: `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">${organizerBody}</p>`,
+            body: `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">${organizerBody}</p>`,
             primaryCta: input.adminURL ? { href: input.adminURL, label: "Open board admin" } : undefined,
             footerNote: `Sent because you're the organizer of ${escapeHtml(input.event.title)}.`,
           }),
@@ -557,8 +557,8 @@ export async function sendManagedBookingDetailsEmail(input: {
           email: input.event.organizerEmail,
         },
         body: cancelled
-          ? `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">This booking for <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong> has already been cancelled. Sending a copy for your records.</p>`
-          : `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Fresh copy of your booking on <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>, with the link to manage or cancel it.</p>`,
+          ? `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">This booking for <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong> has already been cancelled. Sending a copy for your records.</p>`
+          : `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Fresh copy of your booking on <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>, with the link to manage or cancel it.</p>`,
         primaryCta: { href: input.manageURL, label: cancelled ? "View booking" : "Manage booking" },
         footerNote: "Sent because you asked us to resend your booking details.",
         manageURL: input.manageURL,
@@ -600,7 +600,7 @@ export async function sendAdminRecoveryEmail(input: {
           "replaces the previous one",
         ]),
         body: [
-          `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Someone requested a new admin link for <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>. If that was you, this one replaces the previous.</p>`,
+          `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Someone requested a new admin link for <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>. If that was you, this one replaces the previous.</p>`,
           renderLinkCard({
             variant: "admin",
             label: "Private admin link",
@@ -664,7 +664,7 @@ export async function sendManageLinkRecoveryEmail(input: {
           name: input.event.organizerName,
           email: input.event.organizerEmail,
         },
-        body: `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Use the link below to manage or cancel your booking on <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>.</p>`,
+        body: `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Use the link below to manage or cancel your booking on <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>.</p>`,
         primaryCta: { href: input.manageURL, label: "Manage booking" },
         footerNote: "Sent because you asked us to resend your booking management link.",
         manageURL: input.manageURL,
@@ -704,7 +704,7 @@ export async function sendMyBoardsLinkEmail(input: {
           "expires in 24 hours",
         ]),
         body: [
-          `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Click below to see every board you've created with this email: <strong style="font-weight:600">${escapeHtml(countLabel)}</strong> in total. Link works for 24 hours.</p>`,
+          `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Click below to see every board you've created with this email: <strong style="font-weight:600">${escapeHtml(countLabel)}</strong> in total. Link works for 24 hours.</p>`,
           renderLinkCard({
             variant: "admin",
             label: "Your private boards link",
@@ -746,7 +746,7 @@ export async function sendPasswordResetEmail(input: {
           `expires in ${expiryLabel}`,
         ]),
         body: [
-          `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Use the private link below to set a new password for your mytimes account. It expires in <strong style="font-weight:600">${escapeHtml(expiryLabel)}</strong>.</p>`,
+          `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Use the private link below to set a new password for your mytimes account. It expires in <strong style="font-weight:600">${escapeHtml(expiryLabel)}</strong>.</p>`,
           renderLinkCard({
             variant: "admin",
             label: "Private reset link",
@@ -788,7 +788,7 @@ export async function sendEmailVerificationEmail(input: {
           `expires in ${expiryLabel}`,
         ]),
         body: [
-          `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Use the private link below to verify your mytimes organizer account. It expires in <strong style="font-weight:600">${escapeHtml(expiryLabel)}</strong>.</p>`,
+          `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Use the private link below to verify your mytimes organizer account. It expires in <strong style="font-weight:600">${escapeHtml(expiryLabel)}</strong>.</p>`,
           renderLinkCard({
             variant: "admin",
             label: "Private verification link",
@@ -985,7 +985,7 @@ export async function sendOperationalTestEmail(input: {
         eyebrow: "System check",
         title: "Email is up.",
         preheader: "Provider delivery reached this inbox.",
-        body: `<p style="margin:0 0 18px 0;font-family:${FONT_DISPLAY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">If you received this, the configured production email provider can deliver mail from the API service.</p>`,
+        body: `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">If you received this, the configured production email provider can deliver mail from the API service.</p>`,
         footerNote: "This is an operational test message.",
       }),
     },
@@ -1248,11 +1248,9 @@ function providerError(provider: string, status: number, body: unknown): string 
 // Email template rendering
 // =============================================================================
 
-// Display + body use Nunito (rounded geometric sans, free, self-hosted) when
-// the recipient's client honours <style>-block @font-face declarations,
-// Apple Mail, Gmail desktop, Outlook iOS/Android. Outlook desktop and Gmail
-// mobile fall back to the system sans stack, which still reads cleanly.
-const FONT_DISPLAY = "'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif";
+// Heading uses the same poster-weight face as the site where supported.
+// Body stays Nunito for predictable email rendering; figures stay mono.
+const FONT_HEADING = "'Mytimes Heading','Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif";
 const FONT_BODY = "'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif";
 const FONT_MONO = "'SF Mono',Menlo,Monaco,Consolas,'Courier New',monospace";
 
@@ -1377,12 +1375,13 @@ export function renderEmailHtml(opts: RenderEmailOptions): string {
     // Outlook desktop renders at 120 DPI by default; pin to 96 DPI so width
     // attributes match across clients.
     "<!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->",
-    // Self-hosted Nunito for clients that honour <style>-block @font-face
-    // (Apple Mail, Gmail desktop web, Outlook iOS/Android). Wrapped in a
-    // non-MSO conditional so Outlook desktop ignores it cleanly and falls
-    // back to the system sans stack.
+    // Self-hosted heading + Nunito fonts for clients that honour
+    // <style>-block @font-face declarations. Wrapped in a non-MSO
+    // conditional so Outlook desktop ignores it cleanly and falls back to
+    // the system sans stack.
     `<!--[if !mso]><!-- -->`,
     `<style type="text/css">`,
+    `@font-face{font-family:'Mytimes Heading';font-style:normal;font-weight:800;font-display:swap;src:url('${assetBaseURL}/fonts/mytimes-heading.woff2') format('woff2');}`,
     `@font-face{font-family:'Nunito';font-style:normal;font-weight:400;font-display:swap;src:url('${assetBaseURL}/fonts/Nunito-400.woff2') format('woff2');}`,
     `@font-face{font-family:'Nunito';font-style:normal;font-weight:600;font-display:swap;src:url('${assetBaseURL}/fonts/Nunito-600.woff2') format('woff2');}`,
     `@font-face{font-family:'Nunito';font-style:normal;font-weight:700;font-display:swap;src:url('${assetBaseURL}/fonts/Nunito-700.woff2') format('woff2');}`,
@@ -1430,7 +1429,7 @@ function renderBrandRow(assetBaseURL: string): string {
   const mark = assetBaseURL
     ? `<img src="${escapeAttribute(assetBaseURL)}/assets/brand/wordmark-dark@2x.png" alt="mytimes" width="96" height="24" style="display:block;border:0;outline:none;line-height:1;height:24px;width:96px">`
     : `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>`
-      + `<td style="font-family:${FONT_DISPLAY};font-size:20px;font-weight:700;color:${COLOR_BODY};letter-spacing:-0.01em;line-height:1;mso-line-height-rule:exactly">mytimes</td>`
+      + `<td style="font-family:${FONT_HEADING};font-size:20px;font-weight:800;color:${COLOR_BODY};letter-spacing:-0.01em;line-height:1;mso-line-height-rule:exactly">mytimes</td>`
       + `<td width="6"></td>`
       + `<td><span style="display:inline-block;width:6px;height:6px;background-color:${COLOR_STAMP};border-radius:50%;vertical-align:middle"></span></td>`
       + `</tr></table>`;
@@ -1441,7 +1440,7 @@ function renderHeader(eyebrow: string, title: string): string {
   return [
     `<tr><td style="padding:32px 32px 12px 32px">`,
     `<div style="font-family:${FONT_BODY};font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:${COLOR_BRAND};margin:0 0 14px 0;line-height:1;mso-line-height-rule:exactly">${escapeHtml(eyebrow)}</div>`,
-    `<h1 style="margin:0;font-family:${FONT_DISPLAY};font-size:30px;line-height:1.15;mso-line-height-rule:exactly;font-weight:700;color:${COLOR_BODY};letter-spacing:-0.02em">${escapeHtml(title)}</h1>`,
+    `<h1 style="margin:0;font-family:${FONT_HEADING};font-size:30px;line-height:1.08;mso-line-height-rule:exactly;font-weight:800;color:${COLOR_BODY};letter-spacing:0">${escapeHtml(title)}</h1>`,
     `</td></tr>`,
   ].join("");
 }
@@ -1465,7 +1464,7 @@ function renderTimeBlock(data: TimeBlockData, style: TimeBlockStyle): string {
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${bg}" style="background-color:${bg};border-radius:14px">`,
     `<tr><td style="padding:22px 24px 18px 24px">`,
     `<div style="font-family:${FONT_BODY};font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${COLOR_MUTED};margin:0 0 6px 0;line-height:1;mso-line-height-rule:exactly">${escapeHtml(primary.label)}</div>`,
-    `<div style="font-family:${FONT_DISPLAY};font-size:22px;line-height:1.25;mso-line-height-rule:exactly;color:${titleColor};font-weight:600;letter-spacing:-0.01em">${escapeHtml(primary.weekday)}, ${escapeHtml(primary.date)}</div>`,
+    `<div style="font-family:${FONT_BODY};font-size:22px;line-height:1.25;mso-line-height-rule:exactly;color:${titleColor};font-weight:600;letter-spacing:-0.01em">${escapeHtml(primary.weekday)}, ${escapeHtml(primary.date)}</div>`,
     `<div style="margin-top:6px;font-family:${FONT_MONO};font-size:22px;line-height:1.25;mso-line-height-rule:exactly;color:${timeColor};font-weight:500;letter-spacing:-0.01em">${escapeHtml(primary.timeRange)}<span style="font-family:${FONT_BODY};font-size:12px;color:${COLOR_MUTED};font-weight:400;letter-spacing:0.04em;margin-left:10px;text-transform:uppercase">${escapeHtml(primary.timezone)}</span></div>`,
     `</td></tr>`,
     data.secondary
@@ -1489,7 +1488,7 @@ function renderPersonLockup(person: PersonLockup): string {
     `<img src="https://api.dicebear.com/9.x/notionists/png?seed=${encodeURIComponent(seed)}&backgroundColor=ebe5db&size=88" alt="" width="44" height="44" style="display:block;border:1px solid ${COLOR_HAIRLINE};border-radius:50%;background-color:${COLOR_PEACH_PANEL}">`,
     `</td>`,
     `<td valign="middle">`,
-    `<div style="font-family:${FONT_DISPLAY};font-size:16px;color:${COLOR_BODY};font-weight:600;letter-spacing:-0.01em;line-height:1.25;mso-line-height-rule:exactly">${escapeHtml(person.name)}</div>`,
+    `<div style="font-family:${FONT_HEADING};font-size:16px;color:${COLOR_BODY};font-weight:800;letter-spacing:0;line-height:1.18;mso-line-height-rule:exactly">${escapeHtml(person.name)}</div>`,
     `<div style="margin-top:2px;font-family:${FONT_BODY};font-size:12px;color:${COLOR_MUTED};line-height:1.4;letter-spacing:0.01em;mso-line-height-rule:exactly">${escapeHtml(person.role)}${emailFragment}</div>`,
     `</td>`,
     `</tr>`,
@@ -1509,7 +1508,7 @@ function renderPullQuote(quote: PullQuote): string {
     `<td width="3" bgcolor="${COLOR_BRAND}" style="background-color:${COLOR_BRAND};width:3px;line-height:1px;font-size:1px">&nbsp;</td>`,
     `<td width="14" style="width:14px">&nbsp;</td>`,
     `<td valign="top">`,
-    `<div style="font-family:${FONT_DISPLAY};font-size:15px;line-height:1.55;mso-line-height-rule:exactly;color:${COLOR_BODY};letter-spacing:-0.003em">&ldquo;${escapeHtml(quote.text)}&rdquo;</div>`,
+    `<div style="font-family:${FONT_BODY};font-size:15px;line-height:1.55;mso-line-height-rule:exactly;color:${COLOR_BODY};letter-spacing:-0.003em">&ldquo;${escapeHtml(quote.text)}&rdquo;</div>`,
     attribution,
     `</td>`,
     `</tr>`,
@@ -1524,7 +1523,7 @@ function renderWhatsNext(steps: string[]): string {
       const isLast = index === steps.length - 1;
       return [
         `<tr>`,
-        `<td width="22" valign="top" style="padding-right:10px;font-family:${FONT_DISPLAY};font-size:16px;color:${COLOR_BRAND};line-height:1.55;mso-line-height-rule:exactly">${index + 1}.</td>`,
+        `<td width="22" valign="top" style="padding-right:10px;font-family:${FONT_MONO};font-size:16px;color:${COLOR_BRAND};line-height:1.55;mso-line-height-rule:exactly">${index + 1}.</td>`,
         `<td valign="top" style="padding-bottom:${isLast ? "0" : "10px"};font-family:${FONT_BODY};font-size:14px;line-height:1.55;mso-line-height-rule:exactly;color:${COLOR_BODY}">${step}</td>`,
         `</tr>`,
       ].join("");
@@ -1628,7 +1627,7 @@ function renderFooter(footerNote: string | undefined, manageURL: string | undefi
   const mark = assetBaseURL
     ? `<img src="${escapeAttribute(assetBaseURL)}/assets/brand/wordmark-dark@2x.png" alt="mytimes" width="64" height="16" style="display:block;border:0;outline:none;line-height:1;height:16px;width:64px">`
     : `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>`
-      + `<td style="font-family:${FONT_DISPLAY};font-size:13px;font-weight:700;color:${COLOR_BODY};letter-spacing:-0.005em;mso-line-height-rule:exactly">mytimes</td>`
+      + `<td style="font-family:${FONT_HEADING};font-size:13px;font-weight:800;color:${COLOR_BODY};letter-spacing:0;mso-line-height-rule:exactly">mytimes</td>`
       + `<td width="6"></td>`
       + `<td><span style="display:inline-block;width:4px;height:4px;background-color:${COLOR_STAMP};border-radius:50%;vertical-align:middle"></span></td>`
       + `</tr></table>`;

@@ -1,10 +1,11 @@
 /* ═══════════════════════════════════════════════════════════
    mytimes — foundation.
 
-   Compact, tangible booking-board language with SF Compact
-   Rounded for brand/UI text, Geist Mono on numerals, and
-   mytimes teal ink as the action axis, with warm paper and
-   a small retained stamp-orange accent for material warmth.
+   Compact, tangible booking-board language with a poster-weight
+   heading face, SF Compact Rounded for body/UI text, Geist Mono
+   on numerals, and mytimes teal ink as the action axis, with
+   warm paper and a small retained stamp-orange accent for material
+   warmth.
 
    Tokens are split into two layers:
      1. tokens.primitives.css — raw value scales
@@ -18,10 +19,20 @@
 @import './styles/tokens.semantic.css';
 @import './styles/paywall.css';
 
+/* Mytimes Heading — poster-weight display face used only for
+   real headings. Figure-like content is protected later by
+   typography-overrides.css so prices, dates, times, counts,
+   URLs, and reference codes keep the existing mono stack. */
+@font-face {
+  font-family: 'Mytimes Heading';
+  src: url('/fonts/mytimes-heading.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* SF Compact Rounded — Apple's softened sans, used here for
-   both headers and body text (anything non-numeric). All
-   requested weights resolve through this face; numerals still
-   go through Geist Mono. */
+   body text and controls. Numerals still go through Geist Mono. */
 @font-face {
   font-family: 'SF Compact Rounded';
   src:

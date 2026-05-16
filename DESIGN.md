@@ -24,13 +24,13 @@ colors:
   info: "#2563EB"
 typography:
   display:
-    fontFamily: "SF Compact Rounded, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif"
+    fontFamily: "Mytimes Heading, SF Compact Rounded, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif"
     fontSize: "clamp(40px, 6vw, 72px)"
     fontWeight: 400
     lineHeight: 1.02
     letterSpacing: "0"
   headline:
-    fontFamily: "SF Compact Rounded, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica Neue, Arial, sans-serif"
+    fontFamily: "Mytimes Heading, SF Compact Rounded, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica Neue, Arial, sans-serif"
     fontSize: "clamp(30px, 4vw, 48px)"
     fontWeight: 400
     lineHeight: 1.05
@@ -160,15 +160,15 @@ The palette is warm paper plus a two-tone teal axis, with sand neutrals for tact
 
 ## 3. Typography
 
-**Display Font:** SF Compact Rounded, with system sans fallbacks.  
-**Body Font:** SF Compact Rounded, with system sans fallbacks.  
+**Display / Heading Font:** Mytimes Heading, with SF Compact Rounded and system sans fallbacks.
+**Body Font:** SF Compact Rounded, with system sans fallbacks.
 **Label/Mono Font:** Geist Mono Variable for numeric and tokenized content only.
 
-**Character:** The type system is soft, compact, and mechanical enough for scheduling without feeling like enterprise calendar software. It should feel like printed admin material, not a generic SaaS dashboard.
+**Character:** The type system pairs a poster-weight heading face with a soft, compact body sans. Headings should feel stamped and assertive; body text stays mechanical and easy to scan. It should feel like printed admin material, not a generic SaaS dashboard.
 
 ### Hierarchy
-- **Display** (400, `clamp(40px, 6vw, 72px)`, 1.02): Landing hero headlines and only the largest marketing moments.
-- **Headline** (400-650, `clamp(30px, 4vw, 48px)`, 1.05): Section titles, pricing titles, major empty states.
+- **Display** (700-900, `clamp(40px, 6vw, 72px)`, 1.02): Landing hero headlines and only the largest marketing moments.
+- **Headline** (700-900, `clamp(30px, 4vw, 48px)`, 1.05): Section titles, pricing titles, major empty states.
 - **Title** (600, 16-24px, 1.25): Card titles, dashboard panel titles, plan names, form section headings.
 - **Body** (400, 14-16px, 1.55-1.65): Product copy, form guidance, FAQ answers, panel descriptions. Keep long body lines under 65-75ch.
 - **Label** (600-700, 10.5-12px, 0.04-0.08em): Short uppercase stamps and tiny section labels only.

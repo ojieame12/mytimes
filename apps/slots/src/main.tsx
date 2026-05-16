@@ -26,6 +26,7 @@ import './styles/account.css';
 import './styles/form.css';
 import './styles/create-flow.css';
 import './styles/management.css';
+import './styles/typography-overrides.css';
 
 initObservability();
 
