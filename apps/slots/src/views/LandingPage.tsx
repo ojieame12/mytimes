@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Helmet } from 'react-helmet-async';
 import {
   ArrowRight,
@@ -79,7 +79,66 @@ const LANDING_JSON_LD = {
   ],
 };
 
+function useLandingMotion() {
+  useEffect(() => {
+    const root = document.querySelector<HTMLElement>('.landing');
+    if (!root) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const revealNodes = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]'));
+
+    const scrollToHash = () => {
+      const targetId = window.location.hash.slice(1);
+      if (!targetId) return;
+
+      const target = document.getElementById(targetId);
+      if (!target || !root.contains(target)) return;
+
+      target.scrollIntoView({
+        block: 'start',
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      });
+    };
+
+    window.requestAnimationFrame(scrollToHash);
+    window.addEventListener('hashchange', scrollToHash);
+
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+      revealNodes.forEach((node) => node.classList.add('is-revealed'));
+      return () => window.removeEventListener('hashchange', scrollToHash);
+    }
+
+    root.classList.add('landing--motion-ready');
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.add('is-revealed');
+          observer.unobserve(entry.target);
+        }
+      },
+      {
+        rootMargin: '0px 0px -16% 0px',
+        threshold: 0.16,
+      },
+    );
+
+    window.requestAnimationFrame(() => {
+      revealNodes.forEach((node) => observer.observe(node));
+    });
+
+    return () => {
+      observer.disconnect();
+      root.classList.remove('landing--motion-ready');
+      window.removeEventListener('hashchange', scrollToHash);
+    };
+  }, []);
+}
+
 export function LandingPage() {
+  useLandingMotion();
+
   return (
     <div className="landing">
       <Helmet>
@@ -134,7 +193,7 @@ export function LandingPage() {
       {/* ─── Demo — the REAL booking header rendered inline.
        *  Same peach material, same product vocabulary, not a
        *  cartoon. ─── */}
-      <section className="landing-demo">
+      <section id="demo" className="landing-demo">
         <LandingDemoCard />
       </section>
 
@@ -143,7 +202,7 @@ export function LandingPage() {
       {/* ─── Editorial sections — each pairs a real product
        *  snippet with a short prose paragraph. ─── */}
 
-      <section className="landing-board-story">
+      <section className="landing-board-story" data-reveal="split">
         <div className="landing-board-story__copy">
           <p className="landing-pitch__eyebrow">
             <span>Pick a time</span>
@@ -168,7 +227,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="landing-pitch">
+      <section className="landing-pitch" data-reveal="split">
         <div className="landing-pitch__text">
           <p className="landing-pitch__eyebrow">
             <span>Their timezone, your timezone</span>
@@ -186,7 +245,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="landing-pitch landing-pitch--alt">
+      <section className="landing-pitch landing-pitch--alt" data-reveal="split">
         <div className="landing-pitch__text">
           <p className="landing-pitch__eyebrow">
             <span>One link, no setup</span>
@@ -209,7 +268,7 @@ export function LandingPage() {
        *  floating seals, no icon-grid filler. The peach page is
        *  the surface. Three labelled stanzas — we ask / we send
        *  / we never — read like a typeset contract. */}
-      <section className="landing-privacy">
+      <section className="landing-privacy" data-reveal="ledger">
         <header className="landing-privacy__head">
           <p className="landing-pitch__eyebrow">
             <span>Privacy by default</span>
@@ -286,7 +345,7 @@ export function LandingPage() {
       <LandingFaqSection />
 
       {/* ─── Footer CTA ─── */}
-      <section className="landing-footer">
+      <section className="landing-footer" data-reveal="artifact">
         <h2 className="landing-footer__title">
           Five minutes. One link. Done.
         </h2>
@@ -380,7 +439,7 @@ const FAQ_ITEMS: Array<{ q: string; a: ReactNode }> = [
 
 function LandingFaqSection() {
   return (
-    <section className="landing-faq" aria-label="Frequently asked questions">
+    <section id="faq" className="landing-faq" aria-label="Frequently asked questions" data-reveal="section">
       <header className="landing-faq__head">
         <span className="landing-flow__mark">Common questions</span>
         <h2>Six things people ask before they ship.</h2>
@@ -468,7 +527,7 @@ function CreationFlowSection() {
   ];
 
   return (
-    <section className="landing-flow">
+    <section className="landing-flow" data-reveal="section">
       <div className="landing-flow__intro">
         <span className="landing-flow__mark">From blank to live</span>
         <h2>Four screens, then the board is out of your hands.</h2>
@@ -692,7 +751,7 @@ function OperationsSection() {
   ];
 
   return (
-    <section className="landing-ops">
+    <section className="landing-ops" data-reveal="split">
       <div className="landing-ops__copy">
         <span className="landing-flow__mark">After the link is live</span>
         <h2>One private desk for every booking.</h2>
@@ -787,7 +846,7 @@ function CompanyStandbySection() {
   ];
 
   return (
-    <section className="landing-company">
+    <section className="landing-company" data-reveal="split">
       <div className="landing-company__copy">
         <span className="landing-flow__mark">Company</span>
         <h2>When boards become company muscle memory.</h2>
@@ -827,7 +886,7 @@ function CompanyStandbySection() {
 
 function ParticipantLifecycleSection() {
   return (
-    <section className="landing-lifecycle">
+    <section className="landing-lifecycle" data-reveal="split">
       {/* Boarding-pass composition. The top is the receipt the participant
        *  gets. The perforated stub at the bottom shows the four capabilities
        *  this booking gives them — turning what used to be a disconnected
@@ -914,7 +973,7 @@ function LandingPricingSection() {
   ];
 
   return (
-    <section className="landing-pricing-v2" aria-label="Pricing summary">
+    <section id="pricing" className="landing-pricing-v2" aria-label="Pricing summary" data-reveal="section">
       <header className="landing-pricing-v2__head">
         <span className="landing-flow__mark">Pricing that matches the job</span>
         <h2>Free for one round.<br />Subscribe when it's the job.</h2>
