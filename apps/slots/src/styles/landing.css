@@ -237,6 +237,112 @@
   }
 }
 
+/* Scroll-reveal rhythm.
+   Hero motion is immediate; everything after the demo waits until the
+   section enters the viewport. Without JS, content remains visible. */
+.landing [id] {
+  scroll-margin-top: 88px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing--motion-ready [data-reveal] {
+    opacity: 0;
+    transform: translate3d(0, 26px, 0);
+    transition:
+      opacity 520ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 680ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+
+  .landing--motion-ready [data-reveal="split"] {
+    transform: translate3d(0, 32px, 0);
+  }
+
+  .landing--motion-ready [data-reveal="ledger"],
+  .landing--motion-ready [data-reveal="section"] {
+    transform: translate3d(0, 22px, 0);
+  }
+
+  .landing--motion-ready [data-reveal="artifact"] {
+    transform: translate3d(0, 28px, 0) scale(0.988);
+  }
+
+  .landing--motion-ready [data-reveal].is-revealed {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  .landing--motion-ready [data-reveal].is-revealed > :where(:first-child, :last-child),
+  .landing--motion-ready [data-reveal].is-revealed :where(
+    .landing-flow__step,
+    .privacy-ledger__stanza,
+    .landing-ops__stat,
+    .landing-company__feature,
+    .landing-lifecycle__stub-list li,
+    .landing-pricing-v2__tier,
+    .landing-faq__item
+  ) {
+    animation: landing-detail-set 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .landing--motion-ready [data-reveal].is-revealed > :last-child,
+  .landing--motion-ready [data-reveal].is-revealed :where(
+    .landing-flow__step:nth-child(2),
+    .privacy-ledger__stanza:nth-child(2),
+    .landing-ops__stat:nth-child(2),
+    .landing-company__feature:nth-child(2),
+    .landing-lifecycle__stub-list li:nth-child(2),
+    .landing-pricing-v2__tier:nth-child(2),
+    .landing-faq__item:nth-child(2)
+  ) {
+    animation-delay: 80ms;
+  }
+
+  .landing--motion-ready [data-reveal].is-revealed :where(
+    .landing-flow__step:nth-child(3),
+    .privacy-ledger__stanza:nth-child(3),
+    .landing-ops__stat:nth-child(3),
+    .landing-company__feature:nth-child(3),
+    .landing-lifecycle__stub-list li:nth-child(3),
+    .landing-faq__item:nth-child(3)
+  ) {
+    animation-delay: 130ms;
+  }
+
+  .landing--motion-ready [data-reveal].is-revealed :where(
+    .landing-flow__step:nth-child(4),
+    .landing-ops__stat:nth-child(4),
+    .landing-company__feature:nth-child(4),
+    .landing-lifecycle__stub-list li:nth-child(4),
+    .landing-faq__item:nth-child(4)
+  ) {
+    animation-delay: 180ms;
+  }
+
+  .landing--motion-ready [data-reveal].is-revealed :where(
+    .landing-faq__item:nth-child(5)
+  ) {
+    animation-delay: 230ms;
+  }
+
+  .landing--motion-ready [data-reveal].is-revealed :where(
+    .landing-faq__item:nth-child(6)
+  ) {
+    animation-delay: 280ms;
+  }
+}
+
+@keyframes landing-detail-set {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ─── Proof strip ─────────────────────────────────────── */
 .landing-proof {
   width: 100%;
