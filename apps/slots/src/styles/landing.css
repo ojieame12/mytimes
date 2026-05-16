@@ -115,6 +115,128 @@
   text-underline-offset: 4px;
 }
 
+/* First-load reveal.
+   The motion language is "ink press": the headline settles like
+   freshly stamped type, the proof strip draws in, and the product
+   artifact lifts after the message is readable. */
+@media (prefers-reduced-motion: no-preference) {
+  .landing-hero__eyebrow,
+  .landing-hero__title span,
+  .landing-hero__body,
+  .landing-hero__cta,
+  .landing-proof,
+  .landing-proof__item,
+  .landing-demo {
+    will-change: opacity, transform, clip-path;
+  }
+
+  .landing-hero__eyebrow {
+    animation: landing-ink-set 340ms var(--ease-out) both;
+  }
+
+  .landing-hero__title span {
+    animation: landing-headline-press 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .landing-hero__title span:first-child { animation-delay: 40ms; }
+  .landing-hero__title span:last-child { animation-delay: 90ms; }
+
+  .landing-hero__body {
+    animation: landing-rise-in 420ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+  }
+
+  .landing-hero__cta {
+    animation: landing-rise-in 380ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
+  }
+
+  .landing-proof {
+    animation: landing-rule-draw 480ms cubic-bezier(0.16, 1, 0.3, 1) 260ms both;
+  }
+
+  .landing-proof__item {
+    animation: landing-proof-item 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .landing-proof__item:nth-child(1) { animation-delay: 320ms; }
+  .landing-proof__item:nth-child(2) { animation-delay: 370ms; }
+  .landing-proof__item:nth-child(3) { animation-delay: 420ms; }
+
+  .landing-demo {
+    animation: landing-artifact-lift 620ms cubic-bezier(0.16, 1, 0.3, 1) 500ms both;
+  }
+}
+
+@keyframes landing-ink-set {
+  from {
+    opacity: 0.7;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-headline-press {
+  0% {
+    opacity: 0.86;
+    transform: translateY(10px) scale(0.988);
+  }
+  64% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes landing-rise-in {
+  from {
+    opacity: 0.9;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-rule-draw {
+  from {
+    opacity: 0;
+    clip-path: inset(0 50% 0 50%);
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-proof-item {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes landing-artifact-lift {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* ─── Proof strip ─────────────────────────────────────── */
 .landing-proof {
   width: 100%;

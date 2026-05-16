@@ -1426,9 +1426,9 @@ function defaultAssetBaseURL(): string {
 function renderBrandRow(assetBaseURL: string): string {
   // PNG wordmark works identically across Gmail, Apple Mail, mobile, and
   // Outlook desktop. The @2x source keeps it crisp on retina. If no asset
-  // host is configured, fall back to a Georgia text wordmark.
+  // host is configured, fall back to an inline text wordmark.
   const mark = assetBaseURL
-    ? `<img src="${escapeAttribute(assetBaseURL)}/assets/brand/wordmark-dark@2x.png" alt="mytimes" width="96" height="24" style="display:block;border:0;outline:none;line-height:1;height:24px;width:96px">`
+    ? `<img src="${escapeAttribute(assetBaseURL)}/assets/brand/wordmark-dark@2x.png" alt="mytimes" width="117" height="24" style="display:block;border:0;outline:none;line-height:1;height:24px;width:117px">`
     : `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>`
       + `<td style="font-family:${FONT_HEADING};font-size:20px;font-weight:800;color:${COLOR_BODY};letter-spacing:-0.01em;line-height:1;mso-line-height-rule:exactly;${HEADING_FEATURE_RESET}">mytimes</td>`
       + `<td width="6"></td>`
@@ -1626,7 +1626,7 @@ function renderDetailRows(rows: Array<[string, string]>): string {
 function renderFooter(footerNote: string | undefined, manageURL: string | undefined, assetBaseURL: string): string {
   const noteLine = footerNote ?? "Sent by mytimes.";
   const mark = assetBaseURL
-    ? `<img src="${escapeAttribute(assetBaseURL)}/assets/brand/wordmark-dark@2x.png" alt="mytimes" width="64" height="16" style="display:block;border:0;outline:none;line-height:1;height:16px;width:64px">`
+    ? `<img src="${escapeAttribute(assetBaseURL)}/assets/brand/wordmark-dark@2x.png" alt="mytimes" width="78" height="16" style="display:block;border:0;outline:none;line-height:1;height:16px;width:78px">`
     : `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>`
       + `<td style="font-family:${FONT_HEADING};font-size:13px;font-weight:800;color:${COLOR_BODY};letter-spacing:0;mso-line-height-rule:exactly;${HEADING_FEATURE_RESET}">mytimes</td>`
       + `<td width="6"></td>`

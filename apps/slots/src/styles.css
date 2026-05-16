@@ -28,7 +28,7 @@
   src: url('/fonts/mytimes-heading.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 /* SF Compact Rounded — Apple's softened sans, used here for
