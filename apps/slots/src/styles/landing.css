@@ -488,6 +488,220 @@
 
 .landing-pitch__ui { position: relative; }
 
+/* ─── Board story — spreadsheet familiarity, booking safety ─ */
+.landing-board-story {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: clamp(28px, 5vw, 70px);
+  align-items: center;
+  padding: clamp(20px, 3vw, 30px);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, hsla(28, 100%, 98%, 0.82), hsla(28, 100%, 96%, 0.66)),
+    var(--card);
+  border: 1px solid hsla(16, 88%, 55%, 0.10);
+}
+.landing-board-story__copy {
+  display: grid;
+  gap: 14px;
+  align-content: center;
+}
+.landing-board-story__title {
+  margin: 0;
+  max-width: 18ch;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--zinc-800);
+  line-height: 1.04;
+}
+.landing-board-story__body {
+  margin: 0;
+  max-width: 49ch;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--fg-muted);
+}
+.landing-board-story__proof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+.landing-board-story__proof span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid hsla(16, 88%, 55%, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.landing-board-story__ui {
+  min-width: 0;
+}
+.landing-board-artifact {
+  position: relative;
+  min-width: 0;
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  background: hsl(29, 45%, 95%);
+  border: 1px solid hsla(16, 88%, 35%, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 24px 54px -34px hsla(16, 88%, 30%, 0.42);
+}
+.landing-board-artifact__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px 14px;
+  border-bottom: 1px dashed hsla(16, 88%, 45%, 0.18);
+}
+.landing-board-artifact__bar span {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.landing-board-artifact__bar code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  color: var(--fg-subtle);
+}
+.landing-board-artifact__rows {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+}
+.landing-board-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid hsla(16, 88%, 35%, 0.10);
+}
+.landing-board-row.is-selected {
+  background: hsl(220, 30%, 14%);
+  border-color: hsla(30, 80%, 96%, 0.10);
+  box-shadow:
+    inset 0 1px 0 hsla(30, 80%, 96%, 0.08),
+    0 16px 34px -28px rgba(10, 10, 14, 0.62);
+}
+.landing-board-row__date {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  color: var(--fg-subtle);
+}
+.landing-board-row__date span,
+.landing-board-row__date small {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.landing-board-row__date strong {
+  font-size: 38px;
+  font-weight: 300;
+  line-height: 0.95;
+  color: var(--zinc-800);
+}
+.landing-board-row.is-selected .landing-board-row__date,
+.landing-board-row.is-selected .landing-board-row__date strong {
+  color: hsl(30, 80%, 96%);
+}
+.landing-board-row__slots {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.landing-board-slot {
+  min-width: 0;
+  min-height: 48px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: hsl(34, 60%, 98%);
+  border: 1px solid hsla(180, 8%, 48%, 0.26);
+}
+.landing-board-slot > span {
+  font-size: 15px;
+  line-height: 1;
+  color: var(--zinc-800);
+}
+.landing-board-slot small {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  color: var(--fg-subtle);
+}
+.landing-board-slot--locked {
+  opacity: 0.42;
+  text-decoration: line-through;
+}
+.landing-board-slot--claimed {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: hsl(30, 80%, 96%);
+  box-shadow: var(--shadow-button-primary);
+}
+.landing-board-slot--claimed > span,
+.landing-board-slot--claimed small {
+  color: hsl(30, 80%, 96%);
+}
+.landing-board-artifact__receipt {
+  position: relative;
+  justify-self: end;
+  margin-top: 12px;
+  width: min(260px, calc(100% - 36px));
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: hsl(220, 30%, 14%);
+  color: hsl(30, 80%, 96%);
+  box-shadow:
+    inset 0 1px 0 hsla(30, 80%, 96%, 0.08),
+    0 18px 38px -24px rgba(10, 10, 14, 0.62);
+}
+.landing-board-artifact__receipt span {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--orange-300);
+}
+.landing-board-artifact__receipt strong {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.3;
+}
+.landing-board-artifact__receipt small {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.4;
+  color: hsla(30, 80%, 96%, 0.68);
+}
+
 /* ─── Snippet wrappers — present a real product fragment
  *  in a calm, framed way. */
 .landing-snippet {
@@ -575,141 +789,154 @@
 .landing-link-card--admin .landing-link-card__url { color: hsl(30, 80%, 96%); }
 .landing-link-card--admin .landing-link-card__hint { color: hsla(30, 80%, 96%, 0.65); }
 
-/* ─── Privacy data-flow section ────────────────────────
-   Centered editorial header, then a two-up diptych of warm
-   peach panels. Each panel is a sibling of .landing-snippet
-   in material (same hsla peach surface, same warm border,
-   same shadow vocabulary) so it reads as part of the
-   editorial family — not a callout box bolted on. */
+/* ─── Privacy ledger — editorial typography over the
+ * peach page. No inner cards, no icons, no floating seals.
+ * Three labelled stanzas (we ask / we send / we never) sit
+ * in a two-column grid: label on the left as a sticky
+ * sidebar, stanzas stack vertically on the right.
+ *
+ * Each row uses a 160px-key + 1fr-value micro-grid so the
+ * keys align vertically across all stanzas — reads like a
+ * typeset contract or a receipt, not a feature comparison. */
 .landing-privacy {
-  display: flex;
-  flex-direction: column;
-  gap: 36px;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.45fr);
+  gap: clamp(28px, 5vw, 80px);
+  align-items: start;
 }
 .landing-privacy__head {
+  position: sticky;
+  top: 32px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 14px;
-  text-align: center;
 }
 .landing-privacy__title {
   margin: 0;
+  max-width: 17ch;
   font-family: var(--font-display);
-  font-size: clamp(32px, 4.4vw, 48px);
+  font-size: clamp(30px, 4vw, 48px);
   font-weight: 400;
   letter-spacing: 0;
   color: var(--zinc-800);
   line-height: 1.05;
-  max-width: 18ch;
+  text-wrap: balance;
 }
 .landing-privacy__body {
   margin: 0;
+  max-width: 44ch;
   font-family: var(--font-sans);
-  font-size: 15.5px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.65;
   color: var(--fg-muted);
-  max-width: 58ch;
-}
-.landing-privacy__panels {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
 }
 
-.landing-privacy-panel {
-  /* Same warm material as .landing-snippet — peach surface,
-     warm orange-tinted hairline, warm-toned shadow. */
-  padding: 24px 26px 22px;
-  border-radius: var(--radius-xl);
-  background: hsla(28, 100%, 97%, 1);
-  border: 1px solid hsla(16, 88%, 55%, 0.12);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 1px 2px hsla(16, 88%, 45%, 0.05),
-    0 14px 36px -14px hsla(16, 88%, 45%, 0.18);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.landing-privacy-panel__eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  align-self: flex-start;
-  padding: 4px 9px 4px 7px;
-  border-radius: 999px;
-  background: hsla(16, 88%, 55%, 0.08);
-  color: var(--primary);
-  font-family: var(--font-sans);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.landing-privacy-panel__eyebrow svg { color: var(--primary); }
-
-.landing-privacy-panel__list {
-  list-style: none;
+.privacy-ledger {
   margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
-.landing-privacy-panel__item {
+.privacy-ledger__stanza {
   display: grid;
-  grid-template-columns: 22px 1fr;
-  gap: 10px;
-  align-items: start;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  padding: 28px 0;
+  border-top: 1px solid var(--border-subtle);
 }
-.landing-privacy-panel__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  /* Soft white well so the icon doesn't get lost on peach. */
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid hsla(16, 88%, 55%, 0.12);
+.privacy-ledger__stanza:first-child {
+  padding-top: 4px;
+  border-top: none;
+}
+.privacy-ledger__stanza:last-child {
+  padding-bottom: 4px;
+}
+.privacy-ledger__label {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--primary);
-  margin-top: 1px;
+  line-height: 1;
 }
-.landing-privacy-panel__text {
+.privacy-ledger__rows {
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  gap: 10px;
 }
-.landing-privacy-panel__label {
+.privacy-ledger__row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 24px;
+  align-items: baseline;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+.privacy-ledger__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.privacy-ledger__key {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--zinc-800);
+}
+.privacy-ledger__val {
   font-family: var(--font-sans);
   font-size: 14px;
-  font-weight: 600;
-  color: var(--zinc-800);
-  letter-spacing: 0;
-  line-height: 1.3;
-}
-.landing-privacy-panel__hint {
-  font-family: var(--font-sans);
-  font-size: 12.5px;
-  color: var(--fg-muted);
-  line-height: 1.45;
-}
-.landing-privacy-panel__footnote {
-  margin: 6px 0 0;
-  padding-top: 14px;
-  border-top: 1px dashed hsla(16, 88%, 55%, 0.18);
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-style: italic;
   line-height: 1.5;
+  color: var(--fg-muted);
+}
+
+/* "We never ask for" reads as a single inline list — each item
+ * is a quiet pill that says "not here" without shouting. The
+ * dashed bottom border + muted color signals the boundary. */
+.privacy-ledger__stanza--never .privacy-ledger__label {
   color: var(--fg-subtle);
 }
-.landing-privacy-panel__footnote em {
-  font-style: italic;
-  color: var(--primary);
-  font-weight: 600;
+.privacy-ledger__never {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+.privacy-ledger__never span {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--fg-subtle);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in oklch, var(--primary) 55%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* Stack the head above the ledger on narrower viewports. */
+@media (max-width: 880px) {
+  .landing-privacy {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .landing-privacy__head {
+    position: static;
+  }
+  .privacy-ledger__row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .privacy-ledger__key {
+    font-size: 15px;
+  }
 }
 
 /* ─── Operations desk ─────────────────────────────────── */
@@ -1523,6 +1750,171 @@
   }
 }
 
+/* ─── Pricing teaser v2 ─────────────────────────────────
+ *  Three vertical stacks: editorial header, two side-by-side
+ *  tier cards, single centred CTA below. Replaces the old
+ *  asymmetric layout where a huge title squashed the cards
+ *  into a corner. Tier cards are real-shaped (price, tagline,
+ *  bullets, footnote) so they read as substantive rather than
+ *  placeholder chips. */
+.landing-pricing-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(28px, 4vw, 48px);
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  text-align: center;
+}
+.landing-pricing-v2__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 560px;
+}
+.landing-pricing-v2__head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4.4vw, 48px);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--zinc-800);
+  line-height: 1.05;
+  text-wrap: balance;
+}
+.landing-pricing-v2__head p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--fg-muted);
+  max-width: 52ch;
+}
+
+.landing-pricing-v2__tiers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  width: 100%;
+  text-align: left;
+}
+.landing-pricing-v2__tier {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 10px 28px -20px hsla(220, 30%, 14%, 0.22);
+}
+.landing-pricing-v2__tier--featured {
+  border-color: color-mix(in oklch, var(--primary) 35%, var(--border-subtle));
+  background:
+    linear-gradient(180deg, color-mix(in oklch, var(--primary) 6%, var(--card)), var(--card));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 14px 36px -22px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+.landing-pricing-v2__tier-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+.landing-pricing-v2__tier-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--zinc-800);
+  line-height: 1;
+}
+.landing-pricing-v2__tier-price {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--zinc-800);
+}
+.landing-pricing-v2__tier-price strong {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.landing-pricing-v2__tier-price span {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--fg-subtle);
+  letter-spacing: 0.01em;
+}
+.landing-pricing-v2__tier-tagline {
+  margin: 14px 0 16px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--zinc-800);
+  letter-spacing: -0.005em;
+}
+.landing-pricing-v2__tier-bullets {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.landing-pricing-v2__tier-bullets li {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 8px;
+  align-items: start;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--fg-muted);
+}
+.landing-pricing-v2__tier-bullets li svg {
+  margin-top: 4px;
+  color: var(--primary);
+  flex: 0 0 auto;
+}
+.landing-pricing-v2__tier-foot {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border-subtle);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: var(--fg-subtle);
+}
+
+.landing-pricing-v2__cta-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.landing-pricing-v2__cta-note {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--fg-subtle);
+  letter-spacing: 0.01em;
+}
+
+@media (max-width: 720px) {
+  .landing-pricing-v2__tiers {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ─── Footer CTA ──────────────────────────────────────── */
 .landing-footer {
   display: flex;
@@ -1570,6 +1962,8 @@
     border-top: none;
   }
   .landing-flow,
+  .landing-board-story,
+  .landing-privacy,
   .landing-ops,
   .landing-company,
   .landing-lifecycle,
@@ -1590,10 +1984,6 @@
   }
   .landing-pitch--alt .landing-pitch__text { order: 1; }
   .landing-pitch--alt .landing-pitch__ui   { order: 2; }
-  .landing-privacy__panels {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
   .landing-upgrade__cards {
     grid-template-columns: 1fr;
   }
@@ -1724,6 +2114,41 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
     width: 100%;
+  }
+  .landing-board-story {
+    padding: 18px;
+  }
+  .landing-board-story__title,
+  .landing-privacy__title {
+    max-width: 14ch;
+  }
+  .landing-board-artifact {
+    padding: 14px;
+  }
+  .landing-board-artifact__bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .landing-board-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .landing-board-row__date {
+    grid-template-columns: auto auto auto;
+    justify-items: start;
+    align-items: end;
+    gap: 8px;
+  }
+  .landing-board-row__date strong {
+    font-size: 32px;
+  }
+  .landing-board-row__slots {
+    grid-template-columns: 1fr;
+  }
+  .landing-board-artifact__receipt {
+    position: static;
+    width: auto;
+    margin-top: 12px;
   }
   .landing-flow__step {
     grid-template-columns: 34px 30px 1fr;

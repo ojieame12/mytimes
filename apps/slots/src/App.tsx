@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useRoute, navigate } from './lib/routing';
 import { AppShell } from './components/AppShell';
-import { BookingPage } from './views/BookingPage';
 import { AuthPage } from './views/AuthPage';
 import { LandingPage } from './views/LandingPage';
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from './views/PasswordResetPage';
@@ -10,6 +9,9 @@ import { PrivacyPage, TermsPage } from './views/LegalPage';
 import { ApiClientError, readPublicBoard, type ClaimSlotResponse, type PublicBoardResponse } from './lib/api';
 import { MOCK_EVENT, MOCK_SLOTS } from './lib/mockData';
 
+const loadBookingPage = () =>
+  import('./views/BookingPage').then(({ BookingPage }) => ({ default: BookingPage }));
+const BookingPage = lazy(loadBookingPage);
 const DetailsStep = lazy(() =>
   import('./views/create/DetailsStep').then(({ DetailsStep }) => ({ default: DetailsStep })),
 );
@@ -50,33 +52,41 @@ export function App() {
     if (route.publicToken === 'full') {
       return (
         <AppShell>
-          <BookingPage
-            publicToken={route.publicToken}
-            slots={MOCK_SLOTS.map((s) => ({ ...s, state: s.state === 'open' ? 'booked' : s.state }))}
-          />
+          <RouteSuspense title="Loading booking board">
+            <BookingPage
+              publicToken={route.publicToken}
+              slots={MOCK_SLOTS.map((s) => ({ ...s, state: s.state === 'open' ? 'booked' : s.state }))}
+            />
+          </RouteSuspense>
         </AppShell>
       );
     }
     if (route.publicToken === 'archived') {
       return (
         <AppShell>
-          <BookingPage
-            publicToken={route.publicToken}
-            event={{ ...MOCK_EVENT, status: 'archived' }}
-          />
+          <RouteSuspense title="Loading booking board">
+            <BookingPage
+              publicToken={route.publicToken}
+              event={{ ...MOCK_EVENT, status: 'archived' }}
+            />
+          </RouteSuspense>
         </AppShell>
       );
     }
     if (route.publicToken === 'preview') {
       return (
         <AppShell>
-          <BookingPage publicToken={route.publicToken} demoMode />
+          <RouteSuspense title="Loading booking board">
+            <BookingPage publicToken={route.publicToken} demoMode />
+          </RouteSuspense>
         </AppShell>
       );
     }
     return (
       <AppShell>
-        <PublicBookingRoute publicToken={route.publicToken} />
+        <RouteSuspense title="Loading booking board">
+          <PublicBookingRoute publicToken={route.publicToken} />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -310,6 +320,7 @@ function PublicBookingRoute({ publicToken }: { publicToken: string }) {
   useEffect(() => {
     let cancelled = false;
     setState({ status: 'loading' });
+    void loadBookingPage();
     readPublicBoard(publicToken)
       .then((board) => {
         if (!cancelled) {

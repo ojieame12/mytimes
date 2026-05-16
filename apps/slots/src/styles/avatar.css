@@ -24,6 +24,22 @@
   object-fit: cover;
 }
 
+.avatar__fallback {
+  display: inline-grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 20%, hsla(28, 100%, 98%, 0.95), transparent 42%),
+    linear-gradient(145deg, var(--orange-50), var(--orange-100));
+  color: var(--primary-hover);
+  font-size: 0.36em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
 /* ─── AvatarStylePicker — 2×2 grid of style choices for the
    create flow. Each option previews the user's own seed in
    that style, so they see how they'll look. */

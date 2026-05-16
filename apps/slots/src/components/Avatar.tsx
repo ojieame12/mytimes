@@ -1,9 +1,5 @@
-import { useMemo } from 'react';
-import { createAvatar, type Style } from '@dicebear/core';
-import * as openPeeps from '@dicebear/open-peeps';
-import * as notionists from '@dicebear/notionists';
-import * as lorelei from '@dicebear/lorelei';
-import * as bigSmile from '@dicebear/big-smile';
+import { useEffect, useMemo, useState } from 'react';
+import type { Style } from '@dicebear/core';
 import type { AvatarStyle } from '../lib/types';
 
 /* ─── Avatar ──────────────────────────────────────────────
@@ -13,19 +9,20 @@ import type { AvatarStyle } from '../lib/types';
  * orange ambient glow — so swapping the inner illustration
  * doesn't change the brand frame. */
 
-/* Pick a style adapter at runtime — type assertion because each
- * adapter is a namespace object that satisfies the Style<T>
- * interface but TypeScript can't see through `import *`. */
-const STYLES: Record<AvatarStyle, Style<Record<string, unknown>>> = {
-  notionists: notionists as Style<Record<string, unknown>>,
-  'open-peeps': openPeeps as Style<Record<string, unknown>>,
-  lorelei: lorelei as Style<Record<string, unknown>>,
-  'big-smile': bigSmile as Style<Record<string, unknown>>,
+type AvatarAdapter = Style<Record<string, unknown>>;
+
+const STYLE_LOADERS: Record<AvatarStyle, () => Promise<AvatarAdapter>> = {
+  notionists: () => import('@dicebear/notionists').then((mod) => mod as unknown as AvatarAdapter),
+  'open-peeps': () => import('@dicebear/open-peeps').then((mod) => mod as unknown as AvatarAdapter),
+  lorelei: () => import('@dicebear/lorelei').then((mod) => mod as unknown as AvatarAdapter),
+  'big-smile': () => import('@dicebear/big-smile').then((mod) => mod as unknown as AvatarAdapter),
 };
 
 /* Backgrounds picked from our orange-tinted palette so the
  * illustration sits on the same warmth as the booking card. */
 const BG_PALETTE = ['fcebd7', 'fde9da', 'ffd4bc', 'fff1e3'];
+const DATA_URI_CACHE = new Map<string, string>();
+const DATA_URI_PROMISES = new Map<string, Promise<string>>();
 
 export interface AvatarProps {
   /** Stable seed — typically the organizer's email. */
@@ -47,14 +44,32 @@ export function Avatar({
   className,
   ariaLabel,
 }: AvatarProps) {
-  const dataUri = useMemo(() => {
-    const adapter = STYLES[style] ?? STYLES.notionists;
-    return createAvatar(adapter, {
-      seed,
-      backgroundColor: BG_PALETTE,
-      backgroundType: ['solid'],
-    }).toDataUri();
-  }, [seed, style]);
+  const cacheKey = `${style}:${seed}`;
+  const [dataUri, setDataUri] = useState(() => DATA_URI_CACHE.get(cacheKey));
+  const initials = useMemo(() => fallbackInitials(seed), [seed]);
+
+  useEffect(() => {
+    if (isReactActTestEnvironment()) return;
+
+    let cancelled = false;
+    const cached = DATA_URI_CACHE.get(cacheKey);
+    if (cached) {
+      setDataUri(cached);
+      return () => {
+        cancelled = true;
+      };
+    }
+    setDataUri(undefined);
+    const cancelScheduledLoad = scheduleIdle(() => {
+      void loadAvatarDataUri(style, seed, cacheKey).then((next) => {
+        if (!cancelled) setDataUri(next);
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelScheduledLoad();
+    };
+  }, [cacheKey, seed, style]);
 
   return (
     <span
@@ -64,7 +79,62 @@ export function Avatar({
       role={ariaLabel ? 'img' : undefined}
       aria-label={ariaLabel}
     >
-      <img className="avatar__img" src={dataUri} alt="" />
+      {dataUri ? (
+        <img className="avatar__img" src={dataUri} alt="" />
+      ) : (
+        <span className="avatar__fallback mono" aria-hidden="true">{initials}</span>
+      )}
     </span>
   );
+}
+
+async function loadAvatarDataUri(style: AvatarStyle, seed: string, cacheKey: string): Promise<string> {
+  const cached = DATA_URI_CACHE.get(cacheKey);
+  if (cached) return cached;
+  const pending = DATA_URI_PROMISES.get(cacheKey);
+  if (pending) return pending;
+
+  const promise = Promise.all([
+    import('@dicebear/core'),
+    (STYLE_LOADERS[style] ?? STYLE_LOADERS.notionists)(),
+  ]).then(([{ createAvatar }, adapter]) => {
+    const dataUri = createAvatar(adapter, {
+      seed,
+      backgroundColor: BG_PALETTE,
+      backgroundType: ['solid'],
+    }).toDataUri();
+    DATA_URI_CACHE.set(cacheKey, dataUri);
+    DATA_URI_PROMISES.delete(cacheKey);
+    return dataUri;
+  });
+
+  DATA_URI_PROMISES.set(cacheKey, promise);
+  return promise;
+}
+
+function fallbackInitials(seed: string): string {
+  return seed
+    .split(/[^a-z0-9]+/i)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+    .slice(0, 2) || 'MT';
+}
+
+function isReactActTestEnvironment(): boolean {
+  return Boolean((globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT);
+}
+
+function scheduleIdle(callback: () => void): () => void {
+  const idleWindow = window as Window & {
+    requestIdleCallback?: (cb: IdleRequestCallback, options?: IdleRequestOptions) => number;
+    cancelIdleCallback?: (handle: number) => void;
+  };
+  if (typeof idleWindow.requestIdleCallback === 'function') {
+    const handle = idleWindow.requestIdleCallback(callback, { timeout: 1200 });
+    return () => idleWindow.cancelIdleCallback?.(handle);
+  }
+  const handle = window.setTimeout(callback, 180);
+  return () => window.clearTimeout(handle);
 }

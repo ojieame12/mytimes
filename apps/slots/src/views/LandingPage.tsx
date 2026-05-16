@@ -5,6 +5,7 @@ import {
   Archive,
   BadgeDollarSign,
   CalendarCheck,
+  Check,
   Clock,
   ClipboardList,
   Copy,
@@ -12,12 +13,7 @@ import {
   FileDown,
   Globe2,
   ShieldCheck,
-  User,
   Mail,
-  MessageSquarePlus,
-  Calendar,
-  Link as LinkIcon,
-  Check,
   KeyRound,
   LockKeyhole,
   ReceiptText,
@@ -27,7 +23,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { navigate } from '../lib/routing';
-import { BookingHeaderCard } from './BookingPage';
+import { BookingHeaderCard } from '../components/BookingHeaderCard';
 import { TimezonePicker } from '../components/TimezonePicker';
 import { MOCK_EVENT, MOCK_SLOTS } from '../lib/mockData';
 
@@ -147,22 +143,28 @@ export function LandingPage() {
       {/* ─── Editorial sections — each pairs a real product
        *  snippet with a short prose paragraph. ─── */}
 
-      <section className="landing-pitch landing-pitch--alt">
-        <div className="landing-pitch__text">
+      <section className="landing-board-story">
+        <div className="landing-board-story__copy">
           <p className="landing-pitch__eyebrow">
             <span>Pick a time</span>
           </p>
-          <h2 className="landing-pitch__title">Days big, choices easy.</h2>
-          <p className="landing-pitch__body">
-            Each day's date sits in a mono numeral block, the way calendars
-            looked before they tried to be databases. Slots line up to the
-            right with AM/PM context built in. Hover lifts the row like a
-            paper card. Click a time and the band inverts to dark with a
-            booking form inside.
+          <h2 className="landing-board-story__title">
+            The spreadsheet shape, without the spreadsheet risk.
+          </h2>
+          <p className="landing-board-story__body">
+            People already understand a date column and a row of times.
+            mytimes keeps that scanning pattern, then adds the part a
+            spreadsheet cannot: every claim locks immediately, disappears from
+            the public board, and stays traceable in admin.
           </p>
+          <div className="landing-board-story__proof" aria-label="Booking safety rules">
+            <span>Open times stay visible</span>
+            <span>Claimed times become admin records</span>
+            <span>Admin keeps the record</span>
+          </div>
         </div>
-        <div className="landing-pitch__ui">
-          <DayBandSnippet />
+        <div className="landing-board-story__ui">
+          <BoardSafetySnippet />
         </div>
       </section>
 
@@ -202,88 +204,75 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Privacy data flow — what goes in / what comes out.
-       *  The wedge is "no participant accounts"; this section
-       *  pays it off concretely by enumerating both sides. ─── */}
+      {/* ─── Privacy ledger ──────────────────────────────────
+       *  Editorial-typography redesign. No nested cards, no
+       *  floating seals, no icon-grid filler. The peach page is
+       *  the surface. Three labelled stanzas — we ask / we send
+       *  / we never — read like a typeset contract. */}
       <section className="landing-privacy">
         <header className="landing-privacy__head">
           <p className="landing-pitch__eyebrow">
             <span>Privacy by default</span>
           </p>
           <h2 className="landing-privacy__title">
-            What goes in. What comes out.
+            Only what the meeting needs.<br />
+            Nothing else.
           </h2>
           <p className="landing-privacy__body">
-            mytimes is built around radical data minimization. We only ask for
-            what we'd put in a calendar invite, and we only send what makes the
-            meeting happen.
+            A participant is claiming one interview slot, not joining a
+            platform. The data flow stays small on purpose: identify the
+            person, send the confirmation, keep a private cancellation link.
           </p>
         </header>
 
-        <div className="landing-privacy__panels">
-          <PrivacyPanel
-            eyebrow="We ask"
-            items={[
-              {
-                icon: <User size={14} strokeWidth={1.8} aria-hidden="true" />,
-                label: 'Your name',
-                hint: 'so the organizer knows who’s coming',
-              },
-              {
-                icon: <Mail size={14} strokeWidth={1.8} aria-hidden="true" />,
-                label: 'Your email',
-                hint: 'for the confirmation + the manage link',
-              },
-              {
-                icon: (
-                  <MessageSquarePlus
-                    size={14}
-                    strokeWidth={1.8}
-                    aria-hidden="true"
-                  />
-                ),
-                label: 'Optional notes',
-                hint: 'anything the organizer should know, skippable',
-              },
-            ]}
-            footnote={
-              <>
-                We <em>never</em> ask for: a password, a calendar OAuth, your
-                phone, or any analytics tracker.
-              </>
-            }
-          />
-          <PrivacyPanel
-            eyebrow="We send"
-            items={[
-              {
-                icon: <Mail size={14} strokeWidth={1.8} aria-hidden="true" />,
-                label: 'Confirmation email',
-                hint: 'sent the moment you click confirm',
-              },
-              {
-                icon: (
-                  <Calendar size={14} strokeWidth={1.8} aria-hidden="true" />
-                ),
-                label: '.ics calendar file',
-                hint: 'drops straight into your calendar app',
-              },
-              {
-                icon: (
-                  <LinkIcon size={14} strokeWidth={1.8} aria-hidden="true" />
-                ),
-                label: 'Private manage link',
-                hint: 'only you have it, click to cancel if plans change',
-              },
-            ]}
-            footnote={
-              <>
-                We <em>never</em> send: marketing email, reminders, or any
-                third-party tracking pixel.
-              </>
-            }
-          />
-        </div>
+        <dl className="privacy-ledger" aria-label="What mytimes asks for and what it sends">
+          <div className="privacy-ledger__stanza">
+            <dt className="privacy-ledger__label">We ask</dt>
+            <dd className="privacy-ledger__rows">
+              <div className="privacy-ledger__row">
+                <span className="privacy-ledger__key">Name</span>
+                <span className="privacy-ledger__val">so the organizer knows who's coming</span>
+              </div>
+              <div className="privacy-ledger__row">
+                <span className="privacy-ledger__key">Email</span>
+                <span className="privacy-ledger__val">for the confirmation and the manage link</span>
+              </div>
+              <div className="privacy-ledger__row">
+                <span className="privacy-ledger__key">Note</span>
+                <span className="privacy-ledger__val">optional, anything the organizer should know</span>
+              </div>
+            </dd>
+          </div>
+
+          <div className="privacy-ledger__stanza">
+            <dt className="privacy-ledger__label">We send</dt>
+            <dd className="privacy-ledger__rows">
+              <div className="privacy-ledger__row">
+                <span className="privacy-ledger__key">Confirmation</span>
+                <span className="privacy-ledger__val">email, the moment the slot is claimed</span>
+              </div>
+              <div className="privacy-ledger__row">
+                <span className="privacy-ledger__key">Calendar file</span>
+                <span className="privacy-ledger__val">.ics, opens in any calendar app</span>
+              </div>
+              <div className="privacy-ledger__row">
+                <span className="privacy-ledger__key">Manage link</span>
+                <span className="privacy-ledger__val">private, cancel without an account</span>
+              </div>
+            </dd>
+          </div>
+
+          <div className="privacy-ledger__stanza privacy-ledger__stanza--never">
+            <dt className="privacy-ledger__label">We never ask for</dt>
+            <dd className="privacy-ledger__never">
+              <span>Passwords</span>
+              <span>Phone numbers</span>
+              <span>Calendar OAuth</span>
+              <span>Tracking pixels</span>
+              <span>Marketing email</span>
+            </dd>
+          </div>
+        </dl>
       </section>
 
       <OperationsSection />
@@ -538,38 +527,86 @@ function LandingDemoCard() {
   );
 }
 
-/* ─── DayBandSnippet — single row at intimate scale for the
- *  editorial section. Same DOM as the real day-band. */
-function DayBandSnippet() {
+function BoardSafetySnippet() {
+  const rows = [
+    {
+      weekday: 'MON',
+      day: '18',
+      month: 'MAY',
+      slots: [
+        { time: '09:00', status: 'open' },
+        { time: '11:00', status: 'open' },
+        { time: '14:00', status: 'open' },
+      ],
+    },
+    {
+      weekday: 'TUE',
+      day: '19',
+      month: 'MAY',
+      slots: [
+        { time: '10:00', status: 'open' },
+        { time: '13:00', status: 'locked' },
+        { time: '15:00', status: 'open' },
+      ],
+    },
+    {
+      weekday: 'WED',
+      day: '20',
+      month: 'MAY',
+      slots: [
+        { time: '09:00', status: 'open' },
+        { time: '11:00', status: 'claimed' },
+        { time: '14:00', status: 'open' },
+      ],
+    },
+  ];
+
   return (
-    <div className="landing-snippet">
-      <section className="day-band is-active-view">
-        <div className="day-band__top">
-          <div className="day-band__head">
-            <span className="day-band__weekday">WED</span>
-            <span className="day-band__num">20</span>
-            <span className="day-band__month">MAY</span>
+    <div className="landing-board-artifact" aria-label="Spreadsheet-style booking board">
+      <div className="landing-board-artifact__bar">
+        <span>Board state</span>
+        <code className="mono">mytimes.co/b/vision-2026</code>
+      </div>
+
+      <div className="landing-board-artifact__rows">
+        {rows.map((row) => (
+          <div
+            key={`${row.weekday}-${row.day}`}
+            className={`landing-board-row${
+              row.slots.some((slot) => slot.status === 'claimed') ? ' is-selected' : ''
+            }`}
+          >
+            <div className="landing-board-row__date">
+              <span>{row.weekday}</span>
+              <strong className="mono tabular">{row.day}</strong>
+              <small>{row.month}</small>
+            </div>
+            <div className="landing-board-row__slots">
+              {row.slots.map((slot) => (
+                <span
+                  key={slot.time}
+                  className={`landing-board-slot landing-board-slot--${slot.status}`}
+                >
+                  <span className="mono tabular">{slot.time}</span>
+                  <small>
+                    {slot.status === 'claimed'
+                      ? 'claimed'
+                      : slot.status === 'locked'
+                        ? 'hidden'
+                        : 'open'}
+                  </small>
+                </span>
+              ))}
+            </div>
           </div>
-          <div className="day-band__chips">
-            {[
-              ['09:00', 'am'],
-              ['11:00', 'am'],
-              ['14:00', 'pm'],
-              ['15:00', 'pm'],
-            ].map(([time, m]) => (
-              <button
-                key={time}
-                type="button"
-                className={`day-band__chip day-band__chip--${m}`}
-                tabIndex={-1}
-              >
-                <span className="day-band__chip-time mono tabular">{time}</span>
-                <span className="day-band__chip-meridiem" aria-hidden="true">{m}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+        ))}
+      </div>
+
+      <aside className="landing-board-artifact__receipt">
+        <span>Admin record</span>
+        <strong>Mark Reynolds claimed 11:00</strong>
+        <small>Slot removed from the public board immediately.</small>
+      </aside>
     </div>
   );
 }
@@ -617,49 +654,6 @@ function TzSnippet() {
         </button>
       </div>
     </div>
-  );
-}
-
-/* ─── PrivacyPanel — one side of the data-flow diptych.
- *  Wears the same warm-card material as .landing-snippet so it
- *  reads as a sibling of the other editorial product fragments.
- *  Each item is a compact icon + label + supporting hint row.
- *  The footnote inverts the list ("never ask / never send") in
- *  italic small print to set it apart visually. */
-type PrivacyItem = {
-  icon: React.ReactNode;
-  label: string;
-  hint: string;
-};
-
-function PrivacyPanel({
-  eyebrow,
-  items,
-  footnote,
-}: {
-  eyebrow: string;
-  items: PrivacyItem[];
-  footnote: React.ReactNode;
-}) {
-  return (
-    <article className="landing-privacy-panel">
-      <span className="landing-privacy-panel__eyebrow">
-        <Check size={11} strokeWidth={2.2} aria-hidden="true" />
-        {eyebrow}
-      </span>
-      <ul className="landing-privacy-panel__list">
-        {items.map((item) => (
-          <li key={item.label} className="landing-privacy-panel__item">
-            <span className="landing-privacy-panel__icon">{item.icon}</span>
-            <span className="landing-privacy-panel__text">
-              <span className="landing-privacy-panel__label">{item.label}</span>
-              <span className="landing-privacy-panel__hint">{item.hint}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <p className="landing-privacy-panel__footnote">{footnote}</p>
-    </article>
   );
 }
 
@@ -880,52 +874,95 @@ function ParticipantLifecycleSection() {
   );
 }
 
+/* ─── Pricing teaser ──────────────────────────────────
+ *  Tight three-row composition:
+ *    1. Editorial header (eyebrow + short title + body)
+ *    2. Two pricing cards side-by-side, each with three
+ *       real constraints below the headline price
+ *    3. Single primary CTA underneath, centred
+ *
+ *  Replaces the previous design: an oversized headline that
+ *  squashed the cards into a corner and a floating black
+ *  "custom domains" callout that read as a UI mistake. */
 function LandingPricingSection() {
-  return (
-    <section className="landing-pricing" aria-label="Pricing summary">
-      <div className="landing-pricing__copy">
-        <span className="landing-flow__mark">Pricing that matches the job</span>
-        <h2>Start free. Subscribe when it becomes company habit.</h2>
-        <p>
-          mytimes stays free for small interview rounds. Company is for teams
-          that want the board ready every time with shared recovery and billing.
-        </p>
-        <button
-          type="button"
-          className="landing-hero__primary landing-pricing__cta"
-          onClick={() => navigate('/pricing')}
-        >
-          See pricing <ArrowRight size={16} strokeWidth={2} />
-        </button>
-      </div>
+  const tiers = [
+    {
+      label: 'Free',
+      price: '$0',
+      cadence: 'forever',
+      tagline: 'For the round you have to ship this week.',
+      bullets: [
+        '2 active boards',
+        '25 bookings per board',
+        'Per-board CSV export',
+      ],
+      footnote: '60-day active window',
+    },
+    {
+      label: 'Company',
+      price: '$49',
+      cadence: 'per month',
+      tagline: 'When booking rounds become a company habit.',
+      bullets: [
+        'Unlimited boards · 10 organizer seats',
+        'Custom subdomain (book.company.com)',
+        'Shared admin recovery + cross-board export',
+      ],
+      footnote: 'Or $480/year · custom domains included',
+      featured: true,
+    },
+  ];
 
-      <div className="landing-pricing__plans">
-        {[
-          {
-            icon: <LockKeyhole size={15} strokeWidth={1.8} aria-hidden="true" />,
-            label: 'Free',
-            price: '$0',
-            detail: 'Small board to prove the workflow.',
-          },
-          {
-            icon: <ReceiptText size={15} strokeWidth={1.8} aria-hidden="true" />,
-            label: 'Company',
-            price: '$49/mo',
-            detail: 'Workspace mode with 10 seats and custom subdomain.',
-          },
-        ].map((plan) => (
-          <article key={plan.label} className="landing-pricing__plan">
-            <span className="landing-pricing__icon">{plan.icon}</span>
-            <span className="landing-pricing__name">{plan.label}</span>
-            <strong>{plan.price}</strong>
-            <small>{plan.detail}</small>
+  return (
+    <section className="landing-pricing-v2" aria-label="Pricing summary">
+      <header className="landing-pricing-v2__head">
+        <span className="landing-flow__mark">Pricing that matches the job</span>
+        <h2>Free for one round.<br />Subscribe when it's the job.</h2>
+        <p>
+          mytimes stays free for the interview round you have to ship this
+          week. Company unlocks when teams want the board ready every time,
+          with shared recovery and billing.
+        </p>
+      </header>
+
+      <div className="landing-pricing-v2__tiers">
+        {tiers.map((tier) => (
+          <article
+            key={tier.label}
+            className={`landing-pricing-v2__tier${tier.featured ? ' landing-pricing-v2__tier--featured' : ''}`}
+          >
+            <div className="landing-pricing-v2__tier-head">
+              <span className="landing-pricing-v2__tier-name">{tier.label}</span>
+              <div className="landing-pricing-v2__tier-price">
+                <strong className="mono">{tier.price}</strong>
+                <span>{tier.cadence}</span>
+              </div>
+            </div>
+            <p className="landing-pricing-v2__tier-tagline">{tier.tagline}</p>
+            <ul className="landing-pricing-v2__tier-bullets">
+              {tier.bullets.map((b) => (
+                <li key={b}>
+                  <Check size={13} strokeWidth={2.2} aria-hidden="true" />
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="landing-pricing-v2__tier-foot">{tier.footnote}</div>
           </article>
         ))}
       </div>
 
-      <div className="landing-pricing__rule">
-        <BadgeDollarSign size={15} strokeWidth={1.8} aria-hidden="true" />
-        <span>Custom domains belong in Company, where DNS support belongs.</span>
+      <div className="landing-pricing-v2__cta-row">
+        <button
+          type="button"
+          className="landing-hero__primary"
+          onClick={() => navigate('/pricing')}
+        >
+          See full pricing <ArrowRight size={16} strokeWidth={2} />
+        </button>
+        <p className="landing-pricing-v2__cta-note">
+          No credit card to start. Upgrade only when a board needs it.
+        </p>
       </div>
     </section>
   );

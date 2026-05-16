@@ -1,28 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Clock,
-  Video,
-  Globe,
-  CalendarX2,
-  User,
-  Mail,
-  Copy,
-  Check,
-  ShieldCheck,
-  RefreshCcw,
-  ChevronDown,
-} from 'lucide-react';
+import { CalendarX2 } from 'lucide-react';
 import {
   EMPTY_INLINE_SLOT_FORM_DRAFT,
   InlineSlotForm,
   type InlineSlotFormDraft,
 } from '../components/InlineSlotForm';
 import { MonthDateSpinners } from '../components/MonthDateSpinners';
-import { Avatar } from '../components/Avatar';
 import { BookingCompact } from '../components/BookingCompact';
+import { BookingHeaderCard } from '../components/BookingHeaderCard';
 import { TimezonePicker } from '../components/TimezonePicker';
 import type { BookingEvent, TimeSlot } from '../lib/types';
-import { viewerTimezone, formatTimeInTz, formatDateKey } from '../lib/time';
+import {
+  formatDateKey,
+  formatDayPartsInTz,
+  formatTimeInTz,
+  hourInTz,
+  viewerTimezone,
+} from '../lib/time';
 import { MOCK_EVENT, MOCK_SLOTS } from '../lib/mockData';
 import type { ClaimSlotResponse } from '../lib/api';
 
@@ -93,7 +87,7 @@ export function BookingPage({
       event.paymentStatus !== 'not_required',
   );
   const isUnavailable = !isArchived && (isExpired || isPaymentUnavailable);
-  const openSlots = slots.filter((s) => s.state === 'open');
+  const openSlots = useMemo(() => slots.filter((s) => s.state === 'open'), [slots]);
   const openSlotCount = openSlots.length;
   const fullyBooked = !isArchived && !isUnavailable && openSlotCount === 0;
 
@@ -119,25 +113,63 @@ export function BookingPage({
     [openSlots, filter, viewerTz],
   );
 
+  const slotDisplayById = useMemo(() => {
+    const display = new Map<
+      string,
+      {
+        localTime: string;
+        sourceTime: string;
+        showSource: boolean;
+        dateDiffers: boolean;
+        meridiem: 'am' | 'pm';
+      }
+    >();
+    for (const slot of carouselSlots) {
+      const startsAt = new Date(slot.startsAt);
+      const localTime = formatTimeInTz(startsAt, viewerTz);
+      const sourceTime = formatTimeInTz(startsAt, event.timezone);
+      const hour = hourInTz(startsAt, viewerTz);
+      display.set(slot.id, {
+        localTime,
+        sourceTime,
+        showSource: viewerTz !== event.timezone,
+        dateDiffers:
+          formatDateKey(startsAt, viewerTz) !== formatDateKey(startsAt, event.timezone),
+        meridiem: hour < 12 ? 'am' : 'pm',
+      });
+    }
+    return display;
+  }, [carouselSlots, event.timezone, viewerTz]);
+
   /* Group filtered slots by viewer-local day. Single pass: keep
      them in chronological order, slice into day buckets. */
   const dayGroups = useMemo(() => {
-    type Group = { dateKey: string; date: Date; slots: TimeSlot[] };
+    type Group = {
+      dateKey: string;
+      date: Date;
+      dayShort: string;
+      dayNum: string;
+      monthShort: string;
+      slots: TimeSlot[];
+    };
     const out: Group[] = [];
     const map = new Map<string, Group>();
     carouselSlots.forEach((slot) => {
       const d = new Date(slot.startsAt);
-      const dateKey = new Intl.DateTimeFormat('en-CA', {
-        timeZone: viewerTz,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(d);
+      const dateKey = formatDateKey(d, viewerTz);
       const existing = map.get(dateKey);
       if (existing) {
         existing.slots.push(slot);
       } else {
-        const g = { dateKey, date: d, slots: [slot] };
+        const labels = formatDayPartsInTz(d, viewerTz);
+        const g = {
+          dateKey,
+          date: d,
+          dayShort: labels.weekdayShort,
+          dayNum: labels.day,
+          monthShort: labels.monthShort,
+          slots: [slot],
+        };
         map.set(dateKey, g);
         out.push(g);
       }
@@ -317,22 +349,6 @@ export function BookingPage({
             ) : (
               <div className="day-list" ref={dayListRef}>
                 {dayGroups.map((group) => {
-                  const dayName = new Intl.DateTimeFormat('en-GB', {
-                    weekday: 'long',
-                    timeZone: viewerTz,
-                  }).format(group.date);
-                  const dayShort = new Intl.DateTimeFormat('en-GB', {
-                    weekday: 'short',
-                    timeZone: viewerTz,
-                  }).format(group.date);
-                  const dayNum = new Intl.DateTimeFormat('en-GB', {
-                    day: '2-digit',
-                    timeZone: viewerTz,
-                  }).format(group.date);
-                  const monthShort = new Intl.DateTimeFormat('en-GB', {
-                    month: 'short',
-                    timeZone: viewerTz,
-                  }).format(group.date);
                   const bandSelected = selectedSlot && group.slots.some((s) => s.id === selectedSlot.id);
                   return (
                     <section
@@ -345,28 +361,21 @@ export function BookingPage({
                           whitespace between the two clusters. */}
                       <div className="day-band__top">
                         <div className="day-band__head">
-                          <span className="day-band__weekday">{dayShort}</span>
-                          <span className="day-band__num">{dayNum}</span>
-                          <span className="day-band__month">{monthShort}</span>
+                          <span className="day-band__weekday">{group.dayShort}</span>
+                          <span className="day-band__num">{group.dayNum}</span>
+                          <span className="day-band__month">{group.monthShort}</span>
                         </div>
 
                         <div className="day-band__chips">
                           {group.slots.map((slot) => {
                             const isSelected = slot.id === selectedSlotId;
-                            const startsAt = new Date(slot.startsAt);
-                            const localTime = formatTimeInTz(startsAt, viewerTz);
-                            const sourceTime = formatTimeInTz(startsAt, event.timezone);
-                            const showSource = viewerTz !== event.timezone;
-                            const localDateKey = formatDateKey(startsAt, viewerTz);
-                            const sourceDateKey = formatDateKey(startsAt, event.timezone);
-                            const dateDiffers = localDateKey !== sourceDateKey;
-                            const hour = viewerHour(slot.startsAt, viewerTz);
-                            const meridiem = hour < 12 ? 'am' : 'pm';
+                            const display = slotDisplayById.get(slot.id);
+                            if (!display) return null;
                             return (
                               <button
                                 key={slot.id}
                                 type="button"
-                                className={`day-band__chip day-band__chip--${meridiem}${isSelected ? ' is-selected' : ''}${showSource ? ' day-band__chip--dual' : ''}${dateDiffers ? ' day-band__chip--date-shift' : ''}`}
+                                className={`day-band__chip day-band__chip--${display.meridiem}${isSelected ? ' is-selected' : ''}${display.showSource ? ' day-band__chip--dual' : ''}${display.dateDiffers ? ' day-band__chip--date-shift' : ''}`}
                                 onClick={() =>
                                   setSelectedSlotId((current) =>
                                     current === slot.id ? undefined : slot.id,
@@ -374,33 +383,33 @@ export function BookingPage({
                                 }
                                 aria-pressed={isSelected}
                                 aria-label={
-                                  showSource
-                                    ? `Book ${dayShort} ${dayNum} ${monthShort} at ${localTime} ${meridiem} your time (${sourceTime} organizer time${dateDiffers ? ', different date for organizer' : ''})`
-                                    : `Book ${dayShort} ${dayNum} ${monthShort} at ${localTime} ${meridiem}`
+                                  display.showSource
+                                    ? `Book ${group.dayShort} ${group.dayNum} ${group.monthShort} at ${display.localTime} ${display.meridiem} your time (${display.sourceTime} organizer time${display.dateDiffers ? ', different date for organizer' : ''})`
+                                    : `Book ${group.dayShort} ${group.dayNum} ${group.monthShort} at ${display.localTime} ${display.meridiem}`
                                 }
                               >
                                 <span className="day-band__chip-time mono tabular">
-                                  {localTime}
+                                  {display.localTime}
                                 </span>
                                 <span
                                   className="day-band__chip-meridiem"
                                   aria-hidden="true"
                                 >
-                                  {meridiem}
+                                  {display.meridiem}
                                 </span>
-                                {showSource && (
+                                {display.showSource && (
                                   <span
                                     className="day-band__chip-source mono"
                                     aria-hidden="true"
                                   >
-                                    {sourceTime}
+                                    {display.sourceTime}
                                   </span>
                                 )}
-                                {dateDiffers && (
+                                {display.dateDiffers && (
                                   <span
                                     className="day-band__chip-shift"
                                     aria-hidden="true"
-                                    title={`This is a different date for the organizer (${sourceTime} ${event.timezone})`}
+                                    title={`This is a different date for the organizer (${display.sourceTime} ${event.timezone})`}
                                   >
                                     +1d
                                   </span>
@@ -466,166 +475,6 @@ export function BookingPage({
         </p>
       </div>
     </div>
-  );
-}
-
-/* ─── BookingHeaderCard ───────────────────────────────────
- * One wide card that replaces the old hero + side rail. Top
- * zone is the always-visible identity (avatar, eyebrow, title,
- * meta, description). Bottom strip is a compact row: stats,
- * reference code, and a Details ▾ disclosure. Clicking the
- * disclosure expands an inline tray via the grid-template-rows
- * 0fr → 1fr trick that the day-bands use. */
-export function BookingHeaderCard({
-  event,
-  viewerTz,
-  detectedViewerTz,
-  onViewerTzChange,
-  openSlotCount,
-  uniqueDays,
-  commonTimezones,
-}: {
-  event: BookingEvent;
-  viewerTz: string;
-  detectedViewerTz: string;
-  onViewerTzChange: (timezone: string) => void;
-  openSlotCount: number;
-  uniqueDays: number;
-  commonTimezones?: string[];
-}) {
-  const [open, setOpen] = useState(false);
-  const showMytimesFooter = !(
-    event.paymentStatus === 'paid' &&
-    (event.planKey === 'event_pass' || event.planKey === 'company_standby')
-  );
-  return (
-    <section
-      className={`booking-card${open ? ' is-expanded' : ''}`}
-      aria-label="Event details"
-    >
-      <header className="booking-card__main">
-        <div className="booking-card__text">
-          <p className="booking-card__eyebrow">
-            <span>{event.organizerName}</span> invites you to book
-          </p>
-          <h1 className="booking-card__title">{event.title}</h1>
-          <ul className="booking-card__meta">
-            <li>
-              <Clock size={14} strokeWidth={1.6} aria-hidden="true" />
-              <span className="mono tabular">{event.durationMinutes} min</span>
-            </li>
-            <li>
-              <Video size={14} strokeWidth={1.6} aria-hidden="true" />
-              <span>Video call</span>
-            </li>
-            <li>
-              <TimezonePicker
-                value={viewerTz}
-                onChange={onViewerTzChange}
-                detected={detectedViewerTz}
-                commonZones={commonTimezones}
-                showLabel
-              />
-            </li>
-            <li>
-              <Mail size={14} strokeWidth={1.6} aria-hidden="true" />
-              <a
-                href={`mailto:${event.organizerEmail}`}
-                className="booking-card__meta-email mono"
-              >
-                {event.organizerEmail}
-              </a>
-            </li>
-          </ul>
-        </div>
-        <Avatar
-          seed={event.avatarSeed ?? event.organizerEmail}
-          style={event.avatarStyle ?? 'notionists'}
-          size={44}
-        />
-      </header>
-
-      {/* The entire strip is the disclosure trigger. ReferenceInline
-       *  stops propagation so it still copies on click. */}
-      <div
-        className="booking-card__strip"
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        aria-label={open ? 'Hide event details' : 'Show event details'}
-        onClick={() => setOpen((v) => !v)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setOpen((v) => !v);
-          }
-        }}
-      >
-        <div className="booking-card__strip-left">
-          <span className="booking-card__stats">
-            <span className="booking-card__stats-num mono tabular">{openSlotCount}</span>
-            <span className="booking-card__stats-label">open</span>
-            <span className="booking-card__stats-sep" aria-hidden="true">·</span>
-            <span className="booking-card__stats-num mono tabular">{uniqueDays}</span>
-            <span className="booking-card__stats-label">days</span>
-          </span>
-          <span className="booking-card__strip-sep" aria-hidden="true" />
-          <ReferenceInline value={formatReference(event.id)} />
-          {showMytimesFooter && (
-            <>
-              <span className="booking-card__strip-sep" aria-hidden="true" />
-              <span className="booking-card__trust">
-                <ShieldCheck size={12} strokeWidth={1.6} aria-hidden="true" />
-                <span>Hosted on mytimes · Private booking link</span>
-              </span>
-            </>
-          )}
-        </div>
-        <span className="booking-card__caret-icon" aria-hidden="true">
-          <ChevronDown size={14} strokeWidth={1.8} />
-        </span>
-      </div>
-
-      <div className="booking-card__tray" aria-hidden={!open}>
-        <div className="booking-card__tray-inner">
-          <section className="booking-card__tray-section">
-            <h3 className="booking-card__tray-label">What to expect</h3>
-            <ul className="booking-card__tray-list">
-              <li>
-                <Video size={13} strokeWidth={1.6} aria-hidden="true" />
-                <span>Video call details after confirm</span>
-              </li>
-              <li>
-                <Clock size={13} strokeWidth={1.6} aria-hidden="true" />
-                <span>
-                  <span className="mono tabular">{event.durationMinutes}</span> minutes, kept tight
-                </span>
-              </li>
-              <li>
-                <User size={13} strokeWidth={1.6} aria-hidden="true" />
-                <span>1-on-1, no prep needed</span>
-              </li>
-              <li>
-                <Mail size={13} strokeWidth={1.6} aria-hidden="true" />
-                <span>Manage link shown after booking</span>
-              </li>
-            </ul>
-          </section>
-
-          <section className="booking-card__tray-section">
-            <h3 className="booking-card__tray-label">
-              <RefreshCcw size={12} strokeWidth={1.8} aria-hidden="true" />
-              If you can't make it
-            </h3>
-            <p className="booking-card__tray-body">
-              Use your private manage link to cancel. Your slot reopens for someone else.
-              Organizer timezone: <span className="mono">{event.timezone}</span>.
-              Detected here: <span className="mono">{detectedViewerTz}</span>.
-            </p>
-          </section>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -722,48 +571,7 @@ function FilterStrip({
   );
 }
 
-/* ─── ReferenceInline — quiet code text + tap-to-copy icon
- * Inline mono text that lives in the strip row alongside the
- * stats. Click anywhere on it to copy; a flash of "Copied"
- * confirms. No surrounding plate or border. */
-
-function ReferenceInline({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async (e: React.MouseEvent) => {
-    /* Stop the strip's onClick from toggling the tray when the
-     *  user is actually trying to copy the reference code. */
-    e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* clipboard blocked — silently skip */
-    }
-  };
-  return (
-    <button
-      type="button"
-      className="booking-card__ref"
-      onClick={copy}
-      aria-label={copied ? 'Copied reference code' : `Copy reference code ${value}`}
-    >
-      <code className="mono">{value}</code>
-      {copied ? (
-        <Check size={12} strokeWidth={1.8} aria-hidden="true" />
-      ) : (
-        <Copy size={12} strokeWidth={1.6} aria-hidden="true" />
-      )}
-    </button>
-  );
-}
-
 /* ─── Helpers ─────────────────────────────────────────── */
-
-function formatReference(id: string): string {
-  const tail = id.replace(/[^a-z0-9]/gi, '').slice(-12).toUpperCase().padStart(12, '0');
-  return `${tail.slice(0, 4)}-${tail.slice(4, 8)}-${tail.slice(8, 12)}`;
-}
 
 function bucketByTimeOfDay(slots: TimeSlot[], viewerTz: string) {
   const morning: TimeSlot[] = [];
@@ -787,12 +595,7 @@ function isInTimeBucket(slot: TimeSlot, viewerTz: string, bucket: TimeFilter): b
 }
 
 function viewerHour(iso: string, tz: string): number {
-  const h = new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit',
-    hour12: false,
-    timeZone: tz,
-  }).format(new Date(iso));
-  return Number(h);
+  return hourInTz(new Date(iso), tz);
 }
 
 /* ─── Notices ─────────────────────────────────────── */

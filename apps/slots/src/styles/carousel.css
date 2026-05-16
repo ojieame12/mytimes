@@ -191,11 +191,9 @@
 /* ─── Day band — single column, two rows.
    Row 1 (.day-band__top) is a flex row with space-between
    that puts the date block on the far left and the chips on
-   the far right. Row 2 is the form, which animates from
-   0fr → 1fr on select via grid-template-rows.
-
-   Apple-grade timing: 540ms ease-out-expo on the band-level
-   morphs, 520ms with a 220ms stagger on the form rise. */
+   the far right. Row 2 opens inline on select; only paint and
+   compositor-friendly properties animate so the row feels prompt
+   on lower-powered phones. */
 .day-band {
   display: grid;
   grid-template-rows: auto 0fr;
@@ -216,14 +214,10 @@
    *  during scroll). Dropped — IO + reveal alone is fast enough
    *  for 22 rows. */
   transition:
-    background 540ms cubic-bezier(0.16, 1, 0.3, 1),
-    color 540ms cubic-bezier(0.16, 1, 0.3, 1),
-    padding 540ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 540ms cubic-bezier(0.16, 1, 0.3, 1),
-    grid-template-rows 540ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 540ms cubic-bezier(0.16, 1, 0.3, 1),
-    margin 540ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-radius 540ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
     transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
     opacity 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -254,8 +248,6 @@
  * rounded corners, slight padding bump. */
 .day-band:not(.is-selected):hover {
   background: hsla(28, 100%, 97%, 1);
-  padding: 22px 24px;
-  margin: 4px -24px;
   border-radius: 14px;
   border-top-color: transparent;
   box-shadow:
@@ -300,7 +292,7 @@
   opacity: 1;
 }
 
-/* Inverted state — full row flips dark; form row expands 0fr → 1fr.
+/* Inverted state — full row flips dark; form row opens inline.
  *  Materials: vertical zinc-900 → zinc-800 gradient (subtle sheen,
  *  "light from above" feel), faint orange radial wash at the
  *  bottom corner (ambient brand glow), grain texture overlay for
@@ -571,9 +563,8 @@
 }
 
 
-/* ─── Inline form wrapper — animates open via the parent
-       grid-template-rows: 0fr → 1fr transition.
-       overflow:hidden + min-height:0 are required for the trick. */
+/* ─── Inline form wrapper — parent row opens the layout, inner
+       content handles the visible motion. */
 .day-band__form {
   grid-column: 1 / -1;
   grid-row: 2;
@@ -584,25 +575,16 @@
   padding-top: 24px;
   margin-top: 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  /* Stagger after the band finishes its 540ms morph so the form
-     content rises into a finished container, not a moving one. */
-  animation: form-rise 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: 220ms;
+  animation: form-rise 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes form-rise {
   from {
     opacity: 0;
     transform: translateY(-10px);
-    filter: blur(3px);
-  }
-  60% {
-    opacity: 0.9;
-    filter: blur(0.5px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
   }
 }
 @media (prefers-reduced-motion: reduce) {

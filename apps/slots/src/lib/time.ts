@@ -3,9 +3,23 @@
  * All formatters are timezone-aware and use Intl primitives
  * so there is no library footprint to maintain. */
 
+const FORMATTERS = new Map<string, Intl.DateTimeFormat>();
+
+function dateTimeFormatter(
+  key: string,
+  locale: string | string[],
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  const existing = FORMATTERS.get(key);
+  if (existing) return existing;
+  const formatter = new Intl.DateTimeFormat(locale, options);
+  FORMATTERS.set(key, formatter);
+  return formatter;
+}
+
 /** "05:00" — 24-hour clock time in a specific timezone. */
 export function formatTimeInTz(date: Date, tz: string): string {
-  return new Intl.DateTimeFormat('en-GB', {
+  return dateTimeFormatter(`time:${tz}`, 'en-GB', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
@@ -15,7 +29,7 @@ export function formatTimeInTz(date: Date, tz: string): string {
 
 /** "EDT" / "BST" — short tz abbreviation for a given instant + zone. */
 export function formatTzAbbrev(date: Date, tz: string): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
+  const parts = dateTimeFormatter(`tz-abbrev:${tz}`, 'en-US', {
     timeZone: tz,
     timeZoneName: 'short',
   }).formatToParts(date);
@@ -24,7 +38,7 @@ export function formatTzAbbrev(date: Date, tz: string): string {
 
 /** "GMT+02:00" — stable offset label for the exact instant booked. */
 export function formatUtcOffset(date: Date, tz: string): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
+  const parts = dateTimeFormatter(`utc-offset:${tz}`, 'en-US', {
     timeZone: tz,
     timeZoneName: 'longOffset',
   }).formatToParts(date);
@@ -33,7 +47,7 @@ export function formatUtcOffset(date: Date, tz: string): string {
 
 /** "MON 12 MAY" — uppercase mono-styled day label. */
 export function formatDayLabel(date: Date, tz: string): string {
-  return new Intl.DateTimeFormat('en-GB', {
+  return dateTimeFormatter(`day-label:${tz}`, 'en-GB', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -46,12 +60,45 @@ export function formatDayLabel(date: Date, tz: string): string {
 /** "2026-05-18" — stable key for day grouping in a specific tz. */
 export function formatDateKey(date: Date, tz: string): string {
   // en-CA gives ISO-like "2026-05-18" formatting.
-  return new Intl.DateTimeFormat('en-CA', {
+  return dateTimeFormatter(`date-key:${tz}`, 'en-CA', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     timeZone: tz,
   }).format(date);
+}
+
+export function formatDayPartsInTz(
+  date: Date,
+  tz: string,
+): { weekdayLong: string; weekdayShort: string; day: string; monthShort: string } {
+  return {
+    weekdayLong: dateTimeFormatter(`weekday-long:${tz}`, 'en-GB', {
+      weekday: 'long',
+      timeZone: tz,
+    }).format(date),
+    weekdayShort: dateTimeFormatter(`weekday-short:${tz}`, 'en-GB', {
+      weekday: 'short',
+      timeZone: tz,
+    }).format(date),
+    day: dateTimeFormatter(`day-2:${tz}`, 'en-GB', {
+      day: '2-digit',
+      timeZone: tz,
+    }).format(date),
+    monthShort: dateTimeFormatter(`month-short:${tz}`, 'en-GB', {
+      month: 'short',
+      timeZone: tz,
+    }).format(date),
+  };
+}
+
+export function hourInTz(date: Date, tz: string): number {
+  const hour = dateTimeFormatter(`hour:${tz}`, 'en-GB', {
+    hour: '2-digit',
+    hour12: false,
+    timeZone: tz,
+  }).format(date);
+  return Number(hour);
 }
 
 /** The viewer's IANA timezone. Falls back to UTC if unavailable. */
