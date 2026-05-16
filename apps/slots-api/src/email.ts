@@ -394,7 +394,7 @@ export async function sendBookingCancellationEmails(input: {
       ? ` The board now shows ${input.openSlotCount} open slot${input.openSlotCount === 1 ? "" : "s"}.`
       : "";
     const organizerBody = input.reopenedSlot
-      ? `Their time is available again.${openSlotsLine ? " The board now shows <strong style=\"color:#27272A\">" + (input.openSlotCount) + "</strong> open slot" + (input.openSlotCount === 1 ? "" : "s") + "." : ""}`
+      ? `Their time is available again.${openSlotsLine ? ` The board now shows <strong style="color:${COLOR_BODY}">${input.openSlotCount}</strong> open slot${input.openSlotCount === 1 ? "" : "s"}.` : ""}`
       : "Their time is no longer held, but the slot stayed closed on the board.";
     deliveries.push(
       deliverLoggedEmail({
@@ -453,14 +453,14 @@ export function cancellationParticipantEmailShape(input: CancellationParticipant
   if (input.cancelledBy === "organizer") {
     if (input.reopenedSlot) {
       return {
-        body: `<p style="${BODY_PARAGRAPH_STYLE}"><strong style="color:#27272A">${escapeHtml(input.organizerName)}</strong> cancelled this slot. The time is available again on the board${input.rebookURL ? ", so you can pick another one if you need to." : "."}</p>`,
+        body: `<p style="${BODY_PARAGRAPH_STYLE}"><strong style="color:${COLOR_BODY}">${escapeHtml(input.organizerName)}</strong> cancelled this slot. The time is available again on the board${input.rebookURL ? ", so you can pick another one if you need to." : "."}</p>`,
         textLine: "The time is available again on the board.",
         primaryCta: input.rebookURL ? { href: input.rebookURL, label: "Pick another time" } : undefined,
       };
     }
 
     return {
-      body: `<p style="${BODY_PARAGRAPH_STYLE}"><strong style="color:#27272A">${escapeHtml(input.organizerName)}</strong> cancelled this slot. This time stayed closed on the board. Reply to the organizer if you need a different time.</p>`,
+      body: `<p style="${BODY_PARAGRAPH_STYLE}"><strong style="color:${COLOR_BODY}">${escapeHtml(input.organizerName)}</strong> cancelled this slot. This time stayed closed on the board. Reply to the organizer if you need a different time.</p>`,
       textLine: "This time stayed closed on the board. Reply to the organizer if you need a different time.",
       primaryCta: input.rebookURL ? { href: input.rebookURL, label: "View board" } : undefined,
     };
@@ -468,14 +468,14 @@ export function cancellationParticipantEmailShape(input: CancellationParticipant
 
   if (input.reopenedSlot) {
     return {
-      body: `<p style="${BODY_PARAGRAPH_STYLE}">Your booking for <strong style="color:#27272A">${escapeHtml(input.eventTitle)}</strong> has been cancelled. The time is available again on the board.</p>`,
+      body: `<p style="${BODY_PARAGRAPH_STYLE}">Your booking for <strong style="color:${COLOR_BODY}">${escapeHtml(input.eventTitle)}</strong> has been cancelled. The time is available again on the board.</p>`,
       textLine: "The time is available again on the board.",
       primaryCta: input.rebookURL ? { href: input.rebookURL, label: "View board" } : undefined,
     };
   }
 
   return {
-    body: `<p style="${BODY_PARAGRAPH_STYLE}">Your booking for <strong style="color:#27272A">${escapeHtml(input.eventTitle)}</strong> has been cancelled. This time stayed closed on the board.</p>`,
+    body: `<p style="${BODY_PARAGRAPH_STYLE}">Your booking for <strong style="color:${COLOR_BODY}">${escapeHtml(input.eventTitle)}</strong> has been cancelled. This time stayed closed on the board.</p>`,
     textLine: "This time stayed closed on the board.",
     primaryCta: input.rebookURL ? { href: input.rebookURL, label: "View board" } : undefined,
   };
@@ -1256,16 +1256,20 @@ const FONT_DISPLAY = "'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI','Helv
 const FONT_BODY = "'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif";
 const FONT_MONO = "'SF Mono',Menlo,Monaco,Consolas,'Courier New',monospace";
 
-// Palette kept in sync with the product's peach editorial vocabulary.
-const COLOR_PAGE_BG = "#FBF6EE";
+// Palette kept in sync with the product's teal/sand/stamp brand system.
+// Email clients do not reliably support gradients, so the teal action axis is
+// expressed as solid CTA/link color while orange stays a small stamp accent.
+const COLOR_PAGE_BG = "#FEFCF8";
 const COLOR_CARD_BG = "#FEFCFA";
-const COLOR_BODY = "#27272A";
-const COLOR_MUTED = "#71717A";
-const COLOR_BRAND = "#F05A28";
-const COLOR_HAIRLINE = "#E4E4E7";
-const COLOR_PEACH_PANEL = "#FFF1E3";
-const COLOR_PEACH_PANEL_SOFT = "#FCF4EB";
-const COLOR_ADMIN_PANEL = "#27272A";
+const COLOR_BODY = "#091E22";
+const COLOR_MUTED = "#5F6F73";
+const COLOR_BRAND = "#005F83";
+const COLOR_BRAND_ACCENT = "#3EB1C8";
+const COLOR_STAMP = "#F05A28";
+const COLOR_HAIRLINE = "#DDE5E3";
+const COLOR_PEACH_PANEL = "#EBE5DB";
+const COLOR_PEACH_PANEL_SOFT = "#F5EFE6";
+const COLOR_ADMIN_PANEL = "#0E2930";
 const COLOR_ADMIN_TEXT = "#FBF6EE";
 
 const BODY_PARAGRAPH_STYLE =
@@ -1428,7 +1432,7 @@ function renderBrandRow(assetBaseURL: string): string {
     : `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>`
       + `<td style="font-family:${FONT_DISPLAY};font-size:20px;font-weight:700;color:${COLOR_BODY};letter-spacing:-0.01em;line-height:1;mso-line-height-rule:exactly">mytimes</td>`
       + `<td width="6"></td>`
-      + `<td><span style="display:inline-block;width:6px;height:6px;background-color:${COLOR_BRAND};border-radius:50%;vertical-align:middle"></span></td>`
+      + `<td><span style="display:inline-block;width:6px;height:6px;background-color:${COLOR_STAMP};border-radius:50%;vertical-align:middle"></span></td>`
       + `</tr></table>`;
   return `<tr><td style="padding:28px 32px 8px 32px">${mark}</td></tr>`;
 }
@@ -1444,7 +1448,7 @@ function renderHeader(eyebrow: string, title: string): string {
 
 function renderTimeBlock(data: TimeBlockData, style: TimeBlockStyle): string {
   const isMuted = style === "muted";
-  // Soft cancellations use a lighter peach + muted body for the title.
+  // Soft cancellations use a lighter sand + muted body for the title.
   const bg = isMuted ? COLOR_PEACH_PANEL_SOFT : COLOR_PEACH_PANEL;
   const titleColor = isMuted ? COLOR_MUTED : COLOR_BODY;
   const timeColor = isMuted ? COLOR_MUTED : COLOR_BODY;
@@ -1482,7 +1486,7 @@ function renderPersonLockup(person: PersonLockup): string {
     `<table role="presentation" cellpadding="0" cellspacing="0" border="0">`,
     `<tr>`,
     `<td valign="middle" width="44" style="padding-right:14px">`,
-    `<img src="https://api.dicebear.com/9.x/notionists/png?seed=${encodeURIComponent(seed)}&backgroundColor=fff1e3&size=88" alt="" width="44" height="44" style="display:block;border:1px solid ${COLOR_HAIRLINE};border-radius:50%;background-color:${COLOR_PEACH_PANEL}">`,
+    `<img src="https://api.dicebear.com/9.x/notionists/png?seed=${encodeURIComponent(seed)}&backgroundColor=ebe5db&size=88" alt="" width="44" height="44" style="display:block;border:1px solid ${COLOR_HAIRLINE};border-radius:50%;background-color:${COLOR_PEACH_PANEL}">`,
     `</td>`,
     `<td valign="middle">`,
     `<div style="font-family:${FONT_DISPLAY};font-size:16px;color:${COLOR_BODY};font-weight:600;letter-spacing:-0.01em;line-height:1.25;mso-line-height-rule:exactly">${escapeHtml(person.name)}</div>`,
@@ -1580,7 +1584,7 @@ type LinkCardOptions = {
 export function renderLinkCard(opts: LinkCardOptions): string {
   const isAdmin = opts.variant === "admin";
   const bg = isAdmin ? COLOR_ADMIN_PANEL : COLOR_PEACH_PANEL;
-  const labelColor = isAdmin ? "#FCA589" : COLOR_BRAND;
+  const labelColor = isAdmin ? COLOR_BRAND_ACCENT : COLOR_BRAND;
   const urlColor = isAdmin ? COLOR_ADMIN_TEXT : COLOR_BODY;
   const captionColor = isAdmin ? "rgba(251,246,238,0.72)" : COLOR_MUTED;
 
@@ -1626,7 +1630,7 @@ function renderFooter(footerNote: string | undefined, manageURL: string | undefi
     : `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>`
       + `<td style="font-family:${FONT_DISPLAY};font-size:13px;font-weight:700;color:${COLOR_BODY};letter-spacing:-0.005em;mso-line-height-rule:exactly">mytimes</td>`
       + `<td width="6"></td>`
-      + `<td><span style="display:inline-block;width:4px;height:4px;background-color:${COLOR_BRAND};border-radius:50%;vertical-align:middle"></span></td>`
+      + `<td><span style="display:inline-block;width:4px;height:4px;background-color:${COLOR_STAMP};border-radius:50%;vertical-align:middle"></span></td>`
       + `</tr></table>`;
   const manageCell = manageURL
     ? `<td valign="middle" align="right" style="font-family:${FONT_BODY};font-size:11px;color:#A1A1AA"><a href="${escapeAttribute(manageURL)}" style="color:#A1A1AA;text-decoration:underline">Manage</a></td>`
