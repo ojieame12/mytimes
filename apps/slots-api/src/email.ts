@@ -1253,6 +1253,7 @@ function providerError(provider: string, status: number, body: unknown): string 
 const FONT_HEADING = "'Mytimes Heading','Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif";
 const FONT_BODY = "'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif";
 const FONT_MONO = "'SF Mono',Menlo,Monaco,Consolas,'Courier New',monospace";
+const HEADING_FEATURE_RESET = "font-feature-settings:normal;-webkit-font-feature-settings:normal;";
 
 // Palette kept in sync with the product's teal/sand/stamp brand system.
 // Email clients do not reliably support gradients, so the teal action axis is
@@ -1429,7 +1430,7 @@ function renderBrandRow(assetBaseURL: string): string {
   const mark = assetBaseURL
     ? `<img src="${escapeAttribute(assetBaseURL)}/assets/brand/wordmark-dark@2x.png" alt="mytimes" width="96" height="24" style="display:block;border:0;outline:none;line-height:1;height:24px;width:96px">`
     : `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>`
-      + `<td style="font-family:${FONT_HEADING};font-size:20px;font-weight:800;color:${COLOR_BODY};letter-spacing:-0.01em;line-height:1;mso-line-height-rule:exactly">mytimes</td>`
+      + `<td style="font-family:${FONT_HEADING};font-size:20px;font-weight:800;color:${COLOR_BODY};letter-spacing:-0.01em;line-height:1;mso-line-height-rule:exactly;${HEADING_FEATURE_RESET}">mytimes</td>`
       + `<td width="6"></td>`
       + `<td><span style="display:inline-block;width:6px;height:6px;background-color:${COLOR_STAMP};border-radius:50%;vertical-align:middle"></span></td>`
       + `</tr></table>`;
@@ -1440,7 +1441,7 @@ function renderHeader(eyebrow: string, title: string): string {
   return [
     `<tr><td style="padding:32px 32px 12px 32px">`,
     `<div style="font-family:${FONT_BODY};font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:${COLOR_BRAND};margin:0 0 14px 0;line-height:1;mso-line-height-rule:exactly">${escapeHtml(eyebrow)}</div>`,
-    `<h1 style="margin:0;font-family:${FONT_HEADING};font-size:30px;line-height:1.08;mso-line-height-rule:exactly;font-weight:800;color:${COLOR_BODY};letter-spacing:0">${escapeHtml(title)}</h1>`,
+    `<h1 style="margin:0;font-family:${FONT_HEADING};font-size:30px;line-height:1.08;mso-line-height-rule:exactly;font-weight:800;color:${COLOR_BODY};letter-spacing:0;${HEADING_FEATURE_RESET}">${escapeHtml(title)}</h1>`,
     `</td></tr>`,
   ].join("");
 }
@@ -1488,7 +1489,7 @@ function renderPersonLockup(person: PersonLockup): string {
     `<img src="https://api.dicebear.com/9.x/notionists/png?seed=${encodeURIComponent(seed)}&backgroundColor=ebe5db&size=88" alt="" width="44" height="44" style="display:block;border:1px solid ${COLOR_HAIRLINE};border-radius:50%;background-color:${COLOR_PEACH_PANEL}">`,
     `</td>`,
     `<td valign="middle">`,
-    `<div style="font-family:${FONT_HEADING};font-size:16px;color:${COLOR_BODY};font-weight:800;letter-spacing:0;line-height:1.18;mso-line-height-rule:exactly">${escapeHtml(person.name)}</div>`,
+    `<div style="font-family:${FONT_HEADING};font-size:16px;color:${COLOR_BODY};font-weight:800;letter-spacing:0;line-height:1.18;mso-line-height-rule:exactly;${HEADING_FEATURE_RESET}">${escapeHtml(person.name)}</div>`,
     `<div style="margin-top:2px;font-family:${FONT_BODY};font-size:12px;color:${COLOR_MUTED};line-height:1.4;letter-spacing:0.01em;mso-line-height-rule:exactly">${escapeHtml(person.role)}${emailFragment}</div>`,
     `</td>`,
     `</tr>`,
@@ -1627,7 +1628,7 @@ function renderFooter(footerNote: string | undefined, manageURL: string | undefi
   const mark = assetBaseURL
     ? `<img src="${escapeAttribute(assetBaseURL)}/assets/brand/wordmark-dark@2x.png" alt="mytimes" width="64" height="16" style="display:block;border:0;outline:none;line-height:1;height:16px;width:64px">`
     : `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>`
-      + `<td style="font-family:${FONT_HEADING};font-size:13px;font-weight:800;color:${COLOR_BODY};letter-spacing:0;mso-line-height-rule:exactly">mytimes</td>`
+      + `<td style="font-family:${FONT_HEADING};font-size:13px;font-weight:800;color:${COLOR_BODY};letter-spacing:0;mso-line-height-rule:exactly;${HEADING_FEATURE_RESET}">mytimes</td>`
       + `<td width="6"></td>`
       + `<td><span style="display:inline-block;width:4px;height:4px;background-color:${COLOR_STAMP};border-radius:50%;vertical-align:middle"></span></td>`
       + `</tr></table>`;
