@@ -25,6 +25,7 @@
     "test:observability": "tsx scripts/test-observability-ops.mjs",
     "test:booking-flow": "node --import ./scripts/register-css-noop.mjs --import tsx scripts/test-booking-flow-live.tsx",
     "test:frontend-readiness": "node scripts/test-frontend-readiness.mjs",
+    "test:live-readiness": "node scripts/test-live-readiness.mjs",
     "audit:pricing-promises": "node scripts/audit-pricing-promises.mjs",
     "test:pricing-promises": "node scripts/audit-pricing-promises.mjs --strict",
     "test:e2e": "npm run typecheck && npm run build && npm run test:email && npm run test:auth-reset && npm run test:billing && npm run test:railway-domain && npm run test:api && npm run test:hardening && npm run test:booking-ui && npm run test:admin-access-ui && npm run test:notification-integrations-ui && npm run test:observability && npm run test:booking-flow && npm run test:frontend-readiness",

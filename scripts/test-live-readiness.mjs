@@ -68,7 +68,11 @@ for (const path of ["/pricing", "/privacy", "/terms", "/b/preview", "/new", "/si
 
 for (const path of ["/email-previews/index.html", "/email-previews/01-booking-confirmation.html"]) {
   const response = await fetchText(`${frontendURL}${path}`);
-  assertStatus(response, 200, `frontend fallback handles ${path}`);
+  assert(
+    response.status === 200 || response.status === 404,
+    `frontend blocks or safely falls back for ${path}: expected 200 or 404, got ${response.status}`,
+  );
+  checked.push(`frontend blocks or safely falls back for ${path}`);
   assertExcludes(response.text, "Email previews", `${path} must not expose preview index`);
   assertExcludes(response.text, "01-booking-confirmation", `${path} must not expose preview links`);
   assertExcludes(response.text, "Booking confirmed", `${path} must not expose rendered email HTML`);

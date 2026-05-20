@@ -20,6 +20,12 @@ import {
 import { expressiveScrollBehavior } from '../lib/motion';
 import { MOCK_EVENT, MOCK_SLOTS } from '../lib/mockData';
 import type { ClaimSlotResponse } from '../lib/api';
+/* day-band markup is rendered directly in this file (not via
+ * SlotCarousel) so we must pull in carousel.css ourselves —
+ * relying on a sibling component to side-effect-import it was
+ * the regression behind the bare-button render on /b/preview
+ * after the main.tsx CSS bundle was unbundled in d08eec2. */
+import '../styles/carousel.css';
 import '../styles/booking-page.css';
 
 /* ─── BookingPage (public, /b/<public_token>) ─────────────
