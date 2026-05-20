@@ -38,7 +38,7 @@ if (bundleURL) {
     [bundle.text],
     bundle.text,
     frontendURL,
-    ["BookingPage", "AuthPage", "PasswordResetPage"],
+    ["BookingPage", "AuthPage", "PasswordResetPage", "PricingPage", "LegalPage"],
   );
   assertIncludes(scannedBundleText, "View demo board", "live bundle has demo pricing CTA");
   assertIncludes(scannedBundleText, "Preview only", "live bundle has read-only demo submit label");
