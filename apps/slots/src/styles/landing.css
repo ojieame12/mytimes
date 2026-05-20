@@ -18,6 +18,25 @@
   overflow-x: hidden;
 }
 
+@supports (content-visibility: auto) {
+  .landing > [data-reveal] {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 620px;
+  }
+
+  .landing > .landing-pricing-v2 {
+    contain-intrinsic-size: auto 760px;
+  }
+
+  .landing > .landing-faq {
+    contain-intrinsic-size: auto 820px;
+  }
+
+  .landing > .landing-footer {
+    contain-intrinsic-size: auto 260px;
+  }
+}
+
 /* ─── Hero ───────────────────────────────────────────────── */
 .landing-hero {
   display: flex;
