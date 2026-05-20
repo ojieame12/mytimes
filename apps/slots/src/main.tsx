@@ -7,8 +7,6 @@ import './styles.css';
 import './styles/effects.css';
 import './styles/app-shell.css';
 import './styles/landing.css';
-import './styles/pricing.css';
-import './styles/legal.css';
 import './styles/slot-chip.css';
 import './styles/slot-grid.css';
 import './styles/carousel.css';

@@ -1,4 +1,6 @@
 let bookingPagePromise: Promise<typeof import('../views/BookingPage')> | undefined;
+let pricingPagePromise: Promise<typeof import('../views/PricingPage')> | undefined;
+let legalPagePromise: Promise<typeof import('../views/LegalPage')> | undefined;
 let authPagePromise: Promise<typeof import('../views/AuthPage')> | undefined;
 let passwordResetPagePromise: Promise<typeof import('../views/PasswordResetPage')> | undefined;
 let detailsStepPromise: Promise<typeof import('../views/create/DetailsStep')> | undefined;
@@ -18,10 +20,30 @@ let managementStylesPromise: Promise<unknown> | undefined;
 let accountStylesPromise: Promise<unknown> | undefined;
 let checkoutReturnStylesPromise: Promise<unknown> | undefined;
 let myBoardsStylesPromise: Promise<unknown> | undefined;
+let pricingStylesPromise: Promise<unknown> | undefined;
+let legalStylesPromise: Promise<unknown> | undefined;
 
 export function preloadBookingPage() {
   bookingPagePromise ??= import('../views/BookingPage');
   return bookingPagePromise;
+}
+
+export function preloadPricingPage() {
+  pricingStylesPromise ??= import('../styles/pricing.css');
+  pricingPagePromise ??= Promise.all([
+    pricingStylesPromise,
+    import('../views/PricingPage'),
+  ]).then(([, module]) => module);
+  return pricingPagePromise;
+}
+
+export function preloadLegalPage() {
+  legalStylesPromise ??= import('../styles/legal.css');
+  legalPagePromise ??= Promise.all([
+    legalStylesPromise,
+    import('../views/LegalPage'),
+  ]).then(([, module]) => module);
+  return legalPagePromise;
 }
 
 export function preloadAccountRouteStyles() {

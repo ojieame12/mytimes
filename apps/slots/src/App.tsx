@@ -2,8 +2,6 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useRoute, navigate } from './lib/routing';
 import { AppShell } from './components/AppShell';
 import { LandingPage } from './views/LandingPage';
-import { PricingPage } from './views/PricingPage';
-import { PrivacyPage, TermsPage } from './views/LegalPage';
 import { ApiClientError, readPublicBoard, type ClaimSlotResponse, type PublicBoardResponse } from './lib/api';
 import { MOCK_EVENT, MOCK_SLOTS } from './lib/mockData';
 import {
@@ -17,6 +15,8 @@ import {
   preloadManageBookingPage,
   preloadMyBoardsPage,
   preloadPasswordResetPage,
+  preloadLegalPage,
+  preloadPricingPage,
   preloadRecoverAdminPage,
   preloadRequestBoardsLinkPage,
   preloadReviewStep,
@@ -24,6 +24,15 @@ import {
 
 const loadBookingPage = () => preloadBookingPage().then(({ BookingPage }) => ({ default: BookingPage }));
 const BookingPage = lazy(loadBookingPage);
+const PricingPage = lazy(() =>
+  preloadPricingPage().then(({ PricingPage }) => ({ default: PricingPage })),
+);
+const PrivacyPage = lazy(() =>
+  preloadLegalPage().then(({ PrivacyPage }) => ({ default: PrivacyPage })),
+);
+const TermsPage = lazy(() =>
+  preloadLegalPage().then(({ TermsPage }) => ({ default: TermsPage })),
+);
 const DetailsStep = lazy(() =>
   preloadDetailsStep().then(({ DetailsStep }) => ({ default: DetailsStep })),
 );
@@ -178,7 +187,9 @@ export function App() {
   if (route.type === 'pricing') {
     return (
       <AppShell>
-        <PricingPage />
+        <RouteSuspense title="Loading pricing">
+          <PricingPage />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -186,7 +197,9 @@ export function App() {
   if (route.type === 'privacy') {
     return (
       <AppShell>
-        <PrivacyPage />
+        <RouteSuspense title="Loading privacy">
+          <PrivacyPage />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -194,7 +207,9 @@ export function App() {
   if (route.type === 'terms') {
     return (
       <AppShell>
-        <TermsPage />
+        <RouteSuspense title="Loading terms">
+          <TermsPage />
+        </RouteSuspense>
       </AppShell>
     );
   }

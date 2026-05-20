@@ -6,7 +6,9 @@ import {
   preloadAuthPage,
   preloadBookingPage,
   preloadDetailsStep,
+  preloadLegalPage,
   preloadMyBoardsPage,
+  preloadPricingPage,
 } from '../lib/routePreload';
 
 /* ─── AppShell ────────────────────────────────────────────
@@ -99,8 +101,12 @@ export function AppShell({
         </span>
         <span className="app-footer__rule" aria-hidden="true" />
         <span className="app-footer__year">© {new Date().getFullYear()}</span>
-        <FooterRouteLink href="/privacy">Privacy</FooterRouteLink>
-        <FooterRouteLink href="/terms">Terms</FooterRouteLink>
+        <FooterRouteLink href="/privacy" onIntent={() => void preloadLegalPage()}>
+          Privacy
+        </FooterRouteLink>
+        <FooterRouteLink href="/terms" onIntent={() => void preloadLegalPage()}>
+          Terms
+        </FooterRouteLink>
         <a href="mailto:hello@mytimes.co" className="app-footer__link">Contact</a>
         <span className="app-footer__hairline" aria-hidden="true">·</span>
         <span className="app-footer__credit">mytimes booking boards</span>
@@ -109,13 +115,24 @@ export function AppShell({
   );
 }
 
-function FooterRouteLink({ href, children }: { href: string; children: ReactNode }) {
+function FooterRouteLink({
+  href,
+  children,
+  onIntent,
+}: {
+  href: string;
+  children: ReactNode;
+  onIntent?: () => void;
+}) {
   return (
     <a
       href={href}
       className="app-footer__link"
+      onPointerEnter={onIntent}
+      onFocus={onIntent}
       onClick={(event) => {
         event.preventDefault();
+        onIntent?.();
         navigate(href);
       }}
     >
@@ -132,7 +149,16 @@ function GuestNav() {
   return (
     <>
       <nav className="app-bar__links" aria-label="Primary">
-        <button type="button" className="app-bar__link" onClick={() => navigate('/pricing')}>
+        <button
+          type="button"
+          className="app-bar__link"
+          onPointerEnter={() => void preloadPricingPage()}
+          onFocus={() => void preloadPricingPage()}
+          onClick={() => {
+            void preloadPricingPage();
+            navigate('/pricing');
+          }}
+        >
           Pricing
         </button>
         <button
@@ -177,7 +203,16 @@ function AuthedNav() {
   return (
     <>
       <nav className="app-bar__links" aria-label="Primary">
-        <button type="button" className="app-bar__link" onClick={() => navigate('/pricing')}>
+        <button
+          type="button"
+          className="app-bar__link"
+          onPointerEnter={() => void preloadPricingPage()}
+          onFocus={() => void preloadPricingPage()}
+          onClick={() => {
+            void preloadPricingPage();
+            navigate('/pricing');
+          }}
+        >
           Pricing
         </button>
         <button

@@ -23,7 +23,11 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { navigate } from '../lib/routing';
-import { preloadBookingPage, preloadDetailsStep } from '../lib/routePreload';
+import {
+  preloadBookingPage,
+  preloadDetailsStep,
+  preloadPricingPage,
+} from '../lib/routePreload';
 import { BookingHeaderCard } from '../components/BookingHeaderCard';
 import { TimezonePicker } from '../components/TimezonePicker';
 import { MOCK_EVENT, MOCK_SLOTS } from '../lib/mockData';
@@ -1022,7 +1026,12 @@ function LandingPricingSection() {
         <button
           type="button"
           className="landing-hero__primary"
-          onClick={() => navigate('/pricing')}
+          onPointerEnter={() => void preloadPricingPage()}
+          onFocus={() => void preloadPricingPage()}
+          onClick={() => {
+            void preloadPricingPage();
+            navigate('/pricing');
+          }}
         >
           See full pricing <ArrowRight size={16} strokeWidth={2} />
         </button>
