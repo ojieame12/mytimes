@@ -58,7 +58,7 @@ export function RequestBoardsLinkPage() {
       <section className="my-boards-request" aria-live="polite">
         <img
           className="my-boards-request__vignette"
-          src="/assets/bg/vignette-trio-mug-books.png"
+          src="/assets/bg/vignette-trio-mug-books.webp"
           alt=""
         />
         <p className="my-boards-request__eyebrow">
@@ -104,7 +104,7 @@ export function RequestBoardsLinkPage() {
     <section className="my-boards-request">
       <img
         className="my-boards-request__vignette"
-        src="/assets/bg/vignette-trio-mug-books.png"
+        src="/assets/bg/vignette-trio-mug-books.webp"
         alt=""
       />
       <p className="my-boards-request__eyebrow">

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Style } from '@dicebear/core';
 import type { AvatarStyle } from '../lib/types';
 
@@ -23,6 +23,7 @@ const STYLE_LOADERS: Record<AvatarStyle, () => Promise<AvatarAdapter>> = {
 const BG_PALETTE = ['fcebd7', 'fde9da', 'ffd4bc', 'fff1e3'];
 const DATA_URI_CACHE = new Map<string, string>();
 const DATA_URI_PROMISES = new Map<string, Promise<string>>();
+const AVATAR_LOAD_DELAY_MS = 4000;
 
 export interface AvatarProps {
   /** Stable seed — typically the organizer's email. */
@@ -46,10 +47,33 @@ export function Avatar({
 }: AvatarProps) {
   const cacheKey = `${style}:${seed}`;
   const [dataUri, setDataUri] = useState(() => DATA_URI_CACHE.get(cacheKey));
+  const [nearViewport, setNearViewport] = useState(false);
+  const rootRef = useRef<HTMLSpanElement | null>(null);
   const initials = useMemo(() => fallbackInitials(seed), [seed]);
 
   useEffect(() => {
+    const node = rootRef.current;
+    if (!node || nearViewport) return;
+    if (!('IntersectionObserver' in window)) {
+      setNearViewport(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setNearViewport(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '180px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [nearViewport]);
+
+  useEffect(() => {
     if (isReactActTestEnvironment()) return;
+    if (!nearViewport) return;
 
     let cancelled = false;
     const cached = DATA_URI_CACHE.get(cacheKey);
@@ -60,7 +84,7 @@ export function Avatar({
       };
     }
     setDataUri(undefined);
-    const cancelScheduledLoad = scheduleIdle(() => {
+    const cancelScheduledLoad = scheduleIdleAfterCriticalPaint(() => {
       void loadAvatarDataUri(style, seed, cacheKey).then((next) => {
         if (!cancelled) setDataUri(next);
       });
@@ -69,10 +93,11 @@ export function Avatar({
       cancelled = true;
       cancelScheduledLoad();
     };
-  }, [cacheKey, seed, style]);
+  }, [cacheKey, nearViewport, seed, style]);
 
   return (
     <span
+      ref={rootRef}
       className={`avatar${className ? ` ${className}` : ''}`}
       style={{ width: size, height: size }}
       aria-hidden={ariaLabel ? undefined : true}
@@ -126,15 +151,24 @@ function isReactActTestEnvironment(): boolean {
   return Boolean((globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT);
 }
 
-function scheduleIdle(callback: () => void): () => void {
+function scheduleIdleAfterCriticalPaint(callback: () => void): () => void {
   const idleWindow = window as Window & {
     requestIdleCallback?: (cb: IdleRequestCallback, options?: IdleRequestOptions) => number;
     cancelIdleCallback?: (handle: number) => void;
   };
-  if (typeof idleWindow.requestIdleCallback === 'function') {
-    const handle = idleWindow.requestIdleCallback(callback, { timeout: 1200 });
-    return () => idleWindow.cancelIdleCallback?.(handle);
-  }
-  const handle = window.setTimeout(callback, 180);
-  return () => window.clearTimeout(handle);
+  let idleHandle: number | undefined;
+  let timeoutHandle: number | undefined;
+  const run = () => {
+    if (typeof idleWindow.requestIdleCallback === 'function') {
+      idleHandle = idleWindow.requestIdleCallback(callback, { timeout: 1500 });
+      return;
+    }
+    timeoutHandle = window.setTimeout(callback, 180);
+  };
+  const delayHandle = window.setTimeout(run, AVATAR_LOAD_DELAY_MS);
+  return () => {
+    window.clearTimeout(delayHandle);
+    if (idleHandle !== undefined) idleWindow.cancelIdleCallback?.(idleHandle);
+    if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle);
+  };
 }

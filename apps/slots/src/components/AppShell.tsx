@@ -16,14 +16,27 @@ export interface AppShellProps {
   /** When true, the canvas under the children gets the
    *  warm postmark-corner accents. Default true. */
   postmark?: boolean;
+  /** Resolve the organizer session for account-only chrome.
+   *  Public and marketing routes skip this to avoid an API
+   *  round trip on first paint. */
+  resolveSession?: boolean;
 }
 
-export function AppShell({ children, topBarRight, postmark = true }: AppShellProps) {
+export function AppShell({
+  children,
+  topBarRight,
+  postmark = true,
+  resolveSession = false,
+}: AppShellProps) {
   /* Session resolves async. Default to the logged-out treatment
    * and swap once the request returns — no loading flicker.   */
   const [session, setSession] = useState<OrganizerSessionResponse | undefined>(undefined);
 
   useEffect(() => {
+    if (!resolveSession) {
+      setSession(undefined);
+      return;
+    }
     let cancelled = false;
     getOrganizerSession()
       .then((value) => {
@@ -36,7 +49,7 @@ export function AppShell({ children, topBarRight, postmark = true }: AppShellPro
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [resolveSession]);
 
   const isAuthed = Boolean(session);
 

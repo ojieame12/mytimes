@@ -28,20 +28,20 @@
   src: url('/fonts/mytimes-heading.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
 
-/* SF Compact Rounded — Apple's softened sans, used here for
-   body text and controls. Numerals still go through Geist Mono. */
+/* SF Compact Rounded — use the local OS face when available.
+   We do not ship Apple's desktop font; system fallbacks keep
+   first paint fast and avoid a multi-megabyte blocking request. */
 @font-face {
   font-family: 'SF Compact Rounded';
   src:
     local('SF Compact Rounded'),
-    local('SFCompactRounded-Regular'),
-    url('/fonts/SF-Compact-Rounded-Regular.otf') format('opentype');
+    local('SFCompactRounded-Regular');
   font-weight: 100 900;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
 
 /* ─── Page reset ────────────────────────────────────────── */

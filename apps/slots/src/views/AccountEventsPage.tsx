@@ -404,7 +404,7 @@ export function AccountEventsPage() {
         <section className="account-empty" aria-live="polite">
           <img
             className="account-empty__vignette"
-            src="/assets/bg/vignette-laptop-only.png"
+            src="/assets/bg/vignette-laptop-only.webp"
             alt=""
           />
           <h2 className="account-empty__title">No boards yet</h2>

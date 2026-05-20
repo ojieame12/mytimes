@@ -217,7 +217,7 @@ export function App() {
 
   if (route.type === 'account') {
     return (
-      <AppShell>
+      <AppShell resolveSession>
         <RouteSuspense title="Loading account">
           <AccountEventsPage />
         </RouteSuspense>
@@ -227,7 +227,7 @@ export function App() {
 
   if (route.type === 'account-event') {
     return (
-      <AppShell>
+      <AppShell resolveSession>
         <RouteSuspense title="Loading account board">
           <AdminDashboardPage accountEventId={route.eventId} />
         </RouteSuspense>
@@ -423,7 +423,7 @@ function NotFoundPage() {
     <section className="account-shell">
       <section className="account-placeholder">
         <img
-          src="/assets/bg/vignette-bicycle-bag.png"
+          src="/assets/bg/vignette-bicycle-bag.webp"
           alt=""
           style={{
             width: '140px',

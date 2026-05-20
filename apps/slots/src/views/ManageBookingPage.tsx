@@ -261,7 +261,7 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
         <section className="manage-success" aria-live="polite">
           <img
             className="manage-success__vignette"
-            src="/assets/bg/vignette-laptop-grass.png"
+            src="/assets/bg/vignette-laptop-grass.webp"
             alt=""
           />
           <h1 className="manage-success__title">Booking cancelled.</h1>

@@ -70,7 +70,7 @@ export function DoneStep({ variant: variantProp }: DoneStepProps = {}) {
           <section className="done-hero">
             <img
               className="done-hero__vignette"
-              src="/assets/bg/vignette-laptop-only.png"
+              src="/assets/bg/vignette-laptop-only.webp"
               alt=""
             />
             <p className="done-hero__eyebrow">
@@ -140,7 +140,7 @@ export function DoneStep({ variant: variantProp }: DoneStepProps = {}) {
         <section className="done-hero">
           <img
             className="done-hero__vignette"
-            src="/assets/bg/vignette-laptop-only.png"
+            src="/assets/bg/vignette-laptop-only.webp"
             alt=""
           />
           <p className="done-hero__eyebrow">

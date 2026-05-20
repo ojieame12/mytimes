@@ -266,7 +266,7 @@ function EmptyState({
     <section className="my-boards-empty" aria-live="polite">
       <img
         className="my-boards-empty__vignette"
-        src="/assets/bg/vignette-laptop-still-life.png"
+        src="/assets/bg/vignette-laptop-still-life.webp"
         alt=""
       />
       <h2 className="my-boards-empty__title">{title}</h2>

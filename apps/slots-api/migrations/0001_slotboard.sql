@@ -336,6 +336,14 @@ create index if not exists booking_events_public_token_hash_idx
 create index if not exists booking_events_admin_token_hash_idx
   on slotboard.booking_events(admin_token_hash);
 
+create index if not exists booking_events_organizer_email_lower_idx
+  on slotboard.booking_events(lower(organizer_email))
+  where deleted_at is null;
+
+create index if not exists booking_events_organizer_active_lower_idx
+  on slotboard.booking_events(lower(organizer_email), status, created_at desc)
+  where deleted_at is null;
+
 create index if not exists booking_events_retention_idx
   on slotboard.booking_events(status, archived_at, deleted_at);
 

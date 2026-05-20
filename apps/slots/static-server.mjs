@@ -5,6 +5,7 @@ import https from "node:https";
 import { createServer } from "node:http";
 import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { constants as zlibConstants, createBrotliCompress, createGzip } from "node:zlib";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "dist");
 const port = Number.parseInt(process.env.PORT || "4174", 10);
@@ -40,6 +41,8 @@ const contentTypes = new Map([
   [".jpg", "image/jpeg"],
   [".jpeg", "image/jpeg"],
   [".svg", "image/svg+xml"],
+  [".txt", "text/plain; charset=utf-8"],
+  [".webmanifest", "application/manifest+json; charset=utf-8"],
   [".webp", "image/webp"],
   [".otf", "font/otf"],
   [".woff2", "font/woff2"],
@@ -72,8 +75,32 @@ const server = createServer(async (req, res) => {
   }
 
   const filePath = await resolveFile(requested);
+  if (!filePath) {
+    res.writeHead(404, {
+      "Cache-Control": "no-store",
+      "Content-Type": "text/plain; charset=utf-8",
+    });
+    res.end("Not Found");
+    return;
+  }
+  const fileExt = extname(filePath);
   res.setHeader("Cache-Control", cacheControlFor(filePath));
-  res.setHeader("Content-Type", contentTypes.get(extname(filePath)) || "application/octet-stream");
+  res.setHeader("Content-Type", contentTypes.get(fileExt) || "application/octet-stream");
+  const compression = compressionFor(req, fileExt);
+  if (compression === "br") {
+    res.setHeader("Content-Encoding", "br");
+    res.setHeader("Vary", "Accept-Encoding");
+    createReadStream(filePath)
+      .pipe(createBrotliCompress({ params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } }))
+      .pipe(res);
+    return;
+  }
+  if (compression === "gzip") {
+    res.setHeader("Content-Encoding", "gzip");
+    res.setHeader("Vary", "Accept-Encoding");
+    createReadStream(filePath).pipe(createGzip()).pipe(res);
+    return;
+  }
   createReadStream(filePath).pipe(res);
 });
 
@@ -95,10 +122,13 @@ async function resolveFile(pathname) {
   try {
     const fileStat = await stat(pathname);
     if (fileStat.isDirectory()) {
-      return join(pathname, "index.html");
+      const indexPath = join(pathname, "index.html");
+      await stat(indexPath);
+      return indexPath;
     }
     return pathname;
   } catch {
+    if (extname(pathname)) return null;
     const shellPath = join(root, SPA_SHELL_FILENAME);
     try {
       await stat(shellPath);
@@ -158,10 +188,29 @@ function proxyApiRequest(req, res, url) {
 
 function cacheControlFor(filePath) {
   const requestPath = `/${relative(root, filePath).replaceAll("\\", "/")}`;
+  if (
+    /^\/fonts\/.+\.(?:woff2|otf)$/.test(requestPath) ||
+    /^\/assets\/(?:brand|bg)\/.+\.(?:avif|webp|svg|png|jpe?g)$/.test(requestPath)
+  ) {
+    return "public, max-age=31536000, immutable";
+  }
+  if (/^\/(?:favicon\.ico|apple-touch-icon\.png|android-chrome-\d+x\d+\.png|og-image\.png|site\.webmanifest)$/.test(requestPath)) {
+    return "public, max-age=86400";
+  }
   if (/^\/assets\/.+-[A-Za-z0-9_-]{8,}\.(?:css|js|woff2|webp|svg|png|jpe?g)$/.test(requestPath)) {
     return "public, max-age=31536000, immutable";
   }
   return "no-store";
+}
+
+function compressionFor(req, fileExt) {
+  if (![".css", ".html", ".js", ".json", ".svg", ".txt", ".webmanifest"].includes(fileExt)) {
+    return undefined;
+  }
+  const accepts = req.headers["accept-encoding"] || "";
+  if (/\bbr\b/.test(accepts)) return "br";
+  if (/\bgzip\b/.test(accepts)) return "gzip";
+  return undefined;
 }
 
 function envSourceList(name) {

@@ -39,7 +39,7 @@ export function RecoverAdminPage() {
       <section className="recover-shell" aria-live="polite">
         <img
           className="recover-shell__vignette"
-          src="/assets/bg/vignette-trio-mug-books.png"
+          src="/assets/bg/vignette-trio-mug-books.webp"
           alt=""
         />
         <p className="recover-shell__eyebrow">
@@ -78,7 +78,7 @@ export function RecoverAdminPage() {
     <section className="recover-shell">
       <img
         className="recover-shell__vignette"
-        src="/assets/bg/vignette-reading-nook.png"
+        src="/assets/bg/vignette-reading-nook.webp"
         alt=""
       />
       <p className="recover-shell__eyebrow">
