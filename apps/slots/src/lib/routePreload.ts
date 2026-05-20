@@ -7,6 +7,7 @@ let reviewStepPromise: Promise<typeof import('../views/create/ReviewStep')> | un
 let doneStepPromise: Promise<typeof import('../views/create/DoneStep')> | undefined;
 let manageBookingPagePromise: Promise<typeof import('../views/ManageBookingPage')> | undefined;
 let adminDashboardPagePromise: Promise<typeof import('../views/AdminDashboardPage')> | undefined;
+let recoverAdminPagePromise: Promise<typeof import('../views/RecoverAdminPage')> | undefined;
 let accountEventsPagePromise: Promise<typeof import('../views/AccountEventsPage')> | undefined;
 let myBoardsPagePromise: Promise<typeof import('../views/MyBoardsPage')> | undefined;
 let requestBoardsLinkPagePromise: Promise<typeof import('../views/RequestBoardsLinkPage')> | undefined;
@@ -15,11 +16,17 @@ let createRouteStylesPromise: Promise<unknown> | undefined;
 let manageBookingStylesPromise: Promise<unknown> | undefined;
 let managementStylesPromise: Promise<unknown> | undefined;
 let accountStylesPromise: Promise<unknown> | undefined;
+let checkoutReturnStylesPromise: Promise<unknown> | undefined;
 let myBoardsStylesPromise: Promise<unknown> | undefined;
 
 export function preloadBookingPage() {
   bookingPagePromise ??= import('../views/BookingPage');
   return bookingPagePromise;
+}
+
+export function preloadAccountRouteStyles() {
+  accountStylesPromise ??= import('../styles/account.css');
+  return accountStylesPromise;
 }
 
 export function preloadCreateRouteStyles() {
@@ -63,13 +70,27 @@ export function preloadDoneStep() {
 }
 
 export function preloadAuthPage() {
-  authPagePromise ??= import('../views/AuthPage');
+  authPagePromise ??= Promise.all([
+    preloadAccountRouteStyles(),
+    import('../views/AuthPage'),
+  ]).then(([, module]) => module);
   return authPagePromise;
 }
 
 export function preloadPasswordResetPage() {
-  passwordResetPagePromise ??= import('../views/PasswordResetPage');
+  passwordResetPagePromise ??= Promise.all([
+    preloadAccountRouteStyles(),
+    import('../views/PasswordResetPage'),
+  ]).then(([, module]) => module);
   return passwordResetPagePromise;
+}
+
+export function preloadRecoverAdminPage() {
+  recoverAdminPagePromise ??= Promise.all([
+    preloadAccountRouteStyles(),
+    import('../views/RecoverAdminPage'),
+  ]).then(([, module]) => module);
+  return recoverAdminPagePromise;
 }
 
 export function preloadManageBookingPage() {
@@ -94,11 +115,12 @@ export function preloadAdminDashboardPage() {
 }
 
 export function preloadAccountEventsPage() {
-  accountStylesPromise ??= import('../styles/checkout-return.css');
+  checkoutReturnStylesPromise ??= import('../styles/checkout-return.css');
   accountEventsPagePromise ??= Promise.all([
-    accountStylesPromise,
+    preloadAccountRouteStyles(),
+    checkoutReturnStylesPromise,
     import('../views/AccountEventsPage'),
-  ]).then(([, module]) => module);
+  ]).then(([, , module]) => module);
   return accountEventsPagePromise;
 }
 
@@ -114,8 +136,9 @@ export function preloadMyBoardsPage() {
 export function preloadRequestBoardsLinkPage() {
   myBoardsStylesPromise ??= import('../styles/my-boards.css');
   requestBoardsLinkPagePromise ??= Promise.all([
+    preloadAccountRouteStyles(),
     myBoardsStylesPromise,
     import('../views/RequestBoardsLinkPage'),
-  ]).then(([, module]) => module);
+  ]).then(([, , module]) => module);
   return requestBoardsLinkPagePromise;
 }

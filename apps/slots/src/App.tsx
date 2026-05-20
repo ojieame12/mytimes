@@ -17,6 +17,7 @@ import {
   preloadManageBookingPage,
   preloadMyBoardsPage,
   preloadPasswordResetPage,
+  preloadRecoverAdminPage,
   preloadRequestBoardsLinkPage,
   preloadReviewStep,
 } from './lib/routePreload';
@@ -42,7 +43,7 @@ const AdminDashboardPage = lazy(() =>
   preloadAdminDashboardPage().then(({ AdminDashboardPage }) => ({ default: AdminDashboardPage })),
 );
 const RecoverAdminPage = lazy(() =>
-  import('./views/RecoverAdminPage').then(({ RecoverAdminPage }) => ({ default: RecoverAdminPage })),
+  preloadRecoverAdminPage().then(({ RecoverAdminPage }) => ({ default: RecoverAdminPage })),
 );
 const AuthPage = lazy(() =>
   preloadAuthPage().then(({ AuthPage }) => ({ default: AuthPage })),
