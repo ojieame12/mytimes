@@ -1,9 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useRoute, navigate } from './lib/routing';
 import { AppShell } from './components/AppShell';
-import { AuthPage } from './views/AuthPage';
 import { LandingPage } from './views/LandingPage';
-import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from './views/PasswordResetPage';
 import { PricingPage } from './views/PricingPage';
 import { PrivacyPage, TermsPage } from './views/LegalPage';
 import { ApiClientError, readPublicBoard, type ClaimSlotResponse, type PublicBoardResponse } from './lib/api';
@@ -12,35 +10,80 @@ import { MOCK_EVENT, MOCK_SLOTS } from './lib/mockData';
 const loadBookingPage = () =>
   import('./views/BookingPage').then(({ BookingPage }) => ({ default: BookingPage }));
 const BookingPage = lazy(loadBookingPage);
+const loadCreateRouteStyles = () =>
+  Promise.all([
+    import('./styles/create-flow.css'),
+    import('./styles/paywall.css'),
+  ]);
 const DetailsStep = lazy(() =>
-  import('./views/create/DetailsStep').then(({ DetailsStep }) => ({ default: DetailsStep })),
+  Promise.all([
+    loadCreateRouteStyles(),
+    import('./views/create/DetailsStep'),
+  ]).then(([, { DetailsStep }]) => ({ default: DetailsStep })),
 );
 const AvailabilityStep = lazy(() =>
-  import('./views/create/AvailabilityStep').then(({ AvailabilityStep }) => ({ default: AvailabilityStep })),
+  Promise.all([
+    loadCreateRouteStyles(),
+    import('./views/create/AvailabilityStep'),
+  ]).then(([, { AvailabilityStep }]) => ({ default: AvailabilityStep })),
 );
 const ReviewStep = lazy(() =>
-  import('./views/create/ReviewStep').then(({ ReviewStep }) => ({ default: ReviewStep })),
+  Promise.all([
+    loadCreateRouteStyles(),
+    import('./views/create/ReviewStep'),
+  ]).then(([, { ReviewStep }]) => ({ default: ReviewStep })),
 );
 const DoneStep = lazy(() =>
-  import('./views/create/DoneStep').then(({ DoneStep }) => ({ default: DoneStep })),
+  Promise.all([
+    loadCreateRouteStyles(),
+    import('./views/create/DoneStep'),
+  ]).then(([, { DoneStep }]) => ({ default: DoneStep })),
 );
 const ManageBookingPage = lazy(() =>
-  import('./views/ManageBookingPage').then(({ ManageBookingPage }) => ({ default: ManageBookingPage })),
+  Promise.all([
+    import('./styles/manage-booking.css'),
+    import('./views/ManageBookingPage'),
+  ]).then(([, { ManageBookingPage }]) => ({ default: ManageBookingPage })),
 );
 const AdminDashboardPage = lazy(() =>
-  import('./views/AdminDashboardPage').then(({ AdminDashboardPage }) => ({ default: AdminDashboardPage })),
+  Promise.all([
+    import('./styles/checkout-return.css'),
+    import('./styles/management.css'),
+    import('./views/AdminDashboardPage'),
+  ]).then(([, , { AdminDashboardPage }]) => ({ default: AdminDashboardPage })),
 );
 const RecoverAdminPage = lazy(() =>
   import('./views/RecoverAdminPage').then(({ RecoverAdminPage }) => ({ default: RecoverAdminPage })),
 );
+const AuthPage = lazy(() =>
+  import('./views/AuthPage').then(({ AuthPage }) => ({ default: AuthPage })),
+);
+const ForgotPasswordPage = lazy(() =>
+  import('./views/PasswordResetPage').then(({ ForgotPasswordPage }) => ({ default: ForgotPasswordPage })),
+);
+const ResetPasswordPage = lazy(() =>
+  import('./views/PasswordResetPage').then(({ ResetPasswordPage }) => ({ default: ResetPasswordPage })),
+);
+const VerifyEmailPage = lazy(() =>
+  import('./views/PasswordResetPage').then(({ VerifyEmailPage }) => ({ default: VerifyEmailPage })),
+);
 const AccountEventsPage = lazy(() =>
-  import('./views/AccountEventsPage').then(({ AccountEventsPage }) => ({ default: AccountEventsPage })),
+  Promise.all([
+    import('./styles/checkout-return.css'),
+    import('./views/AccountEventsPage'),
+  ]).then(([, { AccountEventsPage }]) => ({ default: AccountEventsPage })),
 );
 const MyBoardsPage = lazy(() =>
-  import('./views/MyBoardsPage').then(({ MyBoardsPage }) => ({ default: MyBoardsPage })),
+  Promise.all([
+    import('./styles/my-boards.css'),
+    import('./views/MyBoardsPage'),
+  ]).then(([, { MyBoardsPage }]) => ({ default: MyBoardsPage })),
 );
 const RequestBoardsLinkPage = lazy(() =>
-  import('./views/RequestBoardsLinkPage').then(({ RequestBoardsLinkPage }) => ({ default: RequestBoardsLinkPage })),
+  Promise.all([
+    import('./styles/my-boards.css'),
+    import('./views/RequestBoardsLinkPage'),
+  ]).then(([, { RequestBoardsLinkPage }]) => ({ default: RequestBoardsLinkPage })),
 );
 
 export function App() {
@@ -178,7 +221,9 @@ export function App() {
   if (route.type === 'signin') {
     return (
       <AppShell>
-        <AuthPage mode="signin" />
+        <RouteSuspense title="Loading sign in">
+          <AuthPage mode="signin" />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -186,7 +231,9 @@ export function App() {
   if (route.type === 'signup') {
     return (
       <AppShell>
-        <AuthPage mode="signup" />
+        <RouteSuspense title="Loading sign up">
+          <AuthPage mode="signup" />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -194,7 +241,9 @@ export function App() {
   if (route.type === 'verify-email') {
     return (
       <AppShell>
-        <VerifyEmailPage />
+        <RouteSuspense title="Loading verification">
+          <VerifyEmailPage />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -202,7 +251,9 @@ export function App() {
   if (route.type === 'forgot-password') {
     return (
       <AppShell>
-        <ForgotPasswordPage />
+        <RouteSuspense title="Loading password reset">
+          <ForgotPasswordPage />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -210,7 +261,9 @@ export function App() {
   if (route.type === 'reset-password') {
     return (
       <AppShell>
-        <ResetPasswordPage />
+        <RouteSuspense title="Loading password reset">
+          <ResetPasswordPage />
+        </RouteSuspense>
       </AppShell>
     );
   }

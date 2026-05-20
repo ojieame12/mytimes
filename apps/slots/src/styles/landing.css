@@ -270,6 +270,7 @@
   .landing--motion-ready [data-reveal].is-revealed {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
+    will-change: auto;
   }
 
   .landing--motion-ready [data-reveal].is-revealed > :where(:first-child, :last-child),

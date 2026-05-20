@@ -1,4 +1,5 @@
-import * as Sentry from '@sentry/react';
+import type { ErrorInfo } from 'react';
+import type * as SentryTypes from '@sentry/react';
 
 const TOKEN_SEGMENT = '[A-Za-z0-9_-]{16,256}';
 const TOKEN_PATH_REPLACEMENTS: Array<[RegExp, string]> = [
@@ -20,27 +21,112 @@ const SENSITIVE_QUERY_KEYS = [
   'checkout_session_id',
 ];
 
+type SentryModule = typeof import('@sentry/react');
+
+type SentryConfig = {
+  dsn: string;
+  environment: string;
+  release: string | undefined;
+  tracesSampleRate: number;
+};
+
+let sentryModulePromise: Promise<SentryModule> | undefined;
+let sentryInitPromise: Promise<SentryModule> | undefined;
+let sentryConfig: SentryConfig | undefined;
+let sentryStarted = false;
+
+/* Sentry is useful in production but large enough to keep out of the
+ * first paint path. Load it after idle, or immediately if the runtime
+ * error boundary needs to report a caught render failure. */
 export function initObservability(): void {
-  const dsn = import.meta.env.VITE_SENTRY_DSN?.trim();
-  if (!dsn) {
+  const config = readSentryConfig();
+  if (!config) {
     return;
   }
 
-  const tracesSampleRate = sampleRateFromEnv(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE);
+  sentryConfig = config;
+  scheduleSentryStart();
+}
 
-  Sentry.init({
-    dsn,
-    environment: import.meta.env.VITE_SENTRY_ENVIRONMENT || import.meta.env.MODE,
-    release: import.meta.env.VITE_SENTRY_RELEASE,
-    integrations: tracesSampleRate > 0 ? [Sentry.browserTracingIntegration()] : [],
-    tracesSampleRate,
-    beforeSend(event) {
-      return sanitizeSentryEvent(event);
-    },
+export function captureBoundaryError(error: Error, errorInfo: ErrorInfo): void {
+  const config = sentryConfig ?? readSentryConfig();
+  if (!config) return;
+  sentryConfig = config;
+
+  void startSentry().then((Sentry) => {
+    Sentry.captureException(error, {
+      contexts: {
+        react: {
+          componentStack: errorInfo.componentStack,
+        },
+      },
+    });
   });
 }
 
-function sanitizeSentryEvent<T extends Sentry.Event>(event: T): T {
+function scheduleSentryStart(): void {
+  const start = () => {
+    void startSentry();
+  };
+
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(start, { timeout: 2500 });
+    return;
+  }
+
+  globalThis.setTimeout(start, 0);
+}
+
+function startSentry(): Promise<SentryModule> {
+  if (sentryInitPromise) {
+    return sentryInitPromise;
+  }
+
+  sentryInitPromise = loadSentry().then((Sentry) => {
+    const config = sentryConfig ?? readSentryConfig();
+    if (!config || sentryStarted) {
+      return Sentry;
+    }
+
+    Sentry.init({
+      dsn: config.dsn,
+      environment: config.environment,
+      release: config.release,
+      integrations: config.tracesSampleRate > 0 ? [Sentry.browserTracingIntegration()] : [],
+      tracesSampleRate: config.tracesSampleRate,
+      beforeSend(event) {
+        return sanitizeSentryEvent(event);
+      },
+    });
+    sentryStarted = true;
+    return Sentry;
+  });
+
+  return sentryInitPromise;
+}
+
+function loadSentry(): Promise<SentryModule> {
+  sentryModulePromise ??= import('@sentry/react');
+  return sentryModulePromise;
+}
+
+function readSentryConfig(): SentryConfig | undefined {
+  const dsn = import.meta.env.VITE_SENTRY_DSN?.trim();
+  if (!dsn) return undefined;
+
+  return {
+    dsn,
+    environment: import.meta.env.VITE_SENTRY_ENVIRONMENT || import.meta.env.MODE,
+    release: import.meta.env.VITE_SENTRY_RELEASE,
+    tracesSampleRate: sampleRateFromEnv(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE),
+  };
+}
+
+function sanitizeSentryEvent<T extends SentryTypes.Event>(event: T): T {
   if (event.request?.url) {
     event.request.url = sanitizeURL(event.request.url);
   }
@@ -63,7 +149,9 @@ function sanitizeSentryEvent<T extends Sentry.Event>(event: T): T {
   return event;
 }
 
-function sanitizeBreadcrumbData(data: NonNullable<Sentry.Breadcrumb['data']>): NonNullable<Sentry.Breadcrumb['data']> {
+function sanitizeBreadcrumbData(
+  data: NonNullable<SentryTypes.Breadcrumb['data']>,
+): NonNullable<SentryTypes.Breadcrumb['data']> {
   return Object.fromEntries(
     Object.entries(data).map(([key, value]) => {
       if (typeof value === 'string') {
