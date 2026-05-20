@@ -22,10 +22,19 @@ let checkoutReturnStylesPromise: Promise<unknown> | undefined;
 let myBoardsStylesPromise: Promise<unknown> | undefined;
 let pricingStylesPromise: Promise<unknown> | undefined;
 let legalStylesPromise: Promise<unknown> | undefined;
+let formStylesPromise: Promise<unknown> | undefined;
 
 export function preloadBookingPage() {
-  bookingPagePromise ??= import('../views/BookingPage');
+  bookingPagePromise ??= Promise.all([
+    preloadFormStyles(),
+    import('../views/BookingPage'),
+  ]).then(([, module]) => module);
   return bookingPagePromise;
+}
+
+export function preloadFormStyles() {
+  formStylesPromise ??= import('../styles/form.css');
+  return formStylesPromise;
 }
 
 export function preloadPricingPage() {
@@ -47,12 +56,16 @@ export function preloadLegalPage() {
 }
 
 export function preloadAccountRouteStyles() {
-  accountStylesPromise ??= import('../styles/account.css');
+  accountStylesPromise ??= Promise.all([
+    preloadFormStyles(),
+    import('../styles/account.css'),
+  ]);
   return accountStylesPromise;
 }
 
 export function preloadCreateRouteStyles() {
   createRouteStylesPromise ??= Promise.all([
+    preloadFormStyles(),
     import('../styles/create-flow.css'),
     import('../styles/paywall.css'),
   ]);
@@ -118,14 +131,16 @@ export function preloadRecoverAdminPage() {
 export function preloadManageBookingPage() {
   manageBookingStylesPromise ??= import('../styles/manage-booking.css');
   manageBookingPagePromise ??= Promise.all([
+    preloadFormStyles(),
     manageBookingStylesPromise,
     import('../views/ManageBookingPage'),
-  ]).then(([, module]) => module);
+  ]).then(([, , module]) => module);
   return manageBookingPagePromise;
 }
 
 export function preloadAdminDashboardPage() {
   managementStylesPromise ??= Promise.all([
+    preloadFormStyles(),
     import('../styles/checkout-return.css'),
     import('../styles/management.css'),
   ]);

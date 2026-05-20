@@ -15,7 +15,6 @@ import './styles/timezone-picker.css';
 import './styles/avatar.css';
 import './styles/event-header.css';
 import './styles/booking-page.css';
-import './styles/form.css';
 import './styles/typography-overrides.css';
 
 class RuntimeErrorBoundary extends Component<
