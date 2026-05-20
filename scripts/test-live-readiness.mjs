@@ -34,7 +34,12 @@ if (bundleURL) {
   assertStatus(bundle, 200, "frontend JS bundle loads");
   assertHeaderIncludes(bundle, "cache-control", "immutable", "frontend JS bundle uses immutable cache");
   bundleText = bundle.text;
-  scannedBundleText = await appendReferencedChunkText([bundle.text], bundle.text, frontendURL, "BookingPage");
+  scannedBundleText = await appendReferencedChunkText(
+    [bundle.text],
+    bundle.text,
+    frontendURL,
+    ["BookingPage", "AuthPage", "PasswordResetPage"],
+  );
   assertIncludes(scannedBundleText, "View demo board", "live bundle has demo pricing CTA");
   assertIncludes(scannedBundleText, "Preview only", "live bundle has read-only demo submit label");
   assertIncludes(scannedBundleText, "This is a demo board", "live bundle has demo submit guard copy");
@@ -360,16 +365,18 @@ function findBundleURL(html, baseURL) {
   return match ? new URL(match[1], baseURL).toString() : undefined;
 }
 
-async function appendReferencedChunkText(texts, bundleText, baseURL, chunkPrefix) {
-  const escapedPrefix = chunkPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = bundleText.match(new RegExp(`["']([^"']*/?assets/${escapedPrefix}-[^"']+\\.js)["']`));
-  if (!match) {
-    warnings.push(`could not find ${chunkPrefix} lazy chunk in entry bundle`);
-    return texts.join("\n");
+async function appendReferencedChunkText(texts, bundleText, baseURL, chunkPrefixes) {
+  for (const chunkPrefix of chunkPrefixes) {
+    const escapedPrefix = chunkPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = bundleText.match(new RegExp(`["']([^"']*/?assets/${escapedPrefix}-[^"']+\\.js)["']`));
+    if (!match) {
+      warnings.push(`could not find ${chunkPrefix} lazy chunk in entry bundle`);
+      continue;
+    }
+    const chunk = await fetchText(new URL(match[1], baseURL).toString());
+    assertStatus(chunk, 200, `frontend ${chunkPrefix} chunk loads`);
+    if (chunk.status === 200) texts.push(chunk.text);
   }
-  const chunk = await fetchText(new URL(match[1], baseURL).toString());
-  assertStatus(chunk, 200, `frontend ${chunkPrefix} chunk loads`);
-  if (chunk.status === 200) texts.push(chunk.text);
   return texts.join("\n");
 }
 
