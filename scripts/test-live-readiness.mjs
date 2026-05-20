@@ -28,27 +28,29 @@ const bundleURL = findBundleURL(index.text, frontendURL);
 assert(bundleURL, "frontend index must reference a production JS bundle");
 
 let bundleText = "";
+let scannedBundleText = "";
 if (bundleURL) {
   const bundle = await fetchText(bundleURL);
   assertStatus(bundle, 200, "frontend JS bundle loads");
   assertHeaderIncludes(bundle, "cache-control", "immutable", "frontend JS bundle uses immutable cache");
   bundleText = bundle.text;
-  assertIncludes(bundle.text, "View demo board", "live bundle has demo pricing CTA");
-  assertIncludes(bundle.text, "Preview only", "live bundle has read-only demo submit label");
-  assertIncludes(bundle.text, "This is a demo board", "live bundle has demo submit guard copy");
-  assertIncludes(bundle.text, "$480", "live bundle has annual company price");
-  assertIncludes(bundle.text, "$49 monthly available", "live bundle has monthly company copy");
-  assertIncludes(bundle.text, "mytimes.co", "live bundle uses mytimes.co examples");
-  assertIncludes(bundle.text, "Reset your password", "live bundle has password reset request copy");
-  assertIncludes(bundle.text, "Choose a new password", "live bundle has password reset completion copy");
-  assertIncludes(bundle.text, "Check your email", "live bundle has verification sent copy");
-  assertIncludes(bundle.text, "Email verified", "live bundle has email verification success copy");
-  assertIncludes(bundle.text, "Verification link expired", "live bundle has email verification error copy");
-  assertExcludes(bundle.text, "Email previews", "live bundle does not contain email preview copy");
-  assertExcludes(bundle.text, "mytimes.app", "live bundle does not contain old mytimes.app origin");
-  assertExcludes(bundle.text, "MT-2026", "live bundle does not contain fake receipt ids");
-  assertExcludes(bundle.text, "View live board", "live bundle does not label demos as live");
-  assertExcludes(bundle.text, "See a live board", "live bundle does not label demos as live");
+  scannedBundleText = await appendReferencedChunkText([bundle.text], bundle.text, frontendURL, "BookingPage");
+  assertIncludes(scannedBundleText, "View demo board", "live bundle has demo pricing CTA");
+  assertIncludes(scannedBundleText, "Preview only", "live bundle has read-only demo submit label");
+  assertIncludes(scannedBundleText, "This is a demo board", "live bundle has demo submit guard copy");
+  assertIncludes(scannedBundleText, "$480", "live bundle has annual company price");
+  assertIncludes(scannedBundleText, "$49 monthly available", "live bundle has monthly company copy");
+  assertIncludes(scannedBundleText, "mytimes.co", "live bundle uses mytimes.co examples");
+  assertIncludes(scannedBundleText, "Reset your password", "live bundle has password reset request copy");
+  assertIncludes(scannedBundleText, "Choose a new password", "live bundle has password reset completion copy");
+  assertIncludes(scannedBundleText, "Check your email", "live bundle has verification sent copy");
+  assertIncludes(scannedBundleText, "Email verified", "live bundle has email verification success copy");
+  assertIncludes(scannedBundleText, "Verification link expired", "live bundle has email verification error copy");
+  assertExcludes(scannedBundleText, "Email previews", "live bundle does not contain email preview copy");
+  assertExcludes(scannedBundleText, "mytimes.app", "live bundle does not contain old mytimes.app origin");
+  assertExcludes(scannedBundleText, "MT-2026", "live bundle does not contain fake receipt ids");
+  assertExcludes(scannedBundleText, "View live board", "live bundle does not label demos as live");
+  assertExcludes(scannedBundleText, "See a live board", "live bundle does not label demos as live");
 }
 
 apiURL ??= inferApiURLFromBundle(bundleText) ?? frontendURL;
@@ -69,7 +71,11 @@ for (const path of ["/pricing", "/privacy", "/terms", "/b/preview", "/new", "/si
 
 for (const path of ["/email-previews/index.html", "/email-previews/01-booking-confirmation.html"]) {
   const response = await fetchText(`${frontendURL}${path}`);
-  assertStatus(response, 200, `frontend fallback handles ${path}`);
+  assert(
+    response.status === 404 || response.status === 200,
+    `frontend blocks or falls back for ${path}: expected 200/404, got ${response.status}`,
+  );
+  checked.push(`frontend blocks or falls back for ${path}`);
   assertExcludes(response.text, "Email previews", `${path} must not expose preview index`);
   assertExcludes(response.text, "01-booking-confirmation", `${path} must not expose preview links`);
   assertExcludes(response.text, "Booking confirmed", `${path} must not expose rendered email HTML`);
@@ -352,6 +358,19 @@ function assertHeaderIncludes(response, name, expectedPart, label) {
 function findBundleURL(html, baseURL) {
   const match = html.match(/<script[^>]+src="([^"]*\/assets\/index-[^"]+\.js)"/);
   return match ? new URL(match[1], baseURL).toString() : undefined;
+}
+
+async function appendReferencedChunkText(texts, bundleText, baseURL, chunkPrefix) {
+  const escapedPrefix = chunkPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = bundleText.match(new RegExp(`["']([^"']*/?assets/${escapedPrefix}-[^"']+\\.js)["']`));
+  if (!match) {
+    warnings.push(`could not find ${chunkPrefix} lazy chunk in entry bundle`);
+    return texts.join("\n");
+  }
+  const chunk = await fetchText(new URL(match[1], baseURL).toString());
+  assertStatus(chunk, 200, `frontend ${chunkPrefix} chunk loads`);
+  if (chunk.status === 200) texts.push(chunk.text);
+  return texts.join("\n");
 }
 
 function assertStatus(response, expected, label) {
