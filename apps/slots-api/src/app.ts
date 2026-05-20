@@ -14,6 +14,7 @@ import {
   readBillingReadiness,
 } from "./billing.js";
 import { getPool } from "./db.js";
+import { createContactLead } from "./contact.js";
 import {
   activateCustomDomain,
   isActiveCustomDomainOrigin,
@@ -23,13 +24,21 @@ import {
 } from "./customDomains.js";
 import { sendEmailDesignTestBatch, sendOperationalTestEmail } from "./email.js";
 import { handleEmailProviderWebhook } from "./emailWebhooks.js";
-import { customDomainReadiness, emailReadiness, loadEnv, observabilityReadiness } from "./env.js";
+import { customDomainReadiness, emailReadiness, loadEnv, notificationReadiness, observabilityReadiness } from "./env.js";
 import { createEvent } from "./events.js";
+import { createEventTemplateFromEvent, readAccountTemplates } from "./eventTemplates.js";
 import { ApiError, toErrorResponse } from "./errors.js";
 import { idempotencyKeyFromHeaders, runIdempotent } from "./idempotency.js";
 import { logError, logInfo, sanitizeRequestPath } from "./logger.js";
-import { captureException } from "./observability.js";
+import { captureException, flushObservability } from "./observability.js";
 import { createMyBoardsAdminLink, readMyBoards, requestMyBoardsLink } from "./myBoards.js";
+import {
+  createAccountNotificationIntegration,
+  disableAccountNotificationIntegration,
+  readAccountNotificationIntegrations,
+  testAccountNotificationIntegration,
+} from "./notificationIntegrations.js";
+import { inviteOrganizationMember, readAccountWorkspace } from "./organizations.js";
 import { getOrganizerAuth, getOrganizerSession, requireOrganizerSession } from "./organizerAuth.js";
 import { recordProductEvent } from "./productEvents.js";
 import { assertRateLimit, requestActorKey } from "./rateLimit.js";
@@ -60,7 +69,9 @@ import {
   resendBookingEmailByAdmin,
   resendBookingEmailByOrganizer,
   resendManagedBookingEmail,
+  rotateAdminPrivateLink,
   rotateAdminPublicLink,
+  rotateOrganizerPrivateLink,
   rotateOrganizerPublicLink,
   setAdminSlotStatus,
   setOrganizerSlotStatus,
@@ -71,15 +82,18 @@ import {
   toAvailabilityInput,
   toCancelBookingInput,
   toClaimSlotInput,
+  toContactLeadInput,
   toCustomDomainInput,
   toCreateEventInput,
   toEmailDesignTestInput,
   toEmailTestInput,
   toManageLinkRecoveryInput,
   toMyBoardsLinkRequestInput,
+  toNotificationIntegrationInput,
   toProductEventInput,
   toRecoveryInput,
   toRescheduleBookingInput,
+  toWorkspaceInviteInput,
   toUpdateEventInput,
 } from "./validation.js";
 
@@ -195,6 +209,7 @@ const readyzHandler: Handler = async (c) => {
       email: emailReadiness(env),
       billing: readBillingReadiness(),
       customDomain: customDomainReadiness(env),
+      notifications: notificationReadiness(env),
       observability: observabilityReadiness(env),
     });
   } catch (error) {
@@ -213,6 +228,54 @@ app.get("/api/slotboard/ops/email-readiness", (c) =>
     email: emailReadiness(env),
   }),
 );
+
+app.get("/api/slotboard/ops/notification-readiness", (c) =>
+  c.json({
+    ok: true,
+    notifications: notificationReadiness(env),
+  }),
+);
+
+app.get("/api/slotboard/ops/observability-readiness", (c) =>
+  c.json({
+    ok: true,
+    observability: observabilityReadiness(env),
+  }),
+);
+
+app.post("/api/slotboard/ops/observability-test", async (c) => {
+  try {
+    assertOpsSecret(c.req.raw.headers);
+
+    const readiness = observabilityReadiness(env);
+    if (!readiness.productionReady) {
+      throw new ApiError(
+        409,
+        "observability_not_configured",
+        readiness.issues[0] ?? "Production error tracking is not configured",
+      );
+    }
+
+    await assertRateLimit("ops-observability-test", requestActorKey(c.req.raw.headers), { limit: 5, windowSeconds: 3600 });
+
+    captureException(new Error("mytimes observability test event"), {
+      method: "POST",
+      path: "/api/slotboard/ops/observability-test",
+      status: 200,
+      source: "ops_observability_test",
+    });
+    await flushObservability();
+    return c.json({
+      ok: true,
+      observability: readiness,
+      event: {
+        status: "sent",
+      },
+    });
+  } catch (error) {
+    return jsonError(c, error);
+  }
+});
 
 app.post("/api/slotboard/ops/email-test", async (c) => {
   try {
@@ -320,6 +383,8 @@ app.post("/api/slotboard/events", async (c) => {
   }
 });
 
+app.post("/api/slotboard/contact", async (c) => createContactLeadHandler(c));
+
 app.get("/api/slotboard/book", async (c) => readPublicBoardHandler(c));
 app.get("/api/slotboard/book/:publicToken", async (c) => readPublicBoardHandler(c, "publicToken"));
 app.post("/api/slotboard/book/claim", async (c) => claimSlotHandler(c));
@@ -341,6 +406,13 @@ app.post("/api/slotboard/billing/company-standby/checkout", async (c) => createC
 app.get("/api/slotboard/account/custom-domain", async (c) => readAccountCustomDomainHandler(c));
 app.post("/api/slotboard/account/custom-domain", async (c) => requestAccountCustomDomainHandler(c));
 app.post("/api/slotboard/account/custom-domain/verify", async (c) => verifyAccountCustomDomainHandler(c));
+app.get("/api/slotboard/account/workspace", async (c) => readAccountWorkspaceHandler(c));
+app.post("/api/slotboard/account/workspace/invites", async (c) => inviteWorkspaceMemberHandler(c));
+app.get("/api/slotboard/account/notification-integrations", async (c) => readAccountNotificationIntegrationsHandler(c));
+app.post("/api/slotboard/account/notification-integrations", async (c) => createAccountNotificationIntegrationHandler(c));
+app.post("/api/slotboard/account/notification-integrations/:integrationId/test", async (c) => testAccountNotificationIntegrationHandler(c));
+app.post("/api/slotboard/account/notification-integrations/:integrationId/disable", async (c) => disableAccountNotificationIntegrationHandler(c));
+app.get("/api/slotboard/account/templates", async (c) => readAccountTemplatesHandler(c));
 app.post("/api/slotboard/my-boards/request", async (c) => requestMyBoardsLinkHandler(c));
 app.get("/api/slotboard/my-boards", async (c) => readMyBoardsHandler(c));
 app.post("/api/slotboard/my-boards/:eventId/admin-link", async (c) => createMyBoardsAdminLinkHandler(c));
@@ -376,6 +448,10 @@ app.post("/api/slotboard/admin/public-link/rotate", async (c) => rotateAdminPubl
 app.post("/api/slotboard/admin/:adminToken/public-link/rotate", async (c) =>
   rotateAdminPublicLinkHandler(c, "adminToken"),
 );
+app.post("/api/slotboard/admin/rotate", async (c) => rotateAdminPrivateLinkHandler(c));
+app.post("/api/slotboard/admin/:adminToken/rotate", async (c) =>
+  rotateAdminPrivateLinkHandler(c, "adminToken"),
+);
 app.patch("/api/slotboard/admin/event", async (c) => updateAdminEventHandler(c));
 app.patch("/api/slotboard/admin/:adminToken/event", async (c) => updateAdminEventHandler(c, "adminToken"));
 app.post("/api/slotboard/admin/archive", async (c) => archiveAdminEventHandler(c));
@@ -405,6 +481,9 @@ app.get("/api/slotboard/admin/:adminToken/export.csv", async (c) => exportAdminC
 app.get("/api/slotboard/account/events", async (c) => readOrganizerEventsHandler(c));
 app.get("/api/slotboard/account/events/:eventId", async (c) => readOrganizerDashboardHandler(c));
 app.get("/api/slotboard/account/events/:eventId/activity", async (c) => readOrganizerActivityHandler(c));
+app.post("/api/slotboard/account/events/:eventId/admin-link/rotate", async (c) =>
+  rotateOrganizerPrivateLinkHandler(c),
+);
 app.post("/api/slotboard/account/events/:eventId/public-link/rotate", async (c) =>
   rotateOrganizerPublicLinkHandler(c),
 );
@@ -427,6 +506,9 @@ app.get("/api/slotboard/account/events/:eventId/export.csv", async (c) => export
 app.get("/api/slotboard/account/exports/bookings.csv", async (c) => exportOrganizerCrossBoardCsvHandler(c));
 app.post("/api/slotboard/account/events/:eventId/billing/event-pass/checkout", async (c) =>
   createOrganizerEventPassCheckoutHandler(c),
+);
+app.post("/api/slotboard/account/events/:eventId/template", async (c) =>
+  createEventTemplateFromEventHandler(c),
 );
 
 app.post("/api/slotboard/recover", async (c) => {
@@ -532,6 +614,34 @@ async function createMyBoardsAdminLinkHandler(c: Context) {
     const eventId = uuidParam(c, "eventId");
     await assertRateLimit("my-boards-admin-link:token", `boards:${tokenHash(rawToken)}`, { limit: 30, windowSeconds: 3600 });
     return c.json(await createMyBoardsAdminLink(rawToken, eventId), 201);
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
+async function createContactLeadHandler(c: Context) {
+  try {
+    const body = await readJson(c.req);
+    const input = toContactLeadInput(body);
+    const actorKey = requestActorKey(c.req.raw.headers);
+    await assertRateLimit("contact:ip", actorKey, { limit: 8, windowSeconds: 3600 });
+    if (input.website) {
+      return c.json({
+        ok: true,
+        lead: {
+          status: "received",
+        },
+      }, 202);
+    }
+    await assertRateLimit("contact:email", input.email, { limit: 4, windowSeconds: 3600 });
+    const result = await createContactLead(input, {
+      actorKey,
+      userAgent: c.req.raw.headers.get("user-agent") ?? undefined,
+    });
+    return c.json({
+      ok: true,
+      lead: result.lead,
+    }, 202);
   } catch (error) {
     return jsonError(c, error);
   }
@@ -791,6 +901,17 @@ async function rotateAdminPublicLinkHandler(c: Context, paramName?: string) {
   }
 }
 
+async function rotateAdminPrivateLinkHandler(c: Context, paramName?: string) {
+  try {
+    const rawToken = tokenFromRequest(c, { purpose: "admin", paramName });
+    await assertRateLimit("admin-rotate-private:ip", requestActorKey(c.req.raw.headers), { limit: 10, windowSeconds: 3600 });
+    await assertRateLimit("admin-rotate-private:token", `admin:${tokenHash(rawToken)}`, { limit: 5, windowSeconds: 3600 });
+    return c.json(await rotateAdminPrivateLink(rawToken), 202);
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
 async function updateAdminEventHandler(c: Context, paramName?: string) {
   try {
     const rawToken = tokenFromRequest(c, { purpose: "admin", paramName });
@@ -875,6 +996,120 @@ async function readOrganizerEventsHandler(c: Context) {
   }
 }
 
+async function readAccountWorkspaceHandler(c: Context) {
+  try {
+    const session = await requireOrganizerSession(c.req.raw.headers);
+    return c.json(await readAccountWorkspace(getPool(), {
+      userId: session.user.id,
+      email: session.user.email,
+    }));
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
+async function inviteWorkspaceMemberHandler(c: Context) {
+  try {
+    const session = await requireOrganizerSession(c.req.raw.headers);
+    await assertRateLimit("account-workspace-invite:user", `user:${session.user.id}`, { limit: 20, windowSeconds: 3600 });
+    const input = toWorkspaceInviteInput(await readJson(c.req));
+    return c.json(await inviteOrganizationMember(getPool(), {
+      actorUserId: session.user.id,
+      actorEmail: session.user.email,
+      email: input.email,
+      role: input.role,
+    }), 201);
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
+async function readAccountNotificationIntegrationsHandler(c: Context) {
+  try {
+    const session = await requireOrganizerSession(c.req.raw.headers);
+    return c.json(await readAccountNotificationIntegrations({
+      userId: session.user.id,
+      email: session.user.email,
+    }));
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
+async function createAccountNotificationIntegrationHandler(c: Context) {
+  try {
+    const session = await requireOrganizerSession(c.req.raw.headers);
+    await assertRateLimit("account-notification-integration-create:user", `user:${session.user.id}`, { limit: 20, windowSeconds: 3600 });
+    const input = toNotificationIntegrationInput(await readJson(c.req));
+    return c.json(await createAccountNotificationIntegration({
+      userId: session.user.id,
+      email: session.user.email,
+      integration: input,
+    }), 201);
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
+async function testAccountNotificationIntegrationHandler(c: Context) {
+  try {
+    const session = await requireOrganizerSession(c.req.raw.headers);
+    const integrationId = uuidParam(c, "integrationId");
+    await assertRateLimit("account-notification-integration-test:user", `user:${session.user.id}`, { limit: 20, windowSeconds: 3600 });
+    return c.json(await testAccountNotificationIntegration({
+      userId: session.user.id,
+      email: session.user.email,
+      integrationId,
+    }));
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
+async function disableAccountNotificationIntegrationHandler(c: Context) {
+  try {
+    const session = await requireOrganizerSession(c.req.raw.headers);
+    const integrationId = uuidParam(c, "integrationId");
+    return c.json(await disableAccountNotificationIntegration({
+      userId: session.user.id,
+      email: session.user.email,
+      integrationId,
+    }));
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
+async function readAccountTemplatesHandler(c: Context) {
+  try {
+    const session = await requireOrganizerSession(c.req.raw.headers);
+    return c.json(await readAccountTemplates({
+      userId: session.user.id,
+      email: session.user.email,
+    }));
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
+async function createEventTemplateFromEventHandler(c: Context) {
+  try {
+    const session = await requireOrganizerSession(c.req.raw.headers);
+    const eventId = uuidParam(c, "eventId");
+    await assertRateLimit("account-template-create:user", `user:${session.user.id}`, { limit: 30, windowSeconds: 3600 });
+    const body = await readOptionalJson(c.req);
+    const name = templateNameFromBody(body);
+    return c.json(await createEventTemplateFromEvent({
+      userId: session.user.id,
+      email: session.user.email,
+      eventId,
+      name,
+    }), 201);
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
 async function readOrganizerDashboardHandler(c: Context) {
   try {
     const session = await requireOrganizerSession(c.req.raw.headers);
@@ -900,6 +1135,18 @@ async function rotateOrganizerPublicLinkHandler(c: Context) {
     const session = await requireOrganizerSession(c.req.raw.headers);
     const eventId = uuidParam(c, "eventId");
     return c.json(await rotateOrganizerPublicLink(session.user.id, eventId));
+  } catch (error) {
+    return jsonError(c, error);
+  }
+}
+
+async function rotateOrganizerPrivateLinkHandler(c: Context) {
+  try {
+    const session = await requireOrganizerSession(c.req.raw.headers);
+    const eventId = uuidParam(c, "eventId");
+    await assertRateLimit("account-admin-link-rotate:user", `user:${session.user.id}`, { limit: 10, windowSeconds: 3600 });
+    await assertRateLimit("account-admin-link-rotate:event", `event:${eventId}`, { limit: 5, windowSeconds: 3600 });
+    return c.json(await rotateOrganizerPrivateLink(session.user.id, eventId), 202);
   } catch (error) {
     return jsonError(c, error);
   }
@@ -1002,6 +1249,23 @@ async function exportOrganizerCrossBoardCsvHandler(c: Context) {
   } catch (error) {
     return jsonError(c, error);
   }
+}
+
+function templateNameFromBody(body: unknown): string | undefined {
+  if (body === undefined || body === null) {
+    return undefined;
+  }
+  if (typeof body !== "object" || Array.isArray(body)) {
+    throw new ApiError(400, "invalid_template", "Request body must be an object");
+  }
+  const value = (body as { name?: unknown }).name;
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (typeof value !== "string") {
+    throw new ApiError(400, "invalid_template", "Template name must be a string");
+  }
+  return value;
 }
 
 async function optionalOrganizerSession(headers: Headers) {

@@ -11,7 +11,9 @@ import {
   Copy,
   Download,
   FileDown,
+  FileText,
   Globe2,
+  Key,
   ShieldCheck,
   Mail,
   KeyRound,
@@ -23,9 +25,13 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { navigate } from '../lib/routing';
+import { prefetchBookingPage, prefetchCreateFlow } from '../lib/prefetch';
+import { Avatar } from '../components/Avatar';
 import { BookingHeaderCard } from '../components/BookingHeaderCard';
 import { TimezonePicker } from '../components/TimezonePicker';
 import { MOCK_EVENT, MOCK_SLOTS } from '../lib/mockData';
+import { formatTimeInTz, formatDateKey, formatDayPartsInTz } from '../lib/time';
+import '../styles/landing.css';
 
 /* ─── LandingPage ─────────────────────────────────────────
  * The landing is its own surface, but its job is to PROVE the
@@ -39,7 +45,7 @@ import { MOCK_EVENT, MOCK_SLOTS } from '../lib/mockData';
  * SoftwareApplication JSON-LD. Here we override the bits
  * that are page-specific, plus add a WebPage schema that
  * names this URL as the entry point. */
-const LANDING_TITLE = 'mytimes — Scheduling for one-off interview rounds';
+const LANDING_TITLE = 'mytimes: Scheduling for one-off interview rounds';
 const LANDING_DESCRIPTION =
   'One-off interview rounds, candidate demos, and vendor calls. Fixed times, one shareable link. No participant accounts, no calendar OAuth. Live in five minutes.';
 const LANDING_URL = 'https://mytimes.co/';
@@ -174,6 +180,8 @@ export function LandingPage() {
           <button
             type="button"
             className="landing-hero__primary"
+            onPointerEnter={prefetchCreateFlow}
+            onFocus={prefetchCreateFlow}
             onClick={() => navigate('/new')}
           >
             Create your board <ArrowRight size={16} strokeWidth={2} />
@@ -181,6 +189,8 @@ export function LandingPage() {
           <button
             type="button"
             className="landing-hero__ghost"
+            onPointerEnter={prefetchBookingPage}
+            onFocus={prefetchBookingPage}
             onClick={() => navigate('/b/preview')}
           >
             See demo board
@@ -199,10 +209,7 @@ export function LandingPage() {
 
       <CreationFlowSection />
 
-      {/* ─── Editorial sections — each pairs a real product
-       *  snippet with a short prose paragraph. ─── */}
-
-      <section className="landing-board-story" data-reveal="split">
+        <section className="bento-section">
         <div className="landing-board-story__copy">
           <p className="landing-pitch__eyebrow">
             <span>Pick a time</span>
@@ -234,10 +241,11 @@ export function LandingPage() {
           </p>
           <h2 className="landing-pitch__title">No one books the wrong hour.</h2>
           <p className="landing-pitch__body">
-            Participants see times in their own timezone with your source
-            timezone on every chip when they hover. Slots that cross a date
-            boundary in your timezone get a small +1d badge that stays always
-            visible, so nobody accidentally books the wrong day.
+            Pick a viewer timezone and the table slides. Every slot keeps the
+            organizer&rsquo;s source time on the left and the participant&rsquo;s
+            local time on the right. A <span className="mono">−1d</span> or{' '}
+            <span className="mono">+1d</span> badge appears the moment a slot
+            crosses midnight in either direction.
           </p>
         </div>
         <div className="landing-pitch__ui">
@@ -312,7 +320,7 @@ export function LandingPage() {
               </div>
               <div className="privacy-ledger__row">
                 <span className="privacy-ledger__key">Calendar file</span>
-                <span className="privacy-ledger__val">.ics, opens in any calendar app</span>
+                <span className="privacy-ledger__val">provider buttons plus .ics, no calendar OAuth</span>
               </div>
               <div className="privacy-ledger__row">
                 <span className="privacy-ledger__key">Manage link</span>
@@ -355,6 +363,8 @@ export function LandingPage() {
         <button
           type="button"
           className="landing-hero__primary landing-footer__cta"
+          onPointerEnter={prefetchCreateFlow}
+          onFocus={prefetchCreateFlow}
           onClick={() => navigate('/new')}
         >
           Create your board <ArrowRight size={16} strokeWidth={2} />
@@ -388,8 +398,9 @@ const FAQ_ITEMS: Array<{ q: string; a: ReactNode }> = [
     a: (
       <>
         No. There is no calendar OAuth. After a booking is confirmed, mytimes
-        emails an <strong>.ics</strong> calendar file that drops into any
-        calendar app. No third-party tracking, no marketing email.
+        emails Google, Outlook, Office 365, and Apple/iCal calendar buttons
+        plus an attached <strong>.ics</strong> file.
+        No third-party tracking, no marketing email.
       </>
     ),
   },
@@ -427,9 +438,9 @@ const FAQ_ITEMS: Array<{ q: string; a: ReactNode }> = [
     q: 'How does pricing work?',
     a: (
       <>
-        Free is <strong>$0</strong> forever for individuals running small
-        rounds, capped at 2 active boards, 25 bookings per board, 60
-        slots, and a 60-day window. Company is <strong>$49 per month</strong>
+        Free is <strong>$0</strong> forever for one small
+        round, capped at 1 active board, 15 bookings, 30
+        slots, and a 3-day active window. Company is <strong>$49 per month</strong>
         {' '}(or $480 per year) with unlimited boards, 10 seats, custom
         subdomain, and company-wide admin recovery.
       </>
@@ -472,7 +483,7 @@ function LandingFaqSection() {
 
 function LandingProofStrip() {
   return (
-    <section className="landing-proof" aria-label="What mytimes is built for">
+    <section className="landing-proof" aria-label="Where mytimes fits">
       {[
         {
           icon: <Clock size={14} strokeWidth={1.8} aria-hidden="true" />,
@@ -670,48 +681,94 @@ function BoardSafetySnippet() {
   );
 }
 
-/* ─── TzSnippet — real TimezonePicker + a sample participant
- *  strip + two dual-time chips, including a date-shift badge. */
+/* ─── TzSnippet — live boarding-pass translation table
+ *  Source TZ stays fixed (a Tokyo organizer — chosen so the
+ *  default Pacific viewer has a chunky 16-hour gap and the
+ *  ±1d badge actually shows up). The viewer column is a real
+ *  TimezonePicker; changing it re-formats every row using the
+ *  same Intl helpers the booking page uses. */
 function TzSnippet() {
+  const sourceTz = 'Asia/Tokyo';
   const demoViewerTz = 'America/Los_Angeles';
   const [viewerTz, setViewerTz] = useState(demoViewerTz);
+
+  /* Anchored to a fixed Thursday so the demo is stable across
+   *  loads. Four interview-shaped times across the organizer's
+   *  workday (09:00, 12:00, 15:00, 17:30 JST). */
+  const sourceInstants = useMemo(
+    () => [
+      new Date('2026-05-21T00:00:00Z'), // 09:00 Thu JST
+      new Date('2026-05-21T03:00:00Z'), // 12:00 Thu JST
+      new Date('2026-05-21T06:00:00Z'), // 15:00 Thu JST
+      new Date('2026-05-21T08:30:00Z'), // 17:30 Thu JST
+    ],
+    [],
+  );
+
+  const rows = sourceInstants.map((instant) => {
+    const orgKey = formatDateKey(instant, sourceTz);
+    const viewKey = formatDateKey(instant, viewerTz);
+    const shift =
+      orgKey === viewKey ? 0 : viewKey < orgKey ? -1 : 1;
+    return {
+      orgTime: formatTimeInTz(instant, sourceTz),
+      orgWeekday: formatDayPartsInTz(instant, sourceTz).weekdayShort,
+      viewTime: formatTimeInTz(instant, viewerTz),
+      viewWeekday: formatDayPartsInTz(instant, viewerTz).weekdayShort,
+      shift,
+    };
+  });
+
   return (
-    <div className="landing-snippet landing-snippet--tz">
-      <div className="booking__tz-strip">
-        <span className="booking__tz-strip-label">Showing in</span>
-        <TimezonePicker
-          value={viewerTz}
-          onChange={setViewerTz}
-          detected={demoViewerTz}
-          commonZones={US_DEMO_TIMEZONES}
-        />
-        <span className="booking__tz-strip-sep" aria-hidden="true">·</span>
-        <span className="booking__tz-strip-source">
-          <span className="booking__tz-strip-label">Organizer in</span>
-          <span className="booking__tz-strip-source-value mono">America/New_York</span>
-        </span>
-      </div>
-      <div className="landing-snippet__chips">
-        <button
-          type="button"
-          className="day-band__chip day-band__chip--am day-band__chip--dual"
-          tabIndex={-1}
-        >
-          <span className="day-band__chip-time mono tabular">09:00</span>
-          <span className="day-band__chip-meridiem" aria-hidden="true">am</span>
-          <span className="day-band__chip-source mono" aria-hidden="true">12:00</span>
-        </button>
-        <button
-          type="button"
-          className="day-band__chip day-band__chip--pm day-band__chip--dual day-band__chip--date-shift"
-          tabIndex={-1}
-        >
-          <span className="day-band__chip-time mono tabular">21:30</span>
-          <span className="day-band__chip-meridiem" aria-hidden="true">pm</span>
-          <span className="day-band__chip-source mono" aria-hidden="true">02:30</span>
-          <span className="day-band__chip-shift" aria-hidden="true">-1d</span>
-        </button>
-      </div>
+    <div className="landing-snippet landing-snippet--tz tz-pass">
+      <header className="tz-pass__head">
+        <div className="tz-pass__head-side">
+          <span className="tz-pass__label">Set in</span>
+          <span className="tz-pass__zone mono">{sourceTz}</span>
+        </div>
+        <span className="tz-pass__head-arrow" aria-hidden="true">↦</span>
+        <div className="tz-pass__head-side tz-pass__head-side--viewer">
+          <span className="tz-pass__label">Showing in</span>
+          <TimezonePicker
+            value={viewerTz}
+            onChange={setViewerTz}
+            detected={demoViewerTz}
+            commonZones={US_DEMO_TIMEZONES}
+          />
+        </div>
+      </header>
+
+      <dl className="tz-pass__table">
+        {rows.map((row, idx) => (
+          <div
+            key={idx}
+            className={
+              row.shift !== 0
+                ? 'tz-pass__row tz-pass__row--shift'
+                : 'tz-pass__row'
+            }
+          >
+            <dt className="tz-pass__col tz-pass__col--org">
+              <span className="tz-pass__time mono tabular">{row.orgTime}</span>
+              <span className="tz-pass__day">{row.orgWeekday}</span>
+            </dt>
+            <dd className="tz-pass__col tz-pass__col--view">
+              <span className="tz-pass__time mono tabular">{row.viewTime}</span>
+              <span className="tz-pass__day">{row.viewWeekday}</span>
+              {row.shift !== 0 ? (
+                <span
+                  className="tz-pass__shift mono"
+                  aria-label={
+                    row.shift > 0 ? 'shifted one day forward' : 'shifted one day back'
+                  }
+                >
+                  {row.shift > 0 ? '+1d' : '−1d'}
+                </span>
+              ) : null}
+            </dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
@@ -743,78 +800,166 @@ function LinkSnippet() {
 }
 
 function OperationsSection() {
-  const stats = [
-    { label: 'Open', value: '18', kind: 'open' },
-    { label: 'Booked', value: '7', kind: 'booked' },
-    { label: 'Closed', value: '3', kind: 'closed' },
-    { label: 'Total', value: '28', kind: 'total' },
-  ];
-
+  /* Direction A — hero one participant, demote the rest.
+   * The pitch is "private desk for every booking" so the visual
+   * unit is ONE booking, large, with the action context next to
+   * it (avatar, bounce alert, real action buttons). The board
+   * stats become a small atmospheric strip, and the slot grid
+   * becomes a sparse horizontal sparkline that just sets the
+   * context "this is your full board". */
   return (
     <section className="landing-ops" data-reveal="split">
       <div className="landing-ops__copy">
         <span className="landing-flow__mark">After the link is live</span>
         <h2>One private desk for every booking.</h2>
         <p>
-          The admin link opens a working view of the board: open slots, booked
-          slots, closed slots, recent activity, participant notes, email status,
-          and the few actions an organizer actually needs.
+          The admin link opens the whole board. Each booking still gets its own
+          record: participant name, note, email delivery status, and the actions
+          you need when a slot has to be closed, reopened, or cancelled.
         </p>
       </div>
 
-      <div className="landing-ops__desk" aria-label="Organizer dashboard preview">
-        <div className="landing-ops__bar">
-          <span>
+      <div className="landing-ops__desk" aria-label="Selected booking preview">
+        {/* Atmospheric context strip — what board are we in, what's
+         *  the headline shape. Quiet so the hero booking dominates. */}
+        <div className="landing-ops__context">
+          <span className="landing-ops__context-board">
             <span className="brand-dot" aria-hidden="true" />
-            Organizer dashboard
+            Vision Assessment · 28 slots
           </span>
-          <strong>America/New_York</strong>
+          <span className="landing-ops__context-stats">
+            <span><strong className="mono">18</strong> open</span>
+            <span className="landing-ops__context-dot" aria-hidden="true" />
+            <span><strong className="mono">7</strong> booked</span>
+            <span className="landing-ops__context-dot" aria-hidden="true" />
+            <span><strong className="mono">3</strong> closed</span>
+          </span>
         </div>
 
-        <div className="landing-ops__stats">
-          {stats.map((stat) => (
-            <span key={stat.label} className={`landing-ops__stat landing-ops__stat--${stat.kind}`}>
-              <strong className="mono">{stat.value}</strong>
-              <small>{stat.label}</small>
+        {/* HERO — one booking, full attention. */}
+        <article className="landing-ops__booking" aria-label="Booking detail">
+          <header className="landing-ops__booking-head">
+            <Avatar
+              className="landing-ops__avatar"
+              seed="anya@protonmail.com"
+              style="notionists"
+              size={56}
+              ariaLabel="Avatar for Anya Gupta"
+            />
+            <div className="landing-ops__booking-id">
+              <span className="landing-ops__booking-eyebrow">Booked · Tue 18 May</span>
+              <h3 className="landing-ops__booking-name">Anya Gupta</h3>
+              <span className="landing-ops__booking-meta mono">
+                10:00 SAST &middot; anya@protonmail.com
+              </span>
+            </div>
+          </header>
+
+          <div className="landing-ops__alert">
+            <span className="landing-ops__alert-eyebrow">Email status · bounced</span>
+            <p className="landing-ops__alert-body">
+              The confirmation email bounced. Anya hasn't received the
+              calendar invite or manage link yet.
+            </p>
+            <div className="landing-ops__alert-buttons">
+              <button type="button" className="landing-ops__btn landing-ops__btn--primary" tabIndex={-1}>
+                <RefreshCw size={14} strokeWidth={1.8} aria-hidden="true" />
+                Resend to anya@protonmail.com
+              </button>
+              <button type="button" className="landing-ops__btn" tabIndex={-1}>
+                Ask for a different email
+              </button>
+            </div>
+          </div>
+
+          <footer className="landing-ops__booking-foot">
+            <span className="landing-ops__booking-note">
+              <span className="landing-ops__booking-note-mark">Note from Anya</span>
+              <span className="landing-ops__booking-note-text">
+                &ldquo;I may join from a phone for the first few minutes.&rdquo;
+              </span>
+            </span>
+          </footer>
+        </article>
+
+        {/* Slot sparkline — sparse horizontal strip. The booked slot
+         *  has a peach dot to anchor "you are looking at this one". */}
+        <div className="landing-ops__sparkline" aria-hidden="true">
+          {[
+            ['09:00', 'open'],
+            ['10:00', 'selected'],
+            ['11:00', 'open'],
+            ['14:00', 'closed'],
+            ['15:00', 'booked'],
+            ['16:00', 'open'],
+            ['17:00', 'open'],
+            ['18:00', 'closed'],
+          ].map(([time, state]) => (
+            <span
+              key={`${time}-${state}`}
+              className={`landing-ops__spark landing-ops__spark--${state}`}
+              title={`${time} · ${state}`}
+            >
+              <span className="mono">{time}</span>
             </span>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
 
-        <div className="landing-ops__workspace">
-          <div className="landing-ops__slots" aria-hidden="true">
-            {[
-              ['09:00', 'open'],
-              ['10:00', 'booked'],
-              ['11:00', 'open'],
-              ['14:00', 'closed'],
-              ['15:00', 'booked'],
-              ['16:00', 'open'],
-              ['17:00', 'open'],
-              ['18:00', 'closed'],
-            ].map(([time, state]) => (
-              <span key={`${time}-${state}`} className={`landing-ops__slot landing-ops__slot--${state}`}>
-                <span className="mono">{time}</span>
-                <small>{state}</small>
-              </span>
-            ))}
-          </div>
-
-          <aside className="landing-ops__action">
-            <span className="landing-ops__action-label">Selected slot</span>
-            <strong>10:00 booked by Anya Gupta</strong>
-            <code>anya@protonmail.com</code>
-            <p>Previous email delivery bounced for this participant.</p>
-            <div className="landing-ops__buttons">
-              <span><RefreshCw size={13} strokeWidth={1.8} aria-hidden="true" />Resend email</span>
-              <span><Archive size={13} strokeWidth={1.8} aria-hidden="true" />Keep closed</span>
-            </div>
-          </aside>
+function OrganizerShowcaseSection() {
+  return (
+    <section className="organizer-showcase">
+      <div className="organizer-showcase-container">
+        <div className="os-text">
+          <div className="os-badge">After the link is live</div>
+          <h2 className="os-title">One private desk for every booking.</h2>
+          <p className="os-desc">
+            The admin link opens a working view of the board: open slots, booked slots, closed slots, recent activity, participant notes, email status, and the few actions an organizer actually needs.
+          </p>
         </div>
-
-        <div className="landing-ops__tools" aria-label="Admin tools">
-          <span><FileDown size={13} strokeWidth={1.8} aria-hidden="true" />Export CSV</span>
-          <span><Archive size={13} strokeWidth={1.8} aria-hidden="true" />Archive board</span>
-          <span><KeyRound size={13} strokeWidth={1.8} aria-hidden="true" />Recover admin link</span>
+        <div className="os-mockup-wrapper">
+          <div className="os-mockup">
+            <div className="os-m-header">
+              <span className="os-m-title">Organizer dashboard</span>
+              <span className="os-m-tz">America/New_York</span>
+            </div>
+            <div className="os-m-metrics">
+              <div className="os-m-metric"><span className="os-m-val text-green">18</span><span className="os-m-lbl">Open</span></div>
+              <div className="os-m-metric"><span className="os-m-val text-blue">7</span><span className="os-m-lbl">Booked</span></div>
+              <div className="os-m-metric"><span className="os-m-val text-gray">3</span><span className="os-m-lbl">Closed</span></div>
+              <div className="os-m-metric"><span className="os-m-val text-black">28</span><span className="os-m-lbl">Total</span></div>
+            </div>
+            <div className="os-m-body">
+              <div className="os-m-slots">
+                <div className="os-m-slot is-open"><span>09:00</span><span>open</span></div>
+                <div className="os-m-slot is-booked"><span>10:00</span><span>booked</span></div>
+                <div className="os-m-slot is-open"><span>11:00</span><span>open</span></div>
+                <div className="os-m-slot is-closed"><span>14:00</span><span>closed</span></div>
+                <div className="os-m-slot is-booked"><span>15:00</span><span>booked</span></div>
+                <div className="os-m-slot is-open"><span>16:00</span><span>open</span></div>
+                <div className="os-m-slot is-open"><span>17:00</span><span>open</span></div>
+                <div className="os-m-slot is-closed"><span>18:00</span><span>closed</span></div>
+              </div>
+              <div className="os-m-panel">
+                <div className="os-m-panel-eyebrow">Selected slot</div>
+                <div className="os-m-panel-title">10:00 booked by Anya Gupta</div>
+                <div className="os-m-panel-email">anya@protonmail.com</div>
+                <div className="os-m-panel-note">Previous email delivery bounced for this participant.</div>
+                <div className="os-m-panel-actions">
+                  <button><RefreshCw size={12}/> Resend email</button>
+                  <button><Archive size={12}/> Keep closed</button>
+                </div>
+              </div>
+            </div>
+            <div className="os-m-footer">
+              <button><FileText size={12}/> Export CSV</button>
+              <button><Archive size={12}/> Archive board</button>
+              <button><Key size={12}/> Recover admin link</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -885,38 +1030,54 @@ function CompanyStandbySection() {
 }
 
 function ParticipantLifecycleSection() {
+  /* Inbox preview redesign. The artifact IS the experience —
+   * a faux mail-client list row on top, the open confirmation
+   * email beneath. Same wordmark, eyebrow, peach time block,
+   * and brand CTA the participant will actually see. Closes
+   * the gap between landing-page claim and real recipient view. */
   return (
-    <section className="landing-lifecycle" data-reveal="split">
-      {/* Boarding-pass composition. The top is the receipt the participant
-       *  gets. The perforated stub at the bottom shows the four capabilities
-       *  this booking gives them — turning what used to be a disconnected
-       *  chip row into the bottom half of the same ticket. */}
-      <div className="landing-lifecycle__ticket" aria-label="Participant receipt preview">
-        <span className="landing-lifecycle__stamp">CONFIRMED</span>
-        <h2>Vision Assessment</h2>
-        <dl>
-          <div>
-            <dt>Booked time</dt>
-            <dd>Mon 18 May, 10:00</dd>
+    <section className="landing-lifecycle landing-lifecycle--inbox" data-reveal="split">
+      <div className="landing-inbox" aria-label="What lands in the participant's inbox">
+        <div className="landing-inbox__row">
+          <Avatar
+            className="landing-inbox__avatar"
+            seed="oyani@mytimes.co"
+            style="notionists"
+            size={36}
+            ariaLabel="Avatar for Oyani Solis"
+          />
+          <div className="landing-inbox__row-text">
+            <div className="landing-inbox__row-top">
+              <span className="landing-inbox__row-sender">Oyani Solis</span>
+              <span className="landing-inbox__row-time mono">10:42</span>
+            </div>
+            <div className="landing-inbox__row-subject">Confirmed with Oyani.</div>
+            <div className="landing-inbox__row-pre">
+              Tue 18 May &middot; 10:00 SAST &middot; 60 min with Oyani &middot;
+              <span className="landing-inbox__row-attach">
+                <span aria-hidden="true">📎</span> calendar attached
+              </span>
+            </div>
           </div>
-          <div>
-            <dt>Calendar file</dt>
-            <dd>vision-assessment.ics</dd>
-          </div>
-          <div>
-            <dt>Private manage link</dt>
-            <dd>mytimes.co/m/v8p-4mQ</dd>
-          </div>
-        </dl>
+        </div>
 
-        <div className="landing-lifecycle__stub" aria-label="What this booking unlocks">
-          <span className="landing-lifecycle__stub-label">This booking carries</span>
-          <ul className="landing-lifecycle__stub-list">
-            <li><Mail size={13} strokeWidth={1.8} aria-hidden="true" /><span>Confirmation email</span></li>
-            <li><Download size={13} strokeWidth={1.8} aria-hidden="true" /><span>Calendar download</span></li>
-            <li><RefreshCw size={13} strokeWidth={1.8} aria-hidden="true" /><span>Cancel &amp; reopen</span></li>
-            <li><Copy size={13} strokeWidth={1.8} aria-hidden="true" /><span>Manage link resend</span></li>
-          </ul>
+        <div className="landing-inbox__open" aria-hidden="true">
+          <div className="landing-inbox__open-bar">
+            <span className="landing-inbox__open-bar-wordmark">mytimes</span>
+            <span className="landing-inbox__open-bar-dot" aria-hidden="true" />
+          </div>
+          <div className="landing-inbox__open-eyebrow">Booking confirmed</div>
+          <div className="landing-inbox__open-title">Confirmed with Oyani.</div>
+          <div className="landing-inbox__open-timeblock">
+            <span className="landing-inbox__open-tb-label">Your time</span>
+            <div className="landing-inbox__open-tb-date">Tuesday, 18 May 2026</div>
+            <div className="landing-inbox__open-tb-time mono">
+              10:00&ndash;11:00 <span>SAST</span>
+            </div>
+          </div>
+          <button className="landing-inbox__open-cta" type="button" tabIndex={-1}>
+            Manage booking <ArrowRight size={13} strokeWidth={2} />
+          </button>
         </div>
       </div>
 
@@ -924,10 +1085,16 @@ function ParticipantLifecycleSection() {
         <span className="landing-flow__mark">The full participant loop</span>
         <h2>Confirmation is not the end of the flow.</h2>
         <p>
-          Every booking can send a confirmation email, attach a calendar file,
-          and give the participant a private manage link. If plans change, they
-          can cancel without asking you to play calendar traffic controller.
+          Every booking sends a real confirmation email, includes calendar
+          buttons plus an <strong>.ics</strong> file, and gives the participant
+          a private manage link. If plans change, they cancel without asking
+          you to play calendar traffic controller.
         </p>
+        <ul className="landing-lifecycle__notes">
+          <li><Mail size={13} strokeWidth={1.8} aria-hidden="true" /><span>Confirmation email, the moment the slot is claimed</span></li>
+          <li><Download size={13} strokeWidth={1.8} aria-hidden="true" /><span>Calendar buttons plus <strong>.ics</strong> file, no OAuth</span></li>
+          <li><RefreshCw size={13} strokeWidth={1.8} aria-hidden="true" /><span>Manage link: cancel or resend without an account</span></li>
+        </ul>
       </div>
     </section>
   );
@@ -943,19 +1110,30 @@ function ParticipantLifecycleSection() {
  *  Replaces the previous design: an oversized headline that
  *  squashed the cards into a corner and a floating black
  *  "custom domains" callout that read as a UI mistake. */
+type PricingTier = {
+  label: string;
+  price: string;
+  cadence: string;
+  tagline: string;
+  bullets: string[];
+  footnote?: string;
+  cta?: { label: string; href: string };
+  featured?: boolean;
+};
+
 function LandingPricingSection() {
-  const tiers = [
+  const tiers: PricingTier[] = [
     {
       label: 'Free',
       price: '$0',
       cadence: 'forever',
-      tagline: 'For the round you have to ship this week.',
+      tagline: 'Try one small round and see if mytimes fits.',
       bullets: [
-        '2 active boards',
-        '25 bookings per board',
-        'Per-board CSV export',
+        '1 active board',
+        '15 bookings · 30 published slots',
+        '3-day active window',
       ],
-      footnote: '60-day active window',
+      footnote: 'Per-board CSV export · 3-day active window',
     },
     {
       label: 'Company',
@@ -970,35 +1148,79 @@ function LandingPricingSection() {
       footnote: 'Or $480/year · custom domains included',
       featured: true,
     },
+    {
+      label: 'Enterprise',
+      price: 'Custom',
+      cadence: '',
+      tagline: 'For hiring teams with formal rollout needs.',
+      bullets: [
+        'Slack & Teams setup',
+        'SSO, security review, custom limits',
+        'Annual contract paperwork',
+      ],
+      cta: { label: 'View Enterprise', href: '/enterprise' },
+    },
   ];
 
   return (
     <section id="pricing" className="landing-pricing-v2" aria-label="Pricing summary" data-reveal="section">
       <header className="landing-pricing-v2__head">
         <span className="landing-flow__mark">Pricing that matches the job</span>
-        <h2>Free for one round.<br />Subscribe when it's the job.</h2>
+        <h2>
+          <span>Free for one round.</span>{' '}
+          <span>Subscribe when it's the job.</span>
+        </h2>
         <p>
-          mytimes stays free for the interview round you have to ship this
-          week. Company unlocks when teams want the board ready every time,
-          with shared recovery and billing.
+          mytimes stays free while you try one round. Company fits when rounds
+          become a habit. Enterprise is for hiring teams that need Slack,
+          Teams, SSO, and signed vendor paperwork.
         </p>
       </header>
 
-      <div className="landing-pricing-v2__tiers">
-        {tiers.map((tier) => (
-          <article
-            key={tier.label}
-            className={`landing-pricing-v2__tier${tier.featured ? ' landing-pricing-v2__tier--featured' : ''}`}
-          >
-            <div className="landing-pricing-v2__tier-head">
-              <span className="landing-pricing-v2__tier-name">{tier.label}</span>
-              <div className="landing-pricing-v2__tier-price">
-                <strong className="mono">{tier.price}</strong>
-                <span>{tier.cadence}</span>
+      {/* Two-row grid: self-serve tiers up top, contact-sales
+       *  card full-width below in a horizontal layout that signals
+       *  "different kind of conversation" without competing. */}
+      <div className="landing-pricing-v2__grid">
+        <div className="landing-pricing-v2__selfserve">
+          {tiers.filter((t) => !t.cta).map((tier) => (
+            <article
+              key={tier.label}
+              className={[
+                'landing-pricing-v2__tier',
+                tier.featured ? 'landing-pricing-v2__tier--featured' : '',
+              ].filter(Boolean).join(' ')}
+            >
+              <div className="landing-pricing-v2__tier-head">
+                <span className="landing-pricing-v2__tier-name">{tier.label}</span>
+                <div className="landing-pricing-v2__tier-price">
+                  <strong className="mono">{tier.price}</strong>
+                  {tier.cadence ? <span>{tier.cadence}</span> : null}
+                </div>
               </div>
+              <p className="landing-pricing-v2__tier-tagline">{tier.tagline}</p>
+              <ul className="landing-pricing-v2__tier-bullets">
+                {tier.bullets.map((b) => (
+                  <li key={b}>
+                    <Check size={13} strokeWidth={2.2} aria-hidden="true" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+              {tier.footnote ? (
+                <div className="landing-pricing-v2__tier-foot">{tier.footnote}</div>
+              ) : null}
+            </article>
+          ))}
+        </div>
+
+        {tiers.filter((t) => t.cta).map((tier) => (
+          <article key={tier.label} className="landing-pricing-v2__enterprise">
+            <div className="landing-pricing-v2__enterprise-head">
+              <span className="landing-pricing-v2__enterprise-label">{tier.label}</span>
+              <span className="landing-pricing-v2__enterprise-price">{tier.price}</span>
+              <p className="landing-pricing-v2__enterprise-tagline">{tier.tagline}</p>
             </div>
-            <p className="landing-pricing-v2__tier-tagline">{tier.tagline}</p>
-            <ul className="landing-pricing-v2__tier-bullets">
+            <ul className="landing-pricing-v2__enterprise-bullets">
               {tier.bullets.map((b) => (
                 <li key={b}>
                   <Check size={13} strokeWidth={2.2} aria-hidden="true" />
@@ -1006,7 +1228,15 @@ function LandingPricingSection() {
                 </li>
               ))}
             </ul>
-            <div className="landing-pricing-v2__tier-foot">{tier.footnote}</div>
+            {tier.cta ? (
+              <button
+                type="button"
+                className="landing-pricing-v2__enterprise-cta"
+                onClick={() => navigate(tier.cta!.href)}
+              >
+                {tier.cta.label} <ArrowRight size={14} strokeWidth={2} />
+              </button>
+            ) : null}
           </article>
         ))}
       </div>

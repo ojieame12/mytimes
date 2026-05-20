@@ -358,6 +358,7 @@ a.material-stamp-dark {
 .admin-board,
 .admin-settings,
 .admin-billing,
+.admin-access-panel,
 .admin-link-panel,
 .admin-slot-panel {
   padding: 16px;
@@ -406,6 +407,190 @@ a.material-stamp-dark {
   margin: -2px 0 0;
   color: var(--fg-subtle);
   font-size: 11.5px;
+}
+.admin-access-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px 16px;
+  background:
+    linear-gradient(180deg, hsla(194, 100%, 16%, 0.98) 0%, hsla(194, 72%, 12%, 1) 100%);
+  border: 1px solid color-mix(in oklch, var(--primary) 38%, var(--zinc-900));
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    var(--shadow-card);
+  color: var(--white);
+}
+.admin-access-panel .admin-section-head {
+  width: 100%;
+  margin-bottom: 0;
+}
+.admin-access-panel .admin-section-head span {
+  color: color-mix(in oklch, var(--teal-300, #3eb1c8) 86%, var(--white));
+}
+.admin-access-panel .admin-section-head strong {
+  color: color-mix(in oklch, var(--white) 82%, transparent);
+  border-color: color-mix(in oklch, var(--teal-300, #3eb1c8) 28%, transparent);
+  background: color-mix(in oklch, var(--teal-300, #3eb1c8) 10%, transparent);
+}
+.admin-access-panel__credential {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 11px 12px;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--white) 7%, transparent);
+  border: 1px solid color-mix(in oklch, var(--teal-300, #3eb1c8) 22%, transparent);
+}
+.admin-access-panel__icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--teal-300, #3eb1c8) 16%, transparent);
+  color: color-mix(in oklch, var(--teal-300, #3eb1c8) 88%, var(--white));
+}
+.admin-access-panel__credential-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.admin-access-panel__label {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in oklch, var(--white) 60%, transparent);
+}
+.admin-access-panel__credential code {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--white);
+  overflow-wrap: anywhere;
+}
+.admin-access-panel__body {
+  margin: 0;
+  color: color-mix(in oklch, var(--white) 72%, transparent);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.admin-access-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  align-items: center;
+}
+.admin-access-panel__button {
+  appearance: none;
+  cursor: pointer;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in oklch, var(--white) 22%, transparent);
+  background: color-mix(in oklch, var(--white) 9%, transparent);
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    transform var(--motion-short) var(--ease-press);
+}
+.admin-access-panel__button:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--white) 14%, transparent);
+  border-color: color-mix(in oklch, var(--white) 34%, transparent);
+}
+.admin-access-panel__button:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+.admin-access-panel__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.admin-access-panel__button--primary {
+  background: color-mix(in oklch, var(--teal-300, #3eb1c8) 18%, transparent);
+  border-color: color-mix(in oklch, var(--teal-300, #3eb1c8) 42%, transparent);
+}
+.admin-access-panel__bookmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: color-mix(in oklch, var(--white) 62%, transparent);
+  font-size: 12px;
+  line-height: 1.3;
+}
+.admin-access-panel__bookmark .mono {
+  color: var(--white);
+  font-size: 11px;
+}
+.admin-access-panel__error {
+  margin: -2px 0 0;
+  color: color-mix(in oklch, var(--red-500) 30%, var(--white));
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.admin-access-panel__rotate {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px dashed color-mix(in oklch, var(--teal-300, #3eb1c8) 24%, transparent);
+}
+.admin-access-panel__rotate p {
+  margin: 0;
+  color: color-mix(in oklch, var(--white) 68%, transparent);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.admin-access-panel__rotate strong {
+  color: var(--white);
+  font-weight: 700;
+}
+.admin-access-panel__rotate-button {
+  appearance: none;
+  cursor: pointer;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 13px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in oklch, var(--white) 28%, transparent);
+  background: var(--white);
+  color: var(--zinc-900);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 800;
+  box-shadow: var(--shadow-button-rest);
+  transition:
+    background var(--motion-short) var(--ease-press),
+    transform var(--motion-short) var(--ease-press);
+}
+.admin-access-panel__rotate-button:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--white) 92%, var(--teal-300, #3eb1c8));
+}
+.admin-access-panel__rotate-button:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+.admin-access-panel__rotate-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 .admin-link-panel {
   display: flex;
@@ -1107,4 +1292,439 @@ a.material-stamp-dark {
   color: var(--fg-subtle);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+/* ─── Quiet eyebrow text-link action ─────────────────────
+ * Sits next to "Organizer dashboard" so the rotate affordance
+ * lives in the metadata band, not in the lifecycle action
+ * row. Reads as a setting, not a primary CTA. */
+.management-eyebrow__sep {
+  margin: 0 6px;
+  color: var(--fg-subtle);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.management-eyebrow__action {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--primary);
+  border-bottom: 1px dashed color-mix(in oklch, var(--primary) 40%, transparent);
+  padding-bottom: 1px;
+  transition:
+    color var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press);
+}
+.management-eyebrow__action:hover:not(:disabled) {
+  color: var(--primary-hover);
+  border-bottom-color: var(--primary);
+}
+.management-eyebrow__action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Rotate admin URL modal ─────────────────────────────
+ * Editorial security card. Header eyebrow + display title,
+ * a labeled metadata block (current URL → destination email),
+ * one paragraph of consequence, and a footer that pairs a
+ * ghost "Keep" link with a primary stamp. The metadata
+ * rows do the visual work, not bullets. */
+.rotate-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  animation: fade-in var(--motion-short) var(--ease-out) both;
+}
+.rotate-modal__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-overlay-scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.rotate-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  padding: 22px 22px 20px;
+  border-radius: var(--radius-xl);
+  background: var(--gradient-card-surface);
+  border: 1px solid var(--border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    var(--shadow-dialog);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: stamp-in var(--motion-medium) var(--ease-out) both;
+}
+.rotate-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rotate-modal__head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.rotate-modal__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.rotate-modal__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  color: var(--fg-default);
+  line-height: 1.15;
+  font-variation-settings: 'opsz' 96, 'SOFT' 80;
+  font-optical-sizing: auto;
+}
+.rotate-modal__close {
+  appearance: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  flex-shrink: 0;
+  transition:
+    background var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press);
+}
+.rotate-modal__close:hover:not(:disabled) {
+  background: var(--bg-hover-subtle);
+  border-color: var(--border-strong);
+  color: var(--fg-default);
+}
+.rotate-modal__close:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.rotate-modal__meta {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.rotate-modal__meta-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: baseline;
+  gap: 16px;
+  padding: 10px 0;
+}
+.rotate-modal__meta-row + .rotate-modal__meta-row {
+  border-top: 1px dashed var(--border-subtle);
+}
+.rotate-modal__meta dt {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.rotate-modal__meta dd {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--zinc-900);
+  line-height: 1.35;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rotate-modal__meta-strike {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--fg-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in oklch, var(--fg-muted) 60%, transparent);
+}
+.rotate-modal__meta-dest strong {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--primary);
+}
+.rotate-modal__body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--zinc-800);
+}
+.rotate-modal__body em {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--zinc-900);
+}
+.rotate-modal__ack {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  padding: 10px 11px;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--primary) 5%, var(--card));
+  border: 1px solid color-mix(in oklch, var(--primary) 18%, var(--border-subtle));
+  color: var(--zinc-800);
+  font-family: var(--font-sans);
+  font-size: 12.75px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.rotate-modal__ack input {
+  width: 15px;
+  height: 15px;
+  margin: 2px 0 0;
+  accent-color: var(--primary);
+}
+.rotate-modal__ack:has(input:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.rotate-modal__ack:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.rotate-modal__error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--red-500) 8%, var(--card));
+  border: 1px solid color-mix(in oklch, var(--red-500) 35%, var(--border-subtle));
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--red-700, #b91c1c);
+}
+.rotate-modal__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+.rotate-modal__cancel {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 6px 2px;
+  margin: 0;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  border-bottom: 1px dashed transparent;
+  transition: color var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press);
+}
+.rotate-modal__cancel:hover:not(:disabled) {
+  color: var(--zinc-900);
+  border-bottom-color: var(--border-default);
+}
+.rotate-modal__cancel:disabled { opacity: 0.5; cursor: not-allowed; }
+.rotate-modal__send { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ─── Post-rotation receipt ──────────────────────────────
+ * Replaces the dashboard once the admin URL dies. No seal,
+ * no celebration — just a letterpress receipt: editorial
+ * headline, a 3-row metadata block, a short footnote, and
+ * a quiet text-link resend. Reads as a record of what
+ * happened, not a milestone. */
+.admin-rotated {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 36px 36px 32px;
+  max-width: 620px;
+  margin: 24px auto 0;
+}
+.admin-rotated__head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+.admin-rotated__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.admin-rotated__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  color: var(--fg-default);
+  line-height: 1.1;
+  font-variation-settings: 'opsz' 96, 'SOFT' 80;
+  font-optical-sizing: auto;
+  max-width: 18ch;
+}
+.admin-rotated__subhead {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--zinc-800);
+  max-width: 56ch;
+}
+.admin-rotated__subhead em {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--zinc-900);
+}
+.admin-rotated__receipt {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  border-top: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-default);
+}
+.admin-rotated__row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: baseline;
+  gap: 18px;
+  padding: 12px 0;
+}
+.admin-rotated__row + .admin-rotated__row {
+  border-top: 1px dashed var(--border-subtle);
+}
+.admin-rotated__receipt dt {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.admin-rotated__receipt dd {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--zinc-900);
+  line-height: 1.35;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.admin-rotated__receipt dd.mono {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.admin-rotated__row-strike {
+  color: var(--fg-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in oklch, var(--fg-muted) 60%, transparent);
+}
+.admin-rotated__row--update {
+  background: color-mix(in oklch, var(--primary) 6%, transparent);
+  margin: 0 -8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: var(--radius-sm);
+  animation: fade-in var(--motion-medium) var(--ease-out) both;
+}
+.admin-rotated__note {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  max-width: 60ch;
+}
+.admin-rotated__error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--red-500) 8%, var(--card));
+  border: 1px solid color-mix(in oklch, var(--red-500) 35%, var(--border-subtle));
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--red-700, #b91c1c);
+}
+.admin-rotated__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+.admin-rotated__resend {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 6px 2px;
+  margin: 0;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  border-bottom: 1px dashed color-mix(in oklch, var(--primary) 40%, transparent);
+  transition: color var(--motion-short) var(--ease-press),
+    border-color var(--motion-short) var(--ease-press);
+}
+.admin-rotated__resend:hover:not(:disabled) {
+  color: var(--primary-hover);
+  border-bottom-color: var(--primary);
+}
+.admin-rotated__resend:disabled { opacity: 0.6; cursor: not-allowed; }
+@media (max-width: 640px) {
+  .admin-rotated {
+    padding: 28px 20px 24px;
+  }
+  .admin-rotated__title { font-size: 24px; }
+  .admin-rotated__row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
 }

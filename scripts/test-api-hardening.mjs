@@ -33,6 +33,26 @@ try {
   await assertBodyLimit();
   await assertQuerySecretRejected();
   await assertForwardedHeaderSpoofResistance();
+  const contactEmail = `contact-hardening+${suffix}@example.com`;
+  const contactResponse = await request("/api/slotboard/contact", {
+    method: "POST",
+    actorKey: `hardening-contact-${suffix}`,
+    expectedStatus: 202,
+    json: {
+      intent: "enterprise",
+      name: "Contact Hardening",
+      email: contactEmail,
+      company: "Hardening Co",
+      role: "Recruiting Ops",
+      teamSize: "51-200",
+      message: "We want Slack, Teams, and SSO for booking boards.",
+      sourcePath: "/contact?intent=enterprise",
+      integrationInterest: ["slack", "teams", "sso"],
+      website: "",
+    },
+  });
+  assert(contactResponse.lead?.status === "received", "expected contact lead to be received");
+  assert((await contactLeadCount(contactEmail)) === 1, "expected contact lead to persist once");
 
   const idempotentTitle = `Idempotency Create ${suffix}`;
   const idempotencyKey = `create-${suffix}`;
@@ -94,15 +114,15 @@ try {
     }),
   });
   assert(publishedLimitBoard.event.slotCount === 80, `expected 80 stored slots, got ${publishedLimitBoard.event.slotCount}`);
-  assert(publishedLimitBoard.event.slotLimit === 60, `expected free slot limit 60, got ${publishedLimitBoard.event.slotLimit}`);
+  assert(publishedLimitBoard.event.slotLimit === 30, `expected free slot limit 30, got ${publishedLimitBoard.event.slotLimit}`);
   const publishedLimitPublicToken = tokenFromLink(publishedLimitBoard.links.public);
   const publishedLimitAdminToken = tokenFromLink(publishedLimitBoard.links.admin);
   const publishedLimitPublic = await request("/api/slotboard/book", {
     token: publishedLimitPublicToken,
   });
   assert(
-    publishedLimitPublic.slots.length === 60,
-    `expected free public board to publish 60 slots, got ${publishedLimitPublic.slots.length}`,
+    publishedLimitPublic.slots.length === 30,
+    `expected free public board to publish 30 slots, got ${publishedLimitPublic.slots.length}`,
   );
   const publishedLimitAdmin = await request("/api/slotboard/admin", {
     token: publishedLimitAdminToken,
@@ -111,8 +131,8 @@ try {
     publishedLimitAdmin.slots.length === 80,
     `expected admin dashboard to retain all 80 generated slots, got ${publishedLimitAdmin.slots.length}`,
   );
-  const hiddenSlot = publishedLimitAdmin.slots[60];
-  assert(hiddenSlot?.id, "expected an unpublished slot after the first 60");
+  const hiddenSlot = publishedLimitAdmin.slots[30];
+  assert(hiddenSlot?.id, "expected an unpublished slot after the first 30");
   await request("/api/slotboard/book/claim", {
     method: "POST",
     token: publishedLimitPublicToken,
@@ -140,7 +160,7 @@ try {
   });
   assert(myBoards.ownerEmail === `slot-limit+${suffix}@example.com`, "expected my boards response for requested email");
   assert(
-    myBoards.boards.some((board) => board.id === publishedLimitBoard.event.id && board.slotCount === 60),
+    myBoards.boards.some((board) => board.id === publishedLimitBoard.event.id && board.slotCount === 30),
     "expected my boards list to include the free board with its published slot count",
   );
   assert(!JSON.stringify(myBoards).includes("/a/"), "expected my boards list not to expose raw admin links");
@@ -401,6 +421,7 @@ try {
           "oversized-body-rejection",
           "query-secret-rejection",
           "forwarded-header-spoof-resistance",
+          "contact-lead-persistence",
           "idempotent-create-single-write",
           "idempotent-create-replay-conflict",
           "idempotent-create-body-reuse-conflict",
@@ -625,6 +646,18 @@ async function eventCountByTitle(title) {
       where title = $1
     `,
     [title],
+  );
+  return result.rows[0]?.count ?? 0;
+}
+
+async function contactLeadCount(email) {
+  const result = await pool.query(
+    `
+      select count(*)::int as count
+      from slotboard.contact_leads
+      where email = $1
+    `,
+    [email],
   );
   return result.rows[0]?.count ?? 0;
 }

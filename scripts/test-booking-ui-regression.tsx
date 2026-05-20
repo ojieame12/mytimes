@@ -12,6 +12,8 @@ Object.defineProperty(globalThis, "React", { value: React, configurable: true })
 const { createRoot } = await import("react-dom/client");
 const { renderToStaticMarkup } = await import("react-dom/server");
 const { Simulate } = await import("react-dom/test-utils");
+const { navigate } = await import("../apps/slots/src/lib/routing");
+const { AppShell } = await import("../apps/slots/src/components/AppShell");
 const { BookingPage } = await import("../apps/slots/src/views/BookingPage");
 const { ManageBookingPage } = await import("../apps/slots/src/views/ManageBookingPage");
 
@@ -84,6 +86,8 @@ await testClaimSubmitGuard(root);
 await testConflictKeepsDraft(root);
 await testManagePageReschedulesWithManageToken(root);
 testUnavailableBoardCopy();
+testAppShellFooterHiding();
+await testRouteNavigationScrollsToTop();
 
 await React.act(async () => {
   root.unmount();
@@ -329,6 +333,50 @@ function testUnavailableBoardCopy() {
   );
 }
 
+function testAppShellFooterHiding() {
+  const withFooter = renderToStaticMarkup(
+    React.createElement(AppShell, null, React.createElement("main", null, "Booking surface")),
+  );
+  const withoutFooter = renderToStaticMarkup(
+    React.createElement(AppShell, { hideFooter: true }, React.createElement("main", null, "Booking surface")),
+  );
+  assert(withFooter.includes("mytimes booking boards"), "Made with mytimes footer renders by default");
+  assert(!withoutFooter.includes("mytimes booking boards"), "Made with mytimes footer is removed when hideFooter is true");
+}
+
+async function testRouteNavigationScrollsToTop() {
+  const scrollCalls: unknown[] = [];
+  Object.defineProperty(window, "scrollTo", {
+    value: (options: unknown) => {
+      scrollCalls.push(options);
+    },
+    configurable: true,
+  });
+
+  window.history.replaceState(null, "", "/enterprise");
+  navigate("/pricing");
+  await flushEffects();
+
+  assert(window.location.pathname === "/pricing", "navigate updates public route path");
+  assert(
+    scrollCalls.some((call) => typeof call === "object" && call !== null && (call as ScrollToOptions).top === 0),
+    "public route navigation resets scroll to top",
+  );
+
+  const anchor = document.createElement("section");
+  anchor.id = "section-anchor";
+  let anchorScrollCount = 0;
+  anchor.scrollIntoView = () => {
+    anchorScrollCount += 1;
+  };
+  document.body.appendChild(anchor);
+  navigate("/pricing#section-anchor");
+  await flushEffects();
+
+  assert(anchorScrollCount === 1, "hash navigation scrolls to the anchor");
+  anchor.remove();
+}
+
 function renderBoardHtml(props: {
   publicToken: string;
   event: BookingEvent;
@@ -392,6 +440,10 @@ function setupDom() {
     configurable: true,
   });
   win.HTMLElement.prototype.scrollIntoView = function scrollIntoView() {};
+  Object.defineProperty(win, "scrollTo", {
+    value: () => {},
+    configurable: true,
+  });
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean })
     .IS_REACT_ACT_ENVIRONMENT = true;
 }

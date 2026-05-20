@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Globe, Check, Search } from 'lucide-react';
+import '../styles/timezone-picker.css';
 
 /* ─── TimezonePicker ──────────────────────────────────────
  * Reusable popover for picking an IANA timezone. Used in the

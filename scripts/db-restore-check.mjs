@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
@@ -182,7 +182,11 @@ function latestBackupFile() {
     ? readdirSync(backupDir)
         .filter((file) => file.endsWith(".dump") || file.endsWith(".sql"))
         .map((file) => path.join(backupDir, file))
-        .sort()
+        .sort((left, right) => {
+          const leftModified = statSync(left).mtimeMs;
+          const rightModified = statSync(right).mtimeMs;
+          return leftModified === rightModified ? left.localeCompare(right) : leftModified - rightModified;
+        })
     : [];
   const latest = files.at(-1);
   if (!latest) {

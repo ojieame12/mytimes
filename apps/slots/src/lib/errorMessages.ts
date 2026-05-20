@@ -26,8 +26,11 @@ export function participantClaimErrorMessage(error: ApiClientError): string {
 }
 
 export function createBoardErrorMessage(error: ApiClientError): string {
+  if (error.code === 'active_board_limit_reached') {
+    return 'Free includes one active board. Open your existing boards to archive the old one, or use Company if you need boards on standby.';
+  }
   if (error.code === 'slot_limit_reached') {
-    return 'This setup is too large for the single-board unlock. Reduce the availability range, or use Company for larger recurring rounds.';
+    return 'This setup is too large for a single-board capacity upgrade. Reduce the availability range, or use Company for larger recurring rounds.';
   }
   return error.message;
 }

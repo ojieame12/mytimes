@@ -21,6 +21,8 @@ const ssrEntry = resolve(ssrDir, 'entry-ssr.js');
 const routes: Array<{ path: string; out: string }> = [
   { path: '/', out: 'index.html' },
   { path: '/pricing', out: 'pricing/index.html' },
+  { path: '/enterprise', out: 'enterprise/index.html' },
+  { path: '/contact', out: 'contact/index.html' },
   { path: '/privacy', out: 'privacy/index.html' },
   { path: '/terms', out: 'terms/index.html' },
 ];

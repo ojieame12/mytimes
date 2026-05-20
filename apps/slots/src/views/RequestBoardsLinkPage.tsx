@@ -4,6 +4,7 @@ import { navigate } from '../lib/routing';
 import { FormField } from '../components/form/FormField';
 import { TextInput } from '../components/form/Inputs';
 import { ApiClientError, requestMyBoardsLink } from '../lib/api';
+import '../styles/my-boards.css';
 
 /* ─── RequestBoardsLinkPage ───────────────────────────────
  * Magic-link gate for the /my-boards cross-event surface.
@@ -58,8 +59,10 @@ export function RequestBoardsLinkPage() {
       <section className="my-boards-request" aria-live="polite">
         <img
           className="my-boards-request__vignette"
-          src="/assets/bg/vignette-trio-mug-books.png"
+          src="/assets/bg/vignette-trio-mug-books.webp"
           alt=""
+          loading="lazy"
+          decoding="async"
         />
         <p className="my-boards-request__eyebrow">
           <span>Check</span> your inbox
@@ -104,8 +107,10 @@ export function RequestBoardsLinkPage() {
     <section className="my-boards-request">
       <img
         className="my-boards-request__vignette"
-        src="/assets/bg/vignette-trio-mug-books.png"
+        src="/assets/bg/vignette-trio-mug-books.webp"
         alt=""
+        loading="lazy"
+        decoding="async"
       />
       <p className="my-boards-request__eyebrow">
         <span>Find</span> my boards

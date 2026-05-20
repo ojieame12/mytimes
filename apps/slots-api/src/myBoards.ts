@@ -100,7 +100,19 @@ export async function createMyBoardsAdminLink(
         update slotboard.booking_events
         set admin_token_hash = $3
         where id = $1
-          and organizer_email = $2
+          and (
+            lower(organizer_email) = lower($2)
+            or organization_id in (
+              select id
+              from slotboard.organizations
+              where lower(billing_owner_email) = lower($2)
+              union
+              select organization_id as id
+              from slotboard.organization_members
+              where lower(email) = lower($2)
+                and status = 'active'
+            )
+          )
           and deleted_at is null
         returning id, title, organizer_name
       `,
@@ -130,9 +142,22 @@ export async function createMyBoardsAdminLink(
 async function countRecoverableBoards(organizerEmail: string): Promise<number> {
   const result = await getPool().query<{ count: string }>(
     `
+      with recoverable_organizations as (
+        select id
+        from slotboard.organizations
+        where lower(billing_owner_email) = lower($1)
+        union
+        select organization_id as id
+        from slotboard.organization_members
+        where lower(email) = lower($1)
+          and status = 'active'
+      )
       select count(*)::text as count
       from slotboard.booking_events
-      where organizer_email = $1
+      where (
+          lower(organizer_email) = lower($1)
+          or organization_id in (select id from recoverable_organizations)
+        )
         and deleted_at is null
     `,
     [organizerEmail],
@@ -161,13 +186,33 @@ async function readActiveMyBoardsLink(rawToken: string): Promise<MyBoardsLinkRow
 async function readBoardsForEmail(ownerEmail: string): Promise<MyBoardSummary[]> {
   const result = await getPool().query<MyBoardSummaryRow>(
     `
-      with ranked_slots as (
+      with recoverable_organizations as (
+        select id
+        from slotboard.organizations
+        where lower(billing_owner_email) = lower($1)
+        union
+        select organization_id as id
+        from slotboard.organization_members
+        where lower(email) = lower($1)
+          and status = 'active'
+      ),
+      recoverable_events as (
+        select e.*
+        from slotboard.booking_events e
+        where (
+            lower(e.organizer_email) = lower($1)
+            or e.organization_id in (select id from recoverable_organizations)
+          )
+          and e.deleted_at is null
+      ),
+      ranked_slots as (
         select
           s.id,
           s.event_id,
           s.status,
           row_number() over (partition by s.event_id order by s.starts_at asc, s.id asc)::int as publish_rank
         from slotboard.time_slots s
+        join recoverable_events e on e.id = s.event_id
       )
       select
         e.id,
@@ -187,12 +232,18 @@ async function readBoardsForEmail(ownerEmail: string): Promise<MyBoardSummary[]>
             and b.id is null
         )::int as open_slots,
         count(distinct b.id)::int as booking_count
-      from slotboard.booking_events e
+      from recoverable_events e
       left join ranked_slots rs on rs.event_id = e.id
       left join slotboard.bookings b on b.slot_id = rs.id and b.cancelled_at is null
-      where e.organizer_email = $1
-        and e.deleted_at is null
-      group by e.id
+      group by
+        e.id,
+        e.title,
+        e.status,
+        e.plan_key,
+        e.payment_status,
+        e.slot_limit,
+        e.created_at,
+        e.expires_at
       order by e.created_at desc
     `,
     [ownerEmail],

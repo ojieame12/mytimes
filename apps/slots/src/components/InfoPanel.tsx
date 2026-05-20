@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import '../styles/info-panel.css';
 
 /* ─── InfoPanel ───────────────────────────────────────────
  * Letterpress mini-card used in the booking page side rail.

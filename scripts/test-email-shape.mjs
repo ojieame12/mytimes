@@ -1,4 +1,6 @@
 import {
+  adminLinkEmailCopy,
+  buildBookingConfirmationEmailMessage,
   cancellationParticipantEmailShape,
   eventCreatedDetailRows,
   renderEmailHtml,
@@ -76,15 +78,135 @@ assert(
 );
 assert(Boolean(attachments?.[0]?.content), "expected Resend attachment payload to include encoded content");
 
+const recoveryAdminCopy = adminLinkEmailCopy({
+  reason: "recovery",
+  eventTitle: "Design Lead Round",
+});
+assert(
+  recoveryAdminCopy.subject === "Admin link recovery: Design Lead Round",
+  "expected recovery admin email to keep recovery subject",
+);
+
+const selfRotatedAdminCopy = adminLinkEmailCopy({
+  reason: "self_rotation",
+  eventTitle: "Design Lead Round",
+});
+assert(
+  selfRotatedAdminCopy.subject === "Admin URL rotated: Design Lead Round",
+  "expected self-rotated admin email to use rotation subject",
+);
+assert(
+  selfRotatedAdminCopy.footerNote.includes("organizer dashboard"),
+  "expected self-rotated admin email to name the organizer dashboard",
+);
+
+const accountRotatedAdminCopy = adminLinkEmailCopy({
+  reason: "account_rotation",
+  eventTitle: "Design Lead Round",
+});
+assert(
+  accountRotatedAdminCopy.subject === "Private admin URL replaced: Design Lead Round",
+  "expected account-rotated admin email to use replacement subject",
+);
+assert(
+  accountRotatedAdminCopy.htmlIntro.includes("Your signed-in dashboard stays open"),
+  "expected account-rotated admin email to explain account session remains valid",
+);
+
 const html = renderEmailHtml({
   eyebrow: "Shape test",
   title: "Email shape",
   body: "<p>Email body.</p>",
   primaryCta: { href: "https://mytimes.co", label: "Open mytimes" },
+  calendarCtas: [
+    { href: "https://calendar.google.com/calendar/render?action=TEMPLATE", label: "Google Calendar" },
+    { href: "https://outlook.live.com/calendar/0/deeplink/compose", label: "Outlook.com" },
+    { href: "webcal://mytimes.co/api/slotboard/manage/test/calendar.ics", label: "Apple / iCal" },
+  ],
+  secondaryCta: { href: "https://mytimes.co/api/slotboard/manage/test/calendar.ics", label: "Add to calendar" },
   detailRows,
 });
 assert(!html.includes("&mdash;"), "expected rendered email HTML to avoid em dash entities");
 assert(!html.includes("#FFFFFF"), "expected rendered email HTML to avoid pure white");
+assert(html.includes("Add to calendar"), "expected rendered email HTML to support secondary calendar CTA");
+assert(html.includes("Google Calendar"), "expected rendered email HTML to support calendar action buttons");
+assert(html.includes("Outlook.com"), "expected rendered email HTML to include Outlook calendar action");
+assert(html.includes("Apple / iCal"), "expected rendered email HTML to include Apple calendar action");
+assert(
+  html.includes("/api/slotboard/manage/test/calendar.ics"),
+  "expected rendered email HTML to include hosted calendar link",
+);
+
+const bookingConfirmation = buildBookingConfirmationEmailMessage({
+  event: {
+    id: "event-email-shape",
+    title: "Design Lead Round",
+    description: "Portfolio review.",
+    organizerName: "Mina Kapoor",
+    organizerEmail: "mina@example.com",
+    avatarStyle: "notionists",
+    timezone: "Africa/Johannesburg",
+    durationMinutes: 30,
+    intervalMinutes: 30,
+    allowMultipleBookings: false,
+    status: "active",
+    planKey: "free",
+    paymentStatus: "not_required",
+    bookingLimit: 25,
+    slotLimit: 60,
+    createdAt: "2026-05-17T10:00:00.000Z",
+    updatedAt: "2026-05-17T10:00:00.000Z",
+  },
+  slot: {
+    id: "slot-email-shape",
+    eventId: "event-email-shape",
+    startsAt: "2026-05-18T08:00:00.000Z",
+    endsAt: "2026-05-18T08:30:00.000Z",
+    state: "booked",
+  },
+  booking: {
+    id: "booking-email-shape",
+    eventId: "event-email-shape",
+    slotId: "slot-email-shape",
+    participantName: "Anya Gupta",
+    participantEmail: "anya@example.com",
+    participantTimezone: "Africa/Johannesburg",
+    participantLocale: "en-ZA",
+    notes: "I may join from a phone.",
+    status: "active",
+    bookedAt: "2026-05-17T10:05:00.000Z",
+    icsSequence: 0,
+  },
+  manageURL: "https://mytimes.co/m/test-manage-token",
+  calendarURL: "https://mytimes.co/api/slotboard/manage/test-manage-token/calendar.ics",
+});
+assert(
+  bookingConfirmation.text.includes("Google Calendar: https://calendar.google.com/calendar/render?"),
+  "expected booking confirmation text to include Google Calendar URL",
+);
+assert(
+  bookingConfirmation.text.includes("Outlook.com: https://outlook.live.com/calendar/0/deeplink/compose?"),
+  "expected booking confirmation text to include Outlook.com calendar URL",
+);
+assert(
+  bookingConfirmation.text.includes("Office 365: https://outlook.office.com/calendar/0/deeplink/compose?"),
+  "expected booking confirmation text to include Office 365 calendar URL",
+);
+assert(
+  bookingConfirmation.text.includes("Apple / iCal: webcal://mytimes.co/api/slotboard/manage/test-manage-token/calendar.ics"),
+  "expected booking confirmation text to include Apple webcal URL",
+);
+assert(
+  bookingConfirmation.html.includes("Google Calendar") &&
+    bookingConfirmation.html.includes("Outlook.com") &&
+    bookingConfirmation.html.includes("Office 365") &&
+    bookingConfirmation.html.includes("Apple / iCal"),
+  "expected booking confirmation HTML to include explicit calendar provider CTAs",
+);
+assert(
+  bookingConfirmation.attachments?.[0]?.content.includes("METHOD:REQUEST"),
+  "expected booking confirmation to keep the .ics attachment",
+);
 
 const emailSource = readFileSync(new URL("../apps/slots-api/src/email.ts", import.meta.url), "utf8");
 assert(!emailSource.includes("&mdash;"), "expected email templates to avoid em dash entities");
@@ -109,6 +231,22 @@ assert(
   emailSource.includes("Verify your mytimes account"),
   "expected email verification email subject to be branded",
 );
+assert(
+  emailSource.includes("calendarURL"),
+  "expected booking email senders to accept hosted calendar URLs",
+);
+assert(
+  emailSource.includes("Add to calendar"),
+  "expected booking confirmation emails to include Add to calendar copy",
+);
+assert(
+  emailSource.includes("calendarCtas"),
+  "expected booking confirmation emails to render multiple calendar CTA buttons",
+);
+assert(
+  emailSource.includes("Remove from calendar"),
+  "expected cancellation emails to include Remove from calendar copy",
+);
 
 console.log(JSON.stringify({
   ok: true,
@@ -118,8 +256,13 @@ console.log(JSON.stringify({
     "participant-cancellation-closed-copy",
     "event-created-duration-and-expiry-details",
     "resend-calendar-content-type",
+    "admin-link-email-reason-copy",
     "email-html-brand-shape",
+    "email-secondary-calendar-cta",
+    "email-calendar-provider-deeplinks",
+    "booking-confirmation-calendar-message",
     "email-template-punctuation",
+    "email-calendar-cta-copy",
     "password-reset-email-registration",
     "password-reset-design-test-variant",
     "email-verification-email-registration",

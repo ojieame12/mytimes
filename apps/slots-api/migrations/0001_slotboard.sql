@@ -181,6 +181,30 @@ create table if not exists slotboard.product_events (
   )
 );
 
+create table if not exists slotboard.contact_leads (
+  id uuid primary key default gen_random_uuid(),
+  intent text not null,
+  name text not null,
+  email text not null,
+  company text,
+  role text,
+  team_size text,
+  message text not null,
+  source_path text,
+  integration_interest text[] not null default '{}',
+  status text not null default 'new',
+  user_agent text,
+  actor_key_hash text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint contact_leads_intent_check check (
+    intent in ('support', 'sales', 'enterprise', 'slack', 'teams', 'security', 'billing')
+  ),
+  constraint contact_leads_status_check check (
+    status in ('new', 'open', 'closed', 'spam')
+  )
+);
+
 alter table slotboard.activity_events
   drop constraint if exists activity_events_type_check;
 
@@ -396,8 +420,25 @@ create index if not exists auth_verifications_identifier_idx
 create index if not exists booking_events_owner_user_id_idx
   on slotboard.booking_events(owner_user_id);
 
+create index if not exists booking_events_organizer_email_lower_idx
+  on slotboard.booking_events(lower(organizer_email))
+  where deleted_at is null;
+
+create index if not exists booking_events_organizer_active_lower_idx
+  on slotboard.booking_events(lower(organizer_email), status, created_at desc)
+  where deleted_at is null;
+
 create index if not exists booking_events_plan_payment_idx
   on slotboard.booking_events(plan_key, payment_status);
+
+create index if not exists contact_leads_created_at_idx
+  on slotboard.contact_leads(created_at desc);
+
+create index if not exists contact_leads_email_idx
+  on slotboard.contact_leads(lower(email));
+
+create index if not exists contact_leads_status_idx
+  on slotboard.contact_leads(status, created_at desc);
 
 create unique index if not exists booking_events_stripe_checkout_session_id_idx
   on slotboard.booking_events(stripe_checkout_session_id)
@@ -520,6 +561,155 @@ create unique index if not exists custom_domains_owner_user_unique_idx
 create index if not exists custom_domains_owner_email_idx
   on slotboard.custom_domains(owner_email);
 
+create table if not exists slotboard.organizations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  slug text,
+  billing_owner_user_id text references slotboard.auth_users(id) on delete set null,
+  billing_owner_email text not null,
+  seat_limit int not null default 10,
+  status text not null default 'active',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint organizations_status_check check (status in ('active', 'suspended', 'cancelled')),
+  constraint organizations_seat_limit_check check (seat_limit > 0)
+);
+
+create unique index if not exists organizations_slug_lower_idx
+  on slotboard.organizations(lower(slug))
+  where slug is not null;
+
+create index if not exists organizations_billing_owner_user_id_idx
+  on slotboard.organizations(billing_owner_user_id);
+
+create index if not exists organizations_billing_owner_email_idx
+  on slotboard.organizations(lower(billing_owner_email));
+
+create table if not exists slotboard.organization_members (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references slotboard.organizations(id) on delete cascade,
+  user_id text references slotboard.auth_users(id) on delete set null,
+  email text not null,
+  role text not null,
+  status text not null default 'invited',
+  invited_by_user_id text references slotboard.auth_users(id) on delete set null,
+  invited_at timestamptz not null default now(),
+  accepted_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint organization_members_role_check check (role in ('owner', 'admin', 'organizer')),
+  constraint organization_members_status_check check (status in ('invited', 'active', 'removed'))
+);
+
+create unique index if not exists organization_members_org_email_unique_idx
+  on slotboard.organization_members(organization_id, lower(email));
+
+create unique index if not exists organization_members_org_user_unique_idx
+  on slotboard.organization_members(organization_id, user_id)
+  where user_id is not null;
+
+create index if not exists organization_members_user_id_idx
+  on slotboard.organization_members(user_id)
+  where user_id is not null;
+
+create index if not exists organization_members_email_idx
+  on slotboard.organization_members(lower(email));
+
+create index if not exists organization_members_active_email_idx
+  on slotboard.organization_members(lower(email), organization_id)
+  where status = 'active';
+
+create table if not exists slotboard.notification_integrations (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references slotboard.organizations(id) on delete cascade,
+  provider text not null,
+  destination_label text not null,
+  encrypted_secret text not null,
+  status text not null default 'active',
+  created_by_user_id text references slotboard.auth_users(id) on delete set null,
+  last_tested_at timestamptz,
+  last_error text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint notification_integrations_provider_check check (provider in ('slack', 'teams')),
+  constraint notification_integrations_status_check check (status in ('active', 'disabled', 'failed'))
+);
+
+create index if not exists notification_integrations_organization_idx
+  on slotboard.notification_integrations(organization_id, provider, status);
+
+create table if not exists slotboard.notification_delivery_logs (
+  id uuid primary key default gen_random_uuid(),
+  integration_id uuid references slotboard.notification_integrations(id) on delete set null,
+  organization_id uuid references slotboard.organizations(id) on delete set null,
+  event_id uuid references slotboard.booking_events(id) on delete cascade,
+  booking_id uuid references slotboard.bookings(id) on delete set null,
+  notification_type text not null,
+  provider text not null,
+  destination_label text,
+  status text not null,
+  provider_status int,
+  provider_response text,
+  error text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint notification_delivery_logs_type_check check (
+    notification_type in ('test', 'booking_created', 'booking_cancelled', 'booking_rescheduled', 'slot_closed', 'slot_reopened')
+  ),
+  constraint notification_delivery_logs_provider_check check (provider in ('slack', 'teams')),
+  constraint notification_delivery_logs_status_check check (status in ('sent', 'failed', 'skipped'))
+);
+
+create index if not exists notification_delivery_logs_event_idx
+  on slotboard.notification_delivery_logs(event_id, created_at desc);
+
+create table if not exists slotboard.event_templates (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references slotboard.organizations(id) on delete cascade,
+  created_by_user_id text references slotboard.auth_users(id) on delete set null,
+  name text not null,
+  title text not null,
+  description text not null default '',
+  timezone text not null,
+  meeting_duration_minutes int not null,
+  interval_minutes int not null,
+  allow_multiple_bookings boolean not null default false,
+  availability_config jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists event_templates_organization_id_idx
+  on slotboard.event_templates(organization_id, created_at desc);
+
+alter table slotboard.booking_events
+  add column if not exists organization_id uuid references slotboard.organizations(id) on delete set null;
+
+alter table slotboard.billing_customers
+  add column if not exists organization_id uuid references slotboard.organizations(id) on delete set null;
+
+alter table slotboard.subscriptions
+  add column if not exists organization_id uuid references slotboard.organizations(id) on delete set null;
+
+alter table slotboard.custom_domains
+  add column if not exists organization_id uuid references slotboard.organizations(id) on delete set null;
+
+create index if not exists booking_events_organization_id_idx
+  on slotboard.booking_events(organization_id)
+  where organization_id is not null;
+
+create index if not exists billing_customers_organization_id_idx
+  on slotboard.billing_customers(organization_id)
+  where organization_id is not null;
+
+create index if not exists subscriptions_organization_id_idx
+  on slotboard.subscriptions(organization_id)
+  where organization_id is not null;
+
+create index if not exists custom_domains_organization_id_idx
+  on slotboard.custom_domains(organization_id)
+  where organization_id is not null;
+
 create or replace function slotboard.touch_updated_at()
 returns trigger
 language plpgsql
@@ -575,6 +765,11 @@ create trigger product_events_touch_updated_at
 before update on slotboard.product_events
 for each row execute function slotboard.touch_updated_at();
 
+drop trigger if exists contact_leads_touch_updated_at on slotboard.contact_leads;
+create trigger contact_leads_touch_updated_at
+before update on slotboard.contact_leads
+for each row execute function slotboard.touch_updated_at();
+
 drop trigger if exists billing_customers_touch_updated_at on slotboard.billing_customers;
 create trigger billing_customers_touch_updated_at
 before update on slotboard.billing_customers
@@ -598,4 +793,29 @@ for each row execute function slotboard.touch_updated_at();
 drop trigger if exists custom_domains_touch_updated_at on slotboard.custom_domains;
 create trigger custom_domains_touch_updated_at
 before update on slotboard.custom_domains
+for each row execute function slotboard.touch_updated_at();
+
+drop trigger if exists organizations_touch_updated_at on slotboard.organizations;
+create trigger organizations_touch_updated_at
+before update on slotboard.organizations
+for each row execute function slotboard.touch_updated_at();
+
+drop trigger if exists organization_members_touch_updated_at on slotboard.organization_members;
+create trigger organization_members_touch_updated_at
+before update on slotboard.organization_members
+for each row execute function slotboard.touch_updated_at();
+
+drop trigger if exists notification_integrations_touch_updated_at on slotboard.notification_integrations;
+create trigger notification_integrations_touch_updated_at
+before update on slotboard.notification_integrations
+for each row execute function slotboard.touch_updated_at();
+
+drop trigger if exists notification_delivery_logs_touch_updated_at on slotboard.notification_delivery_logs;
+create trigger notification_delivery_logs_touch_updated_at
+before update on slotboard.notification_delivery_logs
+for each row execute function slotboard.touch_updated_at();
+
+drop trigger if exists event_templates_touch_updated_at on slotboard.event_templates;
+create trigger event_templates_touch_updated_at
+before update on slotboard.event_templates
 for each row execute function slotboard.touch_updated_at();

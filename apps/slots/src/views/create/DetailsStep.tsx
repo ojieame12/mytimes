@@ -281,7 +281,7 @@ function AvatarStylePicker({
 }) {
   return (
     <div className="avatar-style-picker" role="radiogroup" aria-label="Avatar style">
-      {AVATAR_STYLES.map((option) => {
+      {AVATAR_STYLES.map((option, index) => {
         const isSelected = option.id === value;
         return (
           <button
@@ -292,7 +292,12 @@ function AvatarStylePicker({
             className={`avatar-style-picker__option${isSelected ? ' is-selected' : ''}`}
             onClick={() => onChange(option.id)}
           >
-            <Avatar seed={seed} style={option.id} size={40} />
+            <Avatar
+              seed={seed}
+              style={option.id}
+              size={40}
+              loadDelayMs={isSelected ? 700 : 4600 + index * 700}
+            />
             <span className="avatar-style-picker__option-text">
               <span className="avatar-style-picker__option-label">
                 {option.label}

@@ -92,7 +92,9 @@ export function InlineSlotForm({
   const idempotencyKeyRef = useRef<string | undefined>();
   const submittingRef = useRef(false);
   const onClaimedRef = useRef(onClaimed);
+  const onCloseRef = useRef(onClose);
   onClaimedRef.current = onClaimed;
+  onCloseRef.current = onClose;
 
   const startsAt = useMemo(() => new Date(slot.startsAt), [slot.startsAt]);
   const endsAt = useMemo(() => new Date(slot.endsAt), [slot.endsAt]);
@@ -132,18 +134,13 @@ export function InlineSlotForm({
     };
   }, []);
 
-  /* Focus first field when the form mounts inside the band. */
   useEffect(() => {
-    const first = document.querySelector<HTMLInputElement>(
-      '.day-band.is-selected input[name="participantName"]',
-    );
-    first?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !submitting) onClose();
+      if (e.key === 'Escape' && !submittingRef.current) onCloseRef.current();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose, submitting]);
+  }, []);
 
   const submit = async () => {
     if (submittingRef.current) return;
@@ -267,6 +264,7 @@ export function InlineSlotForm({
                   describedBy={describedBy}
                   invalid={invalid}
                   autoComplete="name"
+                  autoFocus
                   maxLength={160}
                   value={participantName}
                   onChange={(e) => {
@@ -433,7 +431,7 @@ function confirmationDeliveryCopy(delivery?: EmailDeliveryResult): string {
   if (delivery.provider === 'console') {
     return 'Your booking is saved. Email delivery is not configured here, so keep the manage link below.';
   }
-  return "We've sent a confirmation email with a calendar invite.";
+  return "We've sent a confirmation email with calendar buttons and an .ics file.";
 }
 
 function makeClaimIdempotencyKey(): string {

@@ -9,7 +9,6 @@ const checkWWW = process.env.SLOTBOARD_SKIP_WWW_CHECK !== "true";
 const rootDomain = process.env.SLOTBOARD_ROOT_DOMAIN || "mytimes.co";
 const wwwDomain = process.env.SLOTBOARD_WWW_DOMAIN || "www.mytimes.co";
 const apiDomain = process.env.SLOTBOARD_API_DOMAIN || "api.mytimes.co";
-const apiCnameTarget = process.env.SLOTBOARD_API_CNAME_TARGET || "i099f43h.up.railway.app";
 const requireApiCustomDomain = process.env.SLOTBOARD_REQUIRE_API_CUSTOM_DOMAIN === "true";
 
 const failures = [];
@@ -32,23 +31,23 @@ if (bundleURL) {
   const bundle = await fetchText(bundleURL);
   assertStatus(bundle, 200, "frontend JS bundle loads");
   assertHeaderIncludes(bundle, "cache-control", "immutable", "frontend JS bundle uses immutable cache");
-  bundleText = bundle.text;
-  assertIncludes(bundle.text, "View demo board", "live bundle has demo pricing CTA");
-  assertIncludes(bundle.text, "Preview only", "live bundle has read-only demo submit label");
-  assertIncludes(bundle.text, "This is a demo board", "live bundle has demo submit guard copy");
-  assertIncludes(bundle.text, "$480", "live bundle has annual company price");
-  assertIncludes(bundle.text, "$49 monthly available", "live bundle has monthly company copy");
-  assertIncludes(bundle.text, "mytimes.co", "live bundle uses mytimes.co examples");
-  assertIncludes(bundle.text, "Reset your password", "live bundle has password reset request copy");
-  assertIncludes(bundle.text, "Choose a new password", "live bundle has password reset completion copy");
-  assertIncludes(bundle.text, "Check your email", "live bundle has verification sent copy");
-  assertIncludes(bundle.text, "Email verified", "live bundle has email verification success copy");
-  assertIncludes(bundle.text, "Verification link expired", "live bundle has email verification error copy");
-  assertExcludes(bundle.text, "Email previews", "live bundle does not contain email preview copy");
-  assertExcludes(bundle.text, "mytimes.app", "live bundle does not contain old mytimes.app origin");
-  assertExcludes(bundle.text, "MT-2026", "live bundle does not contain fake receipt ids");
-  assertExcludes(bundle.text, "View live board", "live bundle does not label demos as live");
-  assertExcludes(bundle.text, "See a live board", "live bundle does not label demos as live");
+  bundleText = await fetchBundleCorpus(bundleURL, bundle.text);
+  assertIncludes(bundleText, "View demo board", "live bundle has demo pricing CTA");
+  assertIncludes(bundleText, "Preview only", "live bundle has read-only demo submit label");
+  assertIncludes(bundleText, "This is a demo board", "live bundle has demo submit guard copy");
+  assertIncludes(bundleText, "$480", "live bundle has annual company price");
+  assertIncludes(bundleText, "$49 monthly available", "live bundle has monthly company copy");
+  assertIncludes(bundleText, "mytimes.co", "live bundle uses mytimes.co examples");
+  assertIncludes(bundleText, "Reset your password", "live bundle has password reset request copy");
+  assertIncludes(bundleText, "Choose a new password", "live bundle has password reset completion copy");
+  assertIncludes(bundleText, "Check your email", "live bundle has verification sent copy");
+  assertIncludes(bundleText, "Email verified", "live bundle has email verification success copy");
+  assertIncludes(bundleText, "Verification link expired", "live bundle has email verification error copy");
+  assertExcludes(bundleText, "Email previews", "live bundle does not contain email preview copy");
+  assertExcludes(bundleText, "mytimes.app", "live bundle does not contain old mytimes.app origin");
+  assertExcludes(bundleText, "MT-2026", "live bundle does not contain fake receipt ids");
+  assertExcludes(bundleText, "View live board", "live bundle does not label demos as live");
+  assertExcludes(bundleText, "See a live board", "live bundle does not label demos as live");
 }
 
 apiURL ??= inferApiURLFromBundle(bundleText) ?? frontendURL;
@@ -106,6 +105,29 @@ assert(email.json?.email?.provider === "resend", "email provider must be resend"
 assert(email.json?.email?.senderEmail === "mytimes <bookings@mytimes.co>", "sender must use bookings@mytimes.co");
 checked.push("verified Resend provider and sender");
 
+const notifications = await fetchJson(`${apiURL}/api/slotboard/ops/notification-readiness`);
+assertStatus(notifications, 200, "notification readiness endpoint loads");
+assertApiSecurityHeaders(notifications, "notification readiness endpoint");
+assertHeader(notifications, "cache-control", "no-store", "notification readiness disables cache");
+assert(notifications.json?.notifications?.productionReady === true, "notification readiness must be productionReady=true");
+assert(notifications.json?.notifications?.slackWebhookSupported === true, "Slack webhook notifications must be supported");
+assert(notifications.json?.notifications?.teamsWebhookSupported === true, "Teams webhook notifications must be supported");
+checked.push("verified Slack and Teams notification readiness");
+
+const observability = await fetchJson(`${apiURL}/api/slotboard/ops/observability-readiness`);
+assertStatus(observability, 200, "observability readiness endpoint loads");
+assertApiSecurityHeaders(observability, "observability readiness endpoint");
+assertHeader(observability, "cache-control", "no-store", "observability readiness disables cache");
+assert(observability.json?.observability?.provider === "sentry", "observability provider must be Sentry");
+assert(typeof observability.json?.observability?.productionReady === "boolean", "observability readiness must include productionReady");
+checked.push("verified observability readiness endpoint");
+
+const apiReady = await fetchJson(`${apiURL}/readyz`);
+assertStatus(apiReady, 200, "api readyz loads");
+assertApiSecurityHeaders(apiReady, "api readyz");
+assert(apiReady.json?.notifications?.productionReady === true, "api readyz must include production-ready notifications");
+checked.push("verified readyz includes notification readiness");
+
 await assertCorsPreflight();
 
 if (failures.length > 0) {
@@ -152,7 +174,10 @@ async function assertPublicAddressOrCname(hostname, label) {
 async function checkApiCustomDomain() {
   const apiURLHostname = new URL(apiURL).hostname;
   if (apiURLHostname === apiDomain || requireApiCustomDomain) {
-    await assertCnameRecord(apiDomain, apiCnameTarget, "api domain points at Railway");
+    await assertPublicAddressOrCname(apiDomain, "api custom domain has public DNS records");
+    const brandedApi = await fetchJson(`https://${apiDomain}/readyz`);
+    assertStatus(brandedApi, 200, "api custom domain readyz loads");
+    assert(brandedApi.json?.ok === true, "api custom domain readyz must return ok=true");
     return;
   }
 
@@ -160,6 +185,14 @@ async function checkApiCustomDomain() {
   checked.push("api custom domain is optional for current frontend API URL");
   if (records.a.length === 0 && records.aaaa.length === 0 && records.cname.length === 0) {
     warnings.push(`${apiDomain} is not live; current frontend API target is ${apiURLHostname}`);
+    return;
+  }
+
+  const brandedApi = await fetchJson(`https://${apiDomain}/readyz`);
+  if (brandedApi.status !== 200 || brandedApi.json?.ok !== true) {
+    warnings.push(
+      `${apiDomain} has DNS but is not serving the API; same-origin ${apiURLHostname} remains the active API target`,
+    );
   }
 }
 
@@ -185,6 +218,28 @@ function inferApiURLFromBundle(bundleText) {
   if (!bundleText) return undefined;
   const explicitApiURL = bundleText.match(/https:\/\/(?:api-production-[a-z0-9-]+\.up\.railway\.app|api\.mytimes\.co)/i)?.[0];
   return explicitApiURL ? normalizeURL(explicitApiURL) : undefined;
+}
+
+async function fetchBundleCorpus(entryBundleURL, entryText) {
+  const chunks = new Map([[entryBundleURL, entryText]]);
+  const queue = [entryBundleURL];
+
+  while (queue.length > 0 && chunks.size < 80) {
+    const currentURL = queue.shift();
+    const currentText = chunks.get(currentURL) ?? "";
+    const matches = currentText.matchAll(/(?:\.\/)?assets\/[A-Za-z0-9_.-]+\.js/g);
+    for (const match of matches) {
+      const nextURL = new URL(match[0].replace(/^\.\//, ""), frontendURL).toString();
+      if (chunks.has(nextURL)) continue;
+      const chunk = await fetchText(nextURL);
+      if (chunk.status !== 200) continue;
+      chunks.set(nextURL, chunk.text);
+      queue.push(nextURL);
+    }
+  }
+
+  checked.push(`frontend JS corpus scanned ${chunks.size} chunks`);
+  return [...chunks.values()].join("\n");
 }
 
 async function readDnsRecords(hostname) {

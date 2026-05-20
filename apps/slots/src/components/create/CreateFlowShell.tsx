@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { AppShell } from '../AppShell';
 import { Stepper, type StepKey, stepIndex } from './Stepper';
 import { navigate } from '../../lib/routing';
+import '../../styles/create-flow.css';
 
 /* ─── CreateFlowShell ─────────────────────────────────
  * Wraps each wizard step. Reuses AppShell (top bar +

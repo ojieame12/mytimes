@@ -102,6 +102,15 @@ assert(
   "expected account event list to include the board created while signed in",
 );
 
+const recoveredAdminLinks = await request("/api/slotboard/recover", {
+  method: "POST",
+  expectedStatus: 202,
+  json: {
+    organizerEmail: ownerEmail,
+  },
+});
+assert(recoveredAdminLinks.ok === true, "expected admin link recovery to accept the board owner email");
+
 const ownerDashboard = await request(`/api/slotboard/account/events/${created.event.id}`, {
   jar: ownerJar,
 });
@@ -240,6 +249,7 @@ console.log(
         "account-custom-domain-lock",
         "authenticated-create-ownership",
         "account-event-list",
+        "admin-link-recovery",
         "account-dashboard",
         "account-csrf-origin-rejection",
         "account-update",

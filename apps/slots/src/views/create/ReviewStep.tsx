@@ -8,6 +8,11 @@ import { ApiClientError, createEventFromDraft, storeCreatedEvent } from '../../l
 import { createBoardErrorMessage } from '../../lib/errorMessages';
 import type { BookingEvent, TimeSlot } from '../../lib/types';
 
+type SubmitErrorState = {
+  message: string;
+  code?: string;
+};
+
 /* ─── Step 3 — /new/review ─────────────────────────────
  * Render the public booking page exactly as participants
  * will see it, using the user's draft + the slots
@@ -17,7 +22,7 @@ import type { BookingEvent, TimeSlot } from '../../lib/types';
 export function ReviewStep() {
   const { draft } = useWizardDraft();
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | undefined>();
+  const [submitError, setSubmitError] = useState<SubmitErrorState | undefined>();
 
   const detailsErrors = useMemo(() => validateDetails(draft), [draft]);
   const availabilityErrors = useMemo(() => validateAvailability(draft), [draft]);
@@ -83,11 +88,9 @@ export function ReviewStep() {
       storeCreatedEvent(created);
       navigate('/new/done');
     } catch (error) {
-      setSubmitError(
-        error instanceof ApiClientError
-          ? createBoardErrorMessage(error)
-          : 'Could not post this board. Check the API is running and try again.',
-      );
+      setSubmitError(error instanceof ApiClientError
+        ? { code: error.code, message: createBoardErrorMessage(error) }
+        : { message: 'Could not post this board. Check the API is running and try again.' });
     } finally {
       setSubmitting(false);
     }
@@ -97,6 +100,8 @@ export function ReviewStep() {
     const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     return labels[n] ?? '';
   };
+
+  const activeBoardLimitReached = submitError?.code === 'active_board_limit_reached';
 
   return (
     <CreateFlowShell
@@ -129,7 +134,7 @@ export function ReviewStep() {
             </header>
             <dl className="review-summary__row">
               <dt>Title</dt>
-              <dd>{draft.title || '—'}</dd>
+              <dd>{draft.title || 'Not set'}</dd>
               <dt>Duration</dt>
               <dd>
                 <span className="mono">{draft.durationMinutes}</span> minutes
@@ -140,8 +145,8 @@ export function ReviewStep() {
               </dd>
               <dt>Organizer</dt>
               <dd>
-                {draft.organizerName || '—'}
-                <span className="sub">{draft.organizerEmail || '—'}</span>
+                {draft.organizerName || 'Not set'}
+                <span className="sub">{draft.organizerEmail || 'Not set'}</span>
               </dd>
               <dt>Multiple</dt>
               <dd>{draft.allowMultipleBookings ? 'Allowed' : 'One per person'}</dd>
@@ -165,7 +170,7 @@ export function ReviewStep() {
                 <span className="mono">{draft.startDate}</span> → <span className="mono">{draft.endDate}</span>
               </dd>
               <dt>Days</dt>
-              <dd>{draft.weekdays.length === 0 ? '—' : draft.weekdays.map(weekdayLabel).join(' · ')}</dd>
+              <dd>{draft.weekdays.length === 0 ? 'Not set' : draft.weekdays.map(weekdayLabel).join(' · ')}</dd>
               <dt>Window</dt>
               <dd>
                 <span className="mono">{draft.dailyStart}</span> – <span className="mono">{draft.dailyEnd}</span>
@@ -213,13 +218,41 @@ export function ReviewStep() {
         >
           ← Back
         </button>
-        <span className={`create-step__nav-summary${blockedFromPosting || submitError ? ' is-error' : ''}`}>
-          {submitError
-            ? submitError
-            : blockedFromPosting
-            ? 'Some fields are missing. Click to jump back.'
-            : <>Ready to post · <span className="mono">{previewSlots.length}</span> slot{previewSlots.length === 1 ? '' : 's'} will be created</>}
-        </span>
+        <div
+          className={[
+            'create-step__nav-summary',
+            blockedFromPosting || submitError ? 'is-error' : '',
+            activeBoardLimitReached ? 'create-step__nav-summary--stack' : '',
+          ].filter(Boolean).join(' ')}
+        >
+          {activeBoardLimitReached ? (
+            <>
+              <span>{submitError.message}</span>
+              <span className="create-step__nav-error-actions">
+                <button
+                  type="button"
+                  className="create-step__nav-error-action create-step__nav-error-action--primary"
+                  onClick={() => navigate('/my-boards/request')}
+                >
+                  Find previous board
+                </button>
+                <button
+                  type="button"
+                  className="create-step__nav-error-action"
+                  onClick={() => navigate('/pricing')}
+                >
+                  See Company
+                </button>
+              </span>
+            </>
+          ) : submitError ? (
+            submitError.message
+          ) : blockedFromPosting ? (
+            'Some fields are missing. Click to jump back.'
+          ) : (
+            <>Ready to post · <span className="mono">{previewSlots.length}</span> slot{previewSlots.length === 1 ? '' : 's'} will be created</>
+          )}
+        </div>
         <button
           type="button"
           className="create-step__nav-next"

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { navigate } from '../lib/routing';
 import { Avatar } from '../components/Avatar';
+import '../styles/pricing.css';
 
 /* ─── PricingPage ─────────────────────────────────────────
  * The /pricing page is mytimes' main conversion surface.
@@ -22,8 +23,8 @@ import { Avatar } from '../components/Avatar';
  *  1. Hero (60/40) — title + CTAs on the left, real product
  *     link cards on the right so the buyer literally sees the
  *     public link + admin link workflow.
- *  2. Comparison table — two price-headers across the top
- *     (Free / Company), then a single feature matrix below.
+ *  2. Comparison table — price headers across the top
+ *     (Free / Company / Enterprise), then a single feature matrix below.
  *  3. Trust strip — three calm reassurances.
  *  4. FAQ — native <details> accordions on peach surface.
  *  5. Founder note — DiceBear avatar + signed paragraph.
@@ -38,7 +39,7 @@ import { Avatar } from '../components/Avatar';
  */
 
 type Tier = {
-  key: 'free' | 'company';
+  key: 'free' | 'company' | 'enterprise';
   name: string;
   price: string;
   cadence: string;
@@ -51,6 +52,10 @@ type Tier = {
   priceAnchor?: string;
   foundingNote?: string;
   mobileFeatures: string[];
+  /** True when the price reads as a word (e.g. "Custom") rather than a
+   *  numeric amount. Switches the price-token typography from mono
+   *  numerals to the display family so it doesn't pretend to be a price. */
+  priceIsWord?: boolean;
 };
 
 const tiers: Tier[] = [
@@ -64,10 +69,11 @@ const tiers: Tier[] = [
     ctaVariant: 'ghost',
     onSelect: () => navigate('/new'),
     mobileFeatures: [
-      '2 active boards',
-      '25 bookings per board',
-      '60 published slots',
-      '60-day active window',
+      '1 active board',
+      '15 bookings',
+      '30 published slots',
+      '3-day active window',
+      'My boards email recovery',
       'Per-board CSV export',
     ],
   },
@@ -89,6 +95,23 @@ const tiers: Tier[] = [
       'Custom company subdomain',
     ],
   },
+  {
+    key: 'enterprise',
+    name: 'Enterprise',
+    price: 'Custom',
+    cadence: '',
+    blurb: 'For teams that need integration setup, SSO, and contract paperwork.',
+    cta: 'Talk to sales',
+    ctaVariant: 'ghost',
+    onSelect: () => navigate('/contact?intent=enterprise'),
+    priceIsWord: true,
+    mobileFeatures: [
+      'Slack & Teams setup',
+      'SSO and security review',
+      'Custom booking limits',
+      'Annual contract paperwork',
+    ],
+  },
 ];
 
 /* Comparison matrix. A cell can be:
@@ -102,38 +125,51 @@ type Cell =
   | { kind: 'value'; value: string }
   | { kind: 'text'; value: string };
 
-const featureRows: { feature: string; cells: [Cell, Cell] }[] = [
+const featureRows: { feature: string; cells: [Cell, Cell, Cell] }[] = [
   {
     feature: 'Active boards',
     cells: [
-      { kind: 'value', value: '2' },
+      { kind: 'value', value: '1' },
       { kind: 'text', value: 'Unlimited' },
+      { kind: 'text', value: 'Custom' },
     ],
   },
   {
     feature: 'Bookings per board',
     cells: [
-      { kind: 'value', value: '25' },
+      { kind: 'value', value: '15' },
       { kind: 'text', value: 'Unlimited' },
+      { kind: 'text', value: 'Custom' },
     ],
   },
   {
     feature: 'Published slots',
     cells: [
-      { kind: 'value', value: '60' },
+      { kind: 'value', value: '30' },
       { kind: 'text', value: 'Unlimited' },
+      { kind: 'text', value: 'Custom' },
+    ],
+  },
+  {
+    feature: 'Booking window',
+    cells: [
+      { kind: 'value', value: '3 days' },
+      { kind: 'text', value: 'Unlimited' },
+      { kind: 'text', value: 'Custom' },
     ],
   },
   {
     feature: 'Active window',
     cells: [
-      { kind: 'value', value: '60 days' },
+      { kind: 'value', value: '3 days' },
       { kind: 'value', value: '12 months' },
+      { kind: 'text', value: 'Custom' },
     ],
   },
   {
     feature: 'Per-board CSV export',
     cells: [
+      { kind: 'check' },
       { kind: 'check' },
       { kind: 'check' },
     ],
@@ -143,6 +179,7 @@ const featureRows: { feature: string; cells: [Cell, Cell] }[] = [
     cells: [
       { kind: 'dash' },
       { kind: 'check' },
+      { kind: 'check' },
     ],
   },
   {
@@ -150,26 +187,64 @@ const featureRows: { feature: string; cells: [Cell, Cell] }[] = [
     cells: [
       { kind: 'check' },
       { kind: 'check' },
+      { kind: 'check' },
     ],
   },
   {
     feature: 'Admin link recovery',
-    cells: [{ kind: 'check' }, { kind: 'text', value: 'Company-wide' }],
+    cells: [
+      { kind: 'check' },
+      { kind: 'text', value: 'Company-wide' },
+      { kind: 'text', value: 'Company-wide' },
+    ],
   },
   {
     feature: 'Organizer seats',
     cells: [
       { kind: 'value', value: '1' },
       { kind: 'value', value: '10' },
+      { kind: 'text', value: 'Custom' },
     ],
   },
   {
     feature: 'Custom company subdomain',
-    cells: [{ kind: 'dash' }, { kind: 'check' }],
+    cells: [
+      { kind: 'dash' },
+      { kind: 'check' },
+      { kind: 'check' },
+    ],
+  },
+  {
+    feature: 'Slack & Teams setup',
+    cells: [
+      { kind: 'dash' },
+      { kind: 'dash' },
+      { kind: 'check' },
+    ],
+  },
+  {
+    feature: 'SSO + security review',
+    cells: [
+      { kind: 'dash' },
+      { kind: 'dash' },
+      { kind: 'check' },
+    ],
+  },
+  {
+    feature: 'Procurement contracts',
+    cells: [
+      { kind: 'dash' },
+      { kind: 'dash' },
+      { kind: 'check' },
+    ],
   },
   {
     feature: 'Made with mytimes footer',
-    cells: [{ kind: 'text', value: 'Shown' }, { kind: 'text', value: 'Removed' }],
+    cells: [
+      { kind: 'text', value: 'Shown' },
+      { kind: 'text', value: 'Removed' },
+      { kind: 'text', value: 'Removed' },
+    ],
   },
 ];
 
@@ -257,17 +332,28 @@ const faqs: { q: string; a: ReactNode }[] = [
       </>
     ),
   },
+  {
+    q: 'When should I consider Enterprise?',
+    a: (
+      <>
+        Enterprise fits hiring teams that need Slack or Teams notification setup,
+        SSO with a real security review, annual contract paperwork, or custom
+        booking limits. If your buying process involves vendor onboarding
+        rather than a credit card, talk to sales.
+      </>
+    ),
+  },
 ];
 
 /* ─── Route-level head ─────────────────────────────────────
  * Page-specific overrides on top of the site-wide defaults
- * in index.html. The JSON-LD describes both tiers as Offers
+ * in index.html. The JSON-LD describes each tier as an Offer
  * inside a single Product so search engines can read the
  * pricing table directly. The freeware tier is exposed as a
  * separate Offer (price 0) so it's surfaced honestly. */
-const PRICING_TITLE = 'Pricing — mytimes';
+const PRICING_TITLE = 'Pricing: mytimes';
 const PRICING_DESCRIPTION =
-  'Free for small interview rounds. $480 a year (or $49 a month) for a Company workspace with shared recovery, custom subdomain, and 10 organizer seats.';
+  'Free for one small interview round with My boards email recovery. $480 a year (or $49 a month) for a Company workspace with shared recovery, custom subdomain, and 10 organizer seats. Enterprise pricing for teams that need Slack/Teams setup, SSO, and procurement contracts.';
 const PRICING_URL = 'https://mytimes.co/pricing';
 
 const PRICING_JSON_LD = {
@@ -286,7 +372,7 @@ const PRICING_JSON_LD = {
       '@type': 'Offer',
       name: 'Free',
       description:
-        'For individuals running small interview rounds. Two active boards, 25 bookings per board, 60-day active window.',
+        'For individuals running one small interview round. One active board, 15 bookings per board, 30 published slots, 3-day active window, My boards email recovery, per-board CSV export.',
       price: '0',
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
@@ -308,6 +394,26 @@ const PRICING_JSON_LD = {
       },
       availability: 'https://schema.org/InStock',
       url: 'https://mytimes.co/signup',
+    },
+    {
+      '@type': 'Offer',
+      name: 'Enterprise',
+      description:
+        'For hiring teams that need Slack and Teams notification setup, SSO with security review, custom booking limits, and annual contract paperwork. Contact sales for pricing.',
+      priceCurrency: 'USD',
+      priceSpecification: {
+        '@type': 'PriceSpecification',
+        priceCurrency: 'USD',
+        price: '0',
+        // schema.org has no native "contact for pricing" value; the
+        // accepted convention is to omit the numeric price or set it
+        // to 0 alongside an explicit description that pricing is
+        // custom. We do both so structured-data tools don't choke on
+        // a missing price field.
+        description: 'Custom pricing. Contact sales.',
+      },
+      availability: 'https://schema.org/InStock',
+      url: 'https://mytimes.co/enterprise',
     },
   ],
 };
@@ -446,6 +552,13 @@ export function PricingPage() {
             support, and trust. Participant links feel internal and reusable
             across every round.
           </p>
+          <button
+            type="button"
+            className="pricing-button pricing-button--ghost"
+            onClick={() => navigate('/enterprise')}
+          >
+            See Enterprise <ArrowRight size={14} strokeWidth={2} />
+          </button>
         </div>
         <div className="pricing-domain__card">
           <span>
@@ -496,9 +609,9 @@ export function PricingPage() {
             James Miller, founder ·{' '}
             <a
               className="pricing-founder__email mono"
-              href="mailto:hello@mytimes.co"
+              href="mailto:support@getcaboo.com"
             >
-              hello@mytimes.co
+              support@getcaboo.com
             </a>
           </p>
         </div>
@@ -508,11 +621,10 @@ export function PricingPage() {
       <section className="pricing-positioning" aria-label="Pricing model">
         <div className="pricing-positioning__copy">
           <span className="pricing-section-label">The model</span>
-          <h2>Do not sell Company as more events.</h2>
+          <h2>Company is for teams that run rounds repeatedly.</h2>
           <p>
-            Free is the individual workflow. Company buys operational quiet:
-            no repeated approvals, no scattered admin links, no per-round
-            payment decision.
+            Free covers the individual board. Company removes the repeat work:
+            approvals, scattered admin links, and per-round payment decisions.
           </p>
         </div>
         <div
@@ -608,11 +720,22 @@ function PriceHead({ tier }: { tier: Tier }) {
         <span className="pricing-head__badge">{tier.badge}</span>
       )}
       <span className="pricing-head__name">{tier.name}</span>
-      <div className="pricing-head__price">
+      <div
+        className={[
+          'pricing-head__price',
+          tier.priceIsWord ? 'pricing-head__price--word' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         {tier.priceAnchor && (
           <s className="pricing-head__price-anchor mono">{tier.priceAnchor}</s>
         )}
-        <strong className="mono">{tier.price}</strong>
+        {/* "Custom" reads as a word, not a price — render in the display
+         *  family so it doesn't pretend to be a number. Numeric prices
+         *  keep the mono treatment for the rounded peach editorial
+         *  rhythm. */}
+        <strong className={tier.priceIsWord ? '' : 'mono'}>{tier.price}</strong>
         <span>{tier.cadence}</span>
       </div>
       {tier.foundingNote && (

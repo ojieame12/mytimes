@@ -1,0 +1,1303 @@
+/* Contact page — editorial single-column form.
+   The form is the page. No parallel ad, no sidebar, no
+   secondary action that pulls people off a form they're
+   half-filling. See ContactPage.tsx for the intent switch
+   and the field set that varies per intent.
+
+   The .enterprise-* rules live in their own block lower
+   in this file — the two surfaces no longer share typography
+   or layout primitives. */
+
+.contact-page {
+  /* Tighter editorial column than the marketing surfaces.
+   * The form benefits from a narrower measure than landing. */
+  width: min(720px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 48px 0 72px;
+  color: var(--fg-default);
+}
+
+/* ─── Hero ────────────────────────────────────────────────
+ * Editorial, single-column. Matches the LandingPage privacy
+ * section vocabulary — eyebrow with a primary-coloured span,
+ * a display headline, then a body paragraph that owns the
+ * mailto link. No mini-card, no rail. */
+.contact-hero {
+  display: block;
+  padding: 8px 0 28px;
+}
+
+.contact-hero__eyebrow {
+  margin: 0 0 14px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+
+.contact-hero__eyebrow span {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.contact-hero__title {
+  margin: 0;
+  color: var(--fg-strong);
+  font-family: var(--font-display, var(--font-heading));
+  font-size: clamp(36px, 5.4vw, 56px);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: 0;
+}
+
+.contact-hero__body {
+  max-width: 56ch;
+  margin: 18px 0 0;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 16.5px;
+  line-height: 1.6;
+}
+
+.contact-hero__email {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--primary) 45%, transparent);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.contact-hero__email:hover {
+  text-decoration-color: var(--primary);
+}
+
+/* ─── Workspace ───────────────────────────────────────────
+ * Single column. The form is the page. */
+.contact-workspace {
+  display: block;
+  padding: 24px 0 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.contact-form {
+  display: grid;
+  gap: 24px;
+}
+
+.contact-form__fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.contact-form__fieldset--intents {
+  display: grid;
+  gap: 12px;
+}
+
+.contact-form__legend {
+  display: block;
+  margin: 0 0 4px;
+  padding: 0;
+  color: var(--fg-strong);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ─── Intent pills ────────────────────────────────────────
+ * Pill row directly under the hero. The selected pill
+ * carries the brand teal with a soft wash. */
+.contact-intents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.contact-intent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--fg-default);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-short) var(--ease-press),
+    background var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press);
+}
+
+.contact-intent:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.contact-intent.is-selected {
+  border-color: var(--primary);
+  background: rgba(0, 95, 131, 0.1);
+  color: var(--primary);
+}
+
+.contact-intent:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ─── Form panel — the per-intent body ────────────────────
+ * The panel is keyed on the intent in JSX so React re-mounts
+ * it on switch, and the soft fade animation re-runs. */
+.contact-form__panel {
+  display: grid;
+  gap: 18px;
+  animation: contact-fade-in 220ms var(--ease-out, ease) both;
+}
+
+@keyframes contact-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-form__panel {
+    animation: none;
+  }
+}
+
+.contact-form__panel-legend {
+  margin: 0;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.contact-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+/* ─── Fields ──────────────────────────────────────────────
+ * Label-above-input. Labels in small sans caps so they read
+ * as quiet metadata, not interrupting the form's vertical
+ * rhythm. */
+.contact-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.contact-field--message {
+  /* Message always spans full width regardless of grid context. */
+  grid-column: 1 / -1;
+}
+
+.contact-field__label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  color: var(--fg-strong);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.contact-field__hint {
+  color: var(--fg-subtle);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  font-size: 11.5px;
+}
+
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--fg-default);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  outline: none;
+  transition:
+    border-color var(--motion-short) var(--ease-press),
+    box-shadow var(--motion-short) var(--ease-press),
+    background var(--motion-short) var(--ease-press);
+}
+
+.contact-form input,
+.contact-form select {
+  height: 46px;
+  padding: 0 14px;
+}
+
+.contact-form textarea {
+  resize: vertical;
+  min-height: 168px;
+  padding: 14px;
+  line-height: 1.55;
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: var(--fg-subtle);
+  opacity: 0.85;
+}
+
+.contact-form input:focus,
+.contact-form select:focus,
+.contact-form textarea:focus {
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 95, 131, 0.14);
+}
+
+/* ─── Checkboxes ──────────────────────────────────────────
+ * Bug fix: the previous pill inherited a base from the
+ * intent pill and overrode it incompletely, which let
+ * multi-word labels (Security review, Custom limits) render
+ * visibly bigger than the single-word ones. The new check
+ * has its own self-contained sizing: every pill is the same
+ * height regardless of label length, the native input is
+ * the same 16×16, and the label text is normalised to a
+ * single line via white-space: nowrap and line-height: 1. */
+.contact-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.contact-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--fg-default);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-short) var(--ease-press),
+    background var(--motion-short) var(--ease-press),
+    color var(--motion-short) var(--ease-press);
+}
+
+.contact-check:hover {
+  border-color: var(--primary);
+}
+
+.contact-check:has(input:checked) {
+  border-color: var(--primary);
+  background: rgba(0, 95, 131, 0.08);
+  color: var(--primary);
+}
+
+.contact-check:has(input:focus-visible) {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.contact-check input {
+  appearance: auto;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+}
+
+.contact-check__label {
+  display: inline-block;
+  /* Inline-block + line-height: 1 stops the label from leaking
+   * extra inline-box height — the original source of the
+   * visual size mismatch on Security review / Custom limits. */
+  line-height: 1;
+}
+
+/* Honeypot — kept reachable to bot scanners we don't trust,
+ * but physically off-canvas for sighted users and keyboards. */
+.contact-form__trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* ─── Form footer ─────────────────────────────────────────
+ * Single primary CTA. Founder signature lives below it as
+ * editorial trim, not a parallel action. */
+.contact-form__footer {
+  display: grid;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.contact-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  justify-self: start;
+  min-height: 46px;
+  padding: 0 22px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow: var(--shadow-button-primary);
+  cursor: pointer;
+  transition:
+    background var(--motion-short) var(--ease-press),
+    transform var(--motion-short) var(--ease-press);
+}
+
+.contact-submit:hover:not(:disabled) {
+  background: var(--primary-hover, var(--primary));
+}
+
+.contact-submit:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.contact-submit:disabled {
+  cursor: wait;
+  opacity: 0.64;
+}
+
+/* ─── Founder signature ───────────────────────────────────
+ * Small inline lockup that signs the form. The avatar reuses
+ * the same notionists style we render in transactional email,
+ * so the brand reads as one person across surfaces. */
+.contact-signature {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.contact-signature__avatar {
+  flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--bg-surface);
+}
+
+.contact-signature__text {
+  font-style: italic;
+}
+
+/* ─── Inline error ────────────────────────────────────────
+ * Success no longer renders inline — see .contact-confirmation. */
+.contact-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.contact-status--error {
+  border: 1px solid rgba(188, 63, 43, 0.24);
+  background: rgba(188, 63, 43, 0.08);
+  color: var(--intent-danger-strong);
+}
+
+.contact-status--error a {
+  color: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ─── Confirmation state ──────────────────────────────────
+ * Replaces the form in place after a successful submit. Same
+ * peach surface, editorial typography, one quiet return link. */
+.contact-confirmation {
+  display: grid;
+  gap: 16px;
+  padding: 12px 0 4px;
+  animation: contact-fade-in 280ms var(--ease-out, ease) both;
+}
+
+.contact-confirmation__eyebrow {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+
+.contact-confirmation__eyebrow span {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.contact-confirmation__title {
+  margin: 0;
+  color: var(--fg-strong);
+  font-family: var(--font-display, var(--font-heading));
+  font-size: clamp(28px, 4.2vw, 40px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: 0;
+  outline: none;
+}
+
+.contact-confirmation__title a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--primary) 45%, transparent);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+
+.contact-confirmation__body {
+  max-width: 56ch;
+  margin: 0;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 15.5px;
+  line-height: 1.6;
+}
+
+.contact-confirmation__again {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--primary) 40%, transparent);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+}
+
+.contact-confirmation__again:hover {
+  text-decoration-color: var(--primary);
+}
+
+@media (max-width: 860px) {
+  .contact-page {
+    width: min(100% - 28px, 680px);
+    padding-top: 32px;
+  }
+
+  .contact-form__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Enterprise page — editorial sales deck.
+   Four sections:
+     1. Hero (typography only, no fake activity card)
+     2. Three feature blocks (copy + real-looking artifact)
+     3. Rollout (numbered concrete steps)
+     4. Final CTA
+   Vocabulary mirrors the landing brand — peach surfaces, teal
+   action, display font for headlines, sans-serif for body,
+   mono for codey strings (slack handles, domains, signatures).
+═══════════════════════════════════════════════════════════ */
+
+.enterprise-page {
+  width: min(1120px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 56px 0 88px;
+  color: var(--fg-default);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(60px, 8vw, 104px);
+}
+
+/* ─── 1. Hero ─── */
+.enterprise-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  padding-top: 12px;
+}
+.enterprise-hero__eyebrow {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.enterprise-hero__eyebrow span {
+  color: var(--primary);
+  font-weight: 700;
+}
+.enterprise-hero__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 5vw, 56px);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--zinc-800);
+  line-height: 1.06;
+  max-width: 22ch;
+}
+.enterprise-hero__title span {
+  display: block;
+  text-wrap: balance;
+}
+.enterprise-hero__body {
+  margin: 6px 0 0;
+  font-family: var(--font-sans);
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: var(--fg-muted);
+  max-width: 58ch;
+}
+.enterprise-hero__cta {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.enterprise-hero__primary {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 22px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--teal-700);
+  background: var(--action-gradient);
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  box-shadow: var(--shadow-button-primary);
+  transition:
+    background var(--motion-short) var(--ease-press),
+    box-shadow var(--motion-medium) var(--ease-out),
+    transform var(--motion-micro) var(--ease-press);
+}
+.enterprise-hero__primary:hover {
+  background: var(--action-gradient-hover);
+  box-shadow: var(--glow-primary);
+}
+.enterprise-hero__primary:active { transform: translateY(0.5px); }
+.enterprise-hero__ghost {
+  appearance: none;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: 12px 8px;
+  transition: color var(--motion-short) var(--ease-press);
+}
+.enterprise-hero__ghost:hover {
+  color: var(--zinc-800);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 4px;
+}
+
+/* ─── 2. Feature blocks ───
+ *  Horizontal row: copy on one side, artifact on the other.
+ *  --reverse swaps the visual order without touching DOM order
+ *  (artifact stays second in source for SR reading flow). */
+.enterprise-block {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: center;
+}
+.enterprise-block--reverse .enterprise-block__copy { order: 2; }
+.enterprise-block--reverse .enterprise-block__artifact { order: 1; }
+
+.enterprise-block__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.enterprise-block__eyebrow {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.enterprise-block__eyebrow span {
+  color: var(--primary);
+  font-weight: 700;
+}
+.enterprise-block__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--zinc-800);
+  line-height: 1.08;
+  max-width: 22ch;
+}
+.enterprise-block__body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--fg-muted);
+  max-width: 46ch;
+}
+.enterprise-block__body code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.enterprise-block__artifact {
+  min-width: 0;
+}
+
+/* ─── 2a. Slack artifact ───
+ *  Loose Slack vocabulary: light card, channel pill, avatar
+ *  square, "APP" tag next to the bot name, attached booking
+ *  card with a coloured side bar. No real Slack SDK. */
+.enterprise-slack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 16px 36px -22px hsla(220, 30%, 14%, 0.22);
+}
+.enterprise-slack__chrome {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: color-mix(in oklch, var(--sand-100) 50%, var(--card));
+}
+.enterprise-slack__chrome-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.enterprise-slack__chrome-dots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--sand-400) 75%, var(--sand-300));
+}
+.enterprise-slack__chrome-workspace {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--fg-subtle);
+}
+.enterprise-slack__channel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.enterprise-slack__channel-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--zinc-800);
+}
+.enterprise-slack__channel-pill span {
+  color: var(--fg-subtle);
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1;
+  margin-right: 1px;
+}
+.enterprise-slack__channel-meta {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--fg-subtle);
+}
+.enterprise-slack__message {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 10px;
+  padding: 16px 18px 18px;
+  align-items: start;
+}
+.enterprise-slack__avatar {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: var(--action-gradient, linear-gradient(180deg, var(--teal-600), var(--teal-400)));
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  text-transform: lowercase;
+  line-height: 1;
+}
+.enterprise-slack__message-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.enterprise-slack__message-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.enterprise-slack__message-head strong {
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--zinc-800);
+  line-height: 1;
+}
+.enterprise-slack__app-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: color-mix(in oklch, var(--sand-200) 60%, var(--sand-100));
+  color: var(--fg-subtle);
+  font-family: var(--font-sans);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.enterprise-slack__time {
+  font-size: 11.5px;
+  color: var(--fg-subtle);
+  margin-left: 4px;
+}
+.enterprise-slack__message-text {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--zinc-800);
+}
+.enterprise-slack__message-text strong {
+  font-weight: 700;
+}
+.enterprise-slack__message-text .mono {
+  font-size: 13px;
+  color: var(--primary);
+}
+.enterprise-slack__message-attach {
+  display: grid;
+  grid-template-columns: 3px 1fr;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border-radius: 7px;
+  background: color-mix(in oklch, var(--sand-100) 50%, var(--card));
+  border: 1px solid var(--border-subtle);
+}
+.enterprise-slack__attach-bar {
+  align-self: stretch;
+  border-radius: 2px;
+  background: var(--primary);
+}
+.enterprise-slack__attach-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.enterprise-slack__attach-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.enterprise-slack__attach-title {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--zinc-800);
+  line-height: 1.3;
+}
+.enterprise-slack__attach-cta {
+  appearance: none;
+  align-self: flex-start;
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--zinc-800);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ─── 2b. SSO artifact ───
+ *  Mini login card with real provider marks inside a restrained
+ *  neutral button system. The brand color belongs to the mark,
+ *  not the whole enterprise section. */
+.enterprise-sso {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 26px 26px 22px;
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 16px 36px -22px hsla(220, 30%, 14%, 0.22);
+}
+.enterprise-sso__head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.enterprise-sso__wordmark {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--zinc-800);
+  line-height: 1;
+}
+.enterprise-sso__head-dot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.enterprise-sso__head-domain {
+  font-size: 12px;
+  color: var(--fg-subtle);
+}
+.enterprise-sso__title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--zinc-800);
+  line-height: 1.2;
+}
+.enterprise-sso__providers {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.enterprise-sso__provider {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--zinc-800);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: default;
+  pointer-events: none;
+  transition: background var(--motion-short) var(--ease-press);
+}
+.enterprise-sso__provider-mark {
+  width: 52px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--warm-paper) 88%, var(--sand-100));
+  border: 1px solid color-mix(in oklch, var(--border-subtle) 82%, transparent);
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+.enterprise-sso__logo {
+  display: block;
+  flex: 0 0 auto;
+}
+.enterprise-sso__logo--okta {
+  width: 42px;
+  height: 14px;
+}
+.enterprise-sso__logo--microsoft,
+.enterprise-sso__logo--google {
+  width: 21px;
+  height: 21px;
+}
+.enterprise-sso__provider-text {
+  font-size: 14px;
+}
+.enterprise-sso__note {
+  margin: 4px 0 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg-subtle);
+  padding-top: 14px;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+/* ─── 2c. Deal artifact ───
+ *  Peach contract page. Editorial dl list of line items, a
+ *  status pill, a signed-stamp footer. The Check icon inside
+ *  the stamp uses currentColor (primary teal) so it reads as
+ *  approved without looking like a UI button. */
+.enterprise-deal {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 24px 20px;
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, hsla(28, 100%, 98%, 0.96), hsla(28, 100%, 94%, 0.86)),
+    var(--card);
+  border: 1px solid color-mix(in oklch, var(--teal-300) 22%, var(--border-subtle));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 18px 40px -26px color-mix(in oklch, var(--teal-700) 26%, transparent);
+}
+.enterprise-deal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed color-mix(in oklch, var(--teal-300) 26%, var(--border-subtle));
+}
+.enterprise-deal__head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.enterprise-deal__eyebrow {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.enterprise-deal__title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--zinc-800);
+  line-height: 1.2;
+}
+.enterprise-deal__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: var(--intent-warning-soft);
+  color: var(--intent-warning-strong);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.enterprise-deal__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--intent-warning);
+}
+.enterprise-deal__lines {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.enterprise-deal__line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px dotted color-mix(in oklch, var(--teal-300) 18%, var(--border-subtle));
+}
+.enterprise-deal__line:last-child { border-bottom: none; }
+.enterprise-deal__line dt {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--fg-muted);
+  letter-spacing: 0.01em;
+}
+.enterprise-deal__line dd {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--zinc-800);
+  text-align: right;
+}
+.enterprise-deal__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px dashed color-mix(in oklch, var(--teal-300) 26%, var(--border-subtle));
+}
+.enterprise-deal__stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1.5px solid color-mix(in oklch, var(--primary) 55%, transparent);
+  border-radius: 4px;
+  color: var(--primary);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transform: rotate(-1.5deg);
+  background: rgba(255, 255, 255, 0.4);
+}
+.enterprise-deal__meta {
+  font-size: 11.5px;
+  color: var(--fg-subtle);
+}
+
+/* ─── 3. Rollout ───
+ *  Three concrete steps, horizontal strip. Each step pairs a
+ *  large mono numeral with a title + one-line explanation. */
+.enterprise-rollout {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+.enterprise-rollout__head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 22px;
+  max-width: 720px;
+}
+.enterprise-rollout__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--zinc-800);
+  line-height: 1.08;
+  max-width: 22ch;
+}
+.enterprise-rollout__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+.enterprise-rollout__step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 22px 22px 22px 0;
+  border-right: 1px solid var(--border-subtle);
+}
+.enterprise-rollout__step:last-child { border-right: none; }
+.enterprise-rollout__step:not(:first-child) { padding-left: 22px; }
+.enterprise-rollout__num {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-subtle);
+  line-height: 1.2;
+  padding-top: 2px;
+}
+.enterprise-rollout__step > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.enterprise-rollout__step strong {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--zinc-800);
+  line-height: 1.3;
+}
+.enterprise-rollout__step span {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+/* ─── 4. Final CTA ───
+ *  Single editorial title, primary button, small trust line.
+ *  Centered, peach panel, no giant 2-line headline taking up
+ *  the whole row. */
+.enterprise-final {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 56px 32px 60px;
+  border-radius: var(--radius-xl);
+  background: hsla(28, 100%, 97%, 1);
+  border: 1px solid color-mix(in oklch, var(--teal-300) 16%, var(--border-subtle));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 14px 36px -14px color-mix(in oklch, var(--teal-700) 22%, transparent);
+}
+.enterprise-final__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--zinc-800);
+  line-height: 1.08;
+  max-width: 24ch;
+}
+.enterprise-final__note {
+  margin: 6px 0 0;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  max-width: 52ch;
+}
+
+/* ─── Mobile ─── */
+@media (max-width: 860px) {
+  .enterprise-page {
+    width: min(100% - 28px, 680px);
+    padding: 32px 0 56px;
+    gap: 56px;
+  }
+
+  .enterprise-block,
+  .enterprise-block--reverse {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  /* On mobile the source order wins: copy first, then artifact,
+   * for both block variants. */
+  .enterprise-block--reverse .enterprise-block__copy { order: 0; }
+  .enterprise-block--reverse .enterprise-block__artifact { order: 1; }
+
+  .enterprise-rollout__steps {
+    grid-template-columns: 1fr;
+  }
+  .enterprise-rollout__step {
+    padding: 18px 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .enterprise-rollout__step:not(:first-child) { padding-left: 0; }
+  .enterprise-rollout__step:last-child { border-bottom: none; }
+}

@@ -1,4 +1,5 @@
 import type { BookingEvent } from '../lib/types';
+import '../styles/info-panel.css';
 
 /* ─── OrganizerCard ───────────────────────────────────────
  * Compact wax-disc avatar + name + role. Rendered inside an

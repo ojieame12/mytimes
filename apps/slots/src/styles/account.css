@@ -139,7 +139,11 @@
   font-size: 14px;
   font-weight: 500;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .auth-split__submit:hover:not(:disabled) {
@@ -535,6 +539,10 @@
 .account-billing-card__button {
   appearance: none;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-height: 40px;
   padding: 0 16px;
   border-radius: var(--radius-md);
@@ -544,6 +552,7 @@
   font-family: var(--font-sans);
   font-size: 13.5px;
   font-weight: 600;
+  text-decoration: none;
   box-shadow: var(--shadow-button-primary);
 }
 .account-billing-card__button--quiet {
@@ -804,6 +813,427 @@
   line-height: 1.45;
 }
 
+.account-notifications-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 22px;
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    0 10px 28px -18px color-mix(in oklch, var(--intent-primary) 22%, transparent);
+}
+.account-notifications-card__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+.account-notifications-card__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  color: var(--primary);
+}
+.account-notifications-card__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.account-notifications-card__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.account-notifications-card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 430;
+  letter-spacing: -0.012em;
+  color: var(--fg-default);
+  line-height: 1.18;
+}
+.account-notifications-card__body,
+.account-notifications-card__locked,
+.account-notifications-card__hint {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.account-notifications-card__status {
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  color: var(--fg-subtle);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.account-notifications-card__notice,
+.account-notifications-card__error {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.account-notifications-card__notice {
+  color: var(--intent-success-strong);
+}
+.account-notifications-card__error,
+.account-notifications-card__item-error {
+  color: var(--intent-danger);
+}
+.account-notifications-card__form {
+  display: grid;
+  grid-template-columns: auto minmax(150px, 0.55fr) minmax(220px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+}
+.account-notifications-card__provider {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(64px, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+}
+.account-notifications-card__provider button {
+  appearance: none;
+  cursor: pointer;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.account-notifications-card__provider button.is-selected {
+  color: var(--intent-primary-strong);
+  background: color-mix(in oklch, var(--intent-primary-soft) 62%, var(--card));
+  border-color: color-mix(in oklch, var(--intent-primary) 35%, var(--border-subtle));
+}
+.account-notifications-card__provider button:focus-visible,
+.account-notifications-card__field input:focus,
+.account-notifications-card__button:focus-visible,
+.account-notifications-card__mini-action:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.account-notifications-card__field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.account-notifications-card__field span {
+  color: var(--fg-subtle);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.account-notifications-card__field input {
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--fg-default);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+.account-notifications-card__field--webhook input {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.account-notifications-card__button,
+.account-notifications-card__mini-action {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-weight: 650;
+}
+.account-notifications-card__button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--orange-600);
+  background: var(--action-gradient);
+  color: var(--white);
+  font-size: 13px;
+  box-shadow: var(--shadow-button-primary);
+}
+.account-notifications-card__button:hover:not(:disabled) {
+  background: var(--action-gradient-hover);
+}
+.account-notifications-card__button:disabled,
+.account-notifications-card__mini-action:disabled,
+.account-notifications-card__provider button:disabled,
+.account-notifications-card__field input:disabled {
+  cursor: progress;
+  opacity: 0.62;
+}
+.account-notifications-card__hint {
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+}
+.account-notifications-card__empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  color: var(--fg-muted);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.account-notifications-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.account-notifications-card__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+}
+.account-notifications-card__item-main {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 9px;
+  align-items: baseline;
+}
+.account-notifications-card__provider-label {
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  color: var(--intent-primary-strong);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.account-notifications-card__item h3 {
+  min-width: 0;
+  margin: 0;
+  color: var(--fg-default);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 750;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-notifications-card__item p {
+  grid-column: 2;
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.account-notifications-card__item-error {
+  overflow-wrap: anywhere;
+}
+.account-notifications-card__item-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+.account-notifications-card__mini-action {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--fg-default);
+  font-size: 12.5px;
+}
+.account-notifications-card__mini-action:hover:not(:disabled) {
+  color: var(--intent-primary-strong);
+  border-color: var(--intent-primary);
+}
+
+.account-template-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 22px;
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    0 10px 28px -18px color-mix(in oklch, var(--intent-primary) 24%, transparent);
+}
+.account-template-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+.account-template-card__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.account-template-card__title {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 430;
+  letter-spacing: -0.012em;
+  color: var(--fg-default);
+  line-height: 1.18;
+}
+.account-template-card__notice,
+.account-template-card__empty {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.account-template-card__notice {
+  max-width: 28ch;
+  text-align: right;
+}
+.account-template-card__templates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.account-template-card__template {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+}
+.account-template-card__template-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.account-template-card__template h3 {
+  margin: 0;
+  color: var(--fg-default);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-template-card__template p {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+.account-template-card__button,
+.account-template-card__save-button {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+.account-template-card__button {
+  padding: 0 10px;
+  color: var(--fg-default);
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+.account-template-card__button:hover {
+  color: var(--intent-primary-strong);
+  border-color: var(--intent-primary);
+}
+.account-template-card__save {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+.account-template-card__save-label {
+  color: var(--fg-subtle);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.account-template-card__save-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.account-template-card__save-button {
+  max-width: 220px;
+  padding: 0 10px;
+  color: var(--fg-default);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-template-card__save-button:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+.account-template-card__save-button:disabled {
+  cursor: progress;
+  opacity: 0.62;
+}
+
 /* ─── Day-band-family board rows ───────────────────────── */
 .account-rows {
   display: flex;
@@ -989,19 +1419,41 @@
   .account-billing-card__button {
     width: 100%;
   }
+  .account-template-card__head,
   .account-domain-card__head,
+  .account-notifications-card__head,
   .account-domain-card__active,
   .account-domain-card__form,
+  .account-notifications-card__form,
+  .account-notifications-card__item,
+  .account-notifications-card__item-main,
   .account-domain-card__dns-row {
+    grid-template-columns: 1fr;
+  }
+  .account-template-card__head {
+    display: flex;
+    flex-direction: column;
+  }
+  .account-notifications-card__hint,
+  .account-notifications-card__item p {
+    grid-column: auto;
+  }
+  .account-template-card__notice {
+    text-align: left;
+  }
+  .account-template-card__templates,
+  .account-template-card__template {
     grid-template-columns: 1fr;
   }
   .account-domain-card__button {
     width: 100%;
   }
-  .account-domain-card__status {
+  .account-domain-card__status,
+  .account-notifications-card__status {
     justify-self: start;
   }
-  .account-domain-card__active-actions {
+  .account-domain-card__active-actions,
+  .account-notifications-card__item-actions {
     justify-content: flex-start;
   }
 }

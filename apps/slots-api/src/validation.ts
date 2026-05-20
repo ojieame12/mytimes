@@ -59,6 +59,11 @@ export type MyBoardsLinkRequestInput = {
   organizerEmail: string;
 };
 
+export type WorkspaceInviteInput = {
+  email: string;
+  role: "admin" | "organizer";
+};
+
 export type ProductEventInput = {
   name: string;
   actorType: "anonymous" | "organizer" | "participant";
@@ -79,6 +84,65 @@ export type EmailDesignTestInput = {
 export type CustomDomainInput = {
   hostname: string;
 };
+
+export type ContactLeadIntent =
+  | "support"
+  | "sales"
+  | "enterprise"
+  | "slack"
+  | "teams"
+  | "security"
+  | "billing";
+
+export type ContactIntegrationInterest =
+  | "slack"
+  | "teams"
+  | "sso"
+  | "security"
+  | "procurement"
+  | "custom_limits";
+
+export type NotificationProvider = "slack" | "teams";
+
+export type NotificationIntegrationInput = {
+  provider: NotificationProvider;
+  destinationLabel: string;
+  webhookUrl: string;
+};
+
+export type ContactLeadInput = {
+  intent: ContactLeadIntent;
+  name: string;
+  email: string;
+  company?: string | undefined;
+  role?: string | undefined;
+  teamSize?: string | undefined;
+  message: string;
+  sourcePath?: string | undefined;
+  integrationInterest: ContactIntegrationInterest[];
+  website?: string | undefined;
+};
+
+const CONTACT_INTENTS: readonly ContactLeadIntent[] = [
+  "support",
+  "sales",
+  "enterprise",
+  "slack",
+  "teams",
+  "security",
+  "billing",
+];
+
+const CONTACT_INTEGRATION_INTERESTS: readonly ContactIntegrationInterest[] = [
+  "slack",
+  "teams",
+  "sso",
+  "security",
+  "procurement",
+  "custom_limits",
+];
+
+const NOTIFICATION_PROVIDERS: readonly NotificationProvider[] = ["slack", "teams"];
 
 export function toAvailabilityInput(value: unknown): AvailabilityInput {
   if (!isRecord(value)) {
@@ -330,6 +394,23 @@ export function toMyBoardsLinkRequestInput(value: unknown): MyBoardsLinkRequestI
   return { organizerEmail };
 }
 
+export function toWorkspaceInviteInput(value: unknown): WorkspaceInviteInput {
+  if (!isRecord(value)) {
+    throw new ApiError(400, "invalid_workspace_invite", "Request body must be an object");
+  }
+
+  const email = normalizeEmail(stringValue(value, "email"));
+  const role = optionalString(value, "role", "organizer");
+  if (!isPlausibleEmail(email)) {
+    throw new ApiError(400, "invalid_workspace_invite", "email must be a valid email address");
+  }
+  if (role !== "admin" && role !== "organizer") {
+    throw new ApiError(400, "invalid_workspace_invite", "role must be admin or organizer");
+  }
+
+  return { email, role };
+}
+
 export function toProductEventInput(value: unknown): ProductEventInput {
   if (!isRecord(value)) {
     throw new ApiError(400, "invalid_product_event", "Request body must be an object");
@@ -408,6 +489,84 @@ export function toCustomDomainInput(value: unknown): CustomDomainInput {
   return { hostname };
 }
 
+export function toContactLeadInput(value: unknown): ContactLeadInput {
+  if (!isRecord(value)) {
+    throw new ApiError(400, "invalid_contact", "Request body must be an object");
+  }
+
+  const intent = optionalContactIntent(value, "intent", "support");
+  const name = trimmedString(value, "name");
+  const email = normalizeEmail(stringValue(value, "email"));
+  const company = optionalString(value, "company", "");
+  const role = optionalString(value, "role", "");
+  const teamSize = optionalString(value, "teamSize", "");
+  const message = trimmedString(value, "message");
+  const sourcePath = optionalString(value, "sourcePath", "");
+  const integrationInterest = contactIntegrationInterestArray(value, "integrationInterest");
+  const website = optionalString(value, "website", "");
+
+  if (name.length < 1 || name.length > 160) {
+    throw new ApiError(400, "invalid_contact", "name must be between 1 and 160 characters");
+  }
+  if (!isPlausibleEmail(email)) {
+    throw new ApiError(400, "invalid_contact", "email must be a valid email address");
+  }
+  if (company.length > 180) {
+    throw new ApiError(400, "invalid_contact", "company cannot exceed 180 characters");
+  }
+  if (role.length > 160) {
+    throw new ApiError(400, "invalid_contact", "role cannot exceed 160 characters");
+  }
+  if (teamSize.length > 80) {
+    throw new ApiError(400, "invalid_contact", "teamSize cannot exceed 80 characters");
+  }
+  if (message.length < 4 || message.length > 4000) {
+    throw new ApiError(400, "invalid_contact", "message must be between 4 and 4000 characters");
+  }
+  if (sourcePath && (sourcePath.length > 240 || !sourcePath.startsWith("/"))) {
+    throw new ApiError(400, "invalid_contact", "sourcePath must be a path from this site");
+  }
+  if (website.length > 240) {
+    throw new ApiError(400, "invalid_contact", "website cannot exceed 240 characters");
+  }
+
+  return {
+    intent,
+    name,
+    email,
+    company: company || undefined,
+    role: role || undefined,
+    teamSize: teamSize || undefined,
+    message,
+    sourcePath: sourcePath || undefined,
+    integrationInterest,
+    website: website || undefined,
+  };
+}
+
+export function toNotificationIntegrationInput(value: unknown): NotificationIntegrationInput {
+  if (!isRecord(value)) {
+    throw new ApiError(400, "invalid_notification_integration", "Request body must be an object");
+  }
+
+  const provider = notificationProvider(value, "provider");
+  const destinationLabel = trimmedString(value, "destinationLabel");
+  const webhookUrl = trimmedString(value, "webhookUrl");
+
+  if (destinationLabel.length < 1 || destinationLabel.length > 120) {
+    throw new ApiError(400, "invalid_notification_integration", "destinationLabel must be between 1 and 120 characters");
+  }
+  if (!isValidWebhookUrl(webhookUrl)) {
+    throw new ApiError(400, "invalid_notification_integration", "webhookUrl must be a valid HTTPS webhook URL");
+  }
+
+  return {
+    provider,
+    destinationLabel,
+    webhookUrl,
+  };
+}
+
 function blockedRanges(value: unknown): AvailabilityInput["blockedRanges"] {
   if (value === undefined) {
     return undefined;
@@ -459,6 +618,69 @@ function optionalAvatarStyle(record: Record<string, unknown>, key: string, fallb
     throw new ApiError(400, "invalid_event", `${key} must be one of: ${AVATAR_STYLES.join(", ")}`);
   }
   return value as AvatarStyle;
+}
+
+function optionalContactIntent(
+  record: Record<string, unknown>,
+  key: string,
+  fallback: ContactLeadIntent,
+): ContactLeadIntent {
+  const value = optionalString(record, key, fallback);
+  if (!CONTACT_INTENTS.includes(value as ContactLeadIntent)) {
+    throw new ApiError(400, "invalid_contact", `${key} must be one of: ${CONTACT_INTENTS.join(", ")}`);
+  }
+  return value as ContactLeadIntent;
+}
+
+function contactIntegrationInterestArray(
+  record: Record<string, unknown>,
+  key: string,
+): ContactIntegrationInterest[] {
+  const value = record[key];
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
+    throw new ApiError(400, "invalid_contact", `${key} must be an array of strings`);
+  }
+  if (value.length > CONTACT_INTEGRATION_INTERESTS.length) {
+    throw new ApiError(400, "invalid_contact", `${key} cannot contain more than ${CONTACT_INTEGRATION_INTERESTS.length} entries`);
+  }
+  const cleaned = [...new Set(value.map((item) => item.trim()).filter(Boolean))];
+  const invalid = cleaned.find((item) => !CONTACT_INTEGRATION_INTERESTS.includes(item as ContactIntegrationInterest));
+  if (invalid) {
+    throw new ApiError(400, "invalid_contact", `${key} includes an unsupported value`);
+  }
+  return cleaned as ContactIntegrationInterest[];
+}
+
+function notificationProvider(record: Record<string, unknown>, key: string): NotificationProvider {
+  const value = stringValue(record, key).trim().toLowerCase();
+  if (!NOTIFICATION_PROVIDERS.includes(value as NotificationProvider)) {
+    throw new ApiError(400, "invalid_notification_integration", `${key} must be slack or teams`);
+  }
+  return value as NotificationProvider;
+}
+
+function isValidWebhookUrl(value: string): boolean {
+  if (value.length < 12 || value.length > 2048) {
+    return false;
+  }
+  try {
+    const url = new URL(value);
+    if (!["https:", "http:"].includes(url.protocol)) {
+      return false;
+    }
+    if (url.username || url.password) {
+      return false;
+    }
+    if (url.protocol === "http:" && !["localhost", "127.0.0.1", "::1"].includes(url.hostname)) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function optionalStringArray(record: Record<string, unknown>, key: string): string[] | undefined {

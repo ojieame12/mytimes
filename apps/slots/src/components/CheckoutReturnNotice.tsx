@@ -6,6 +6,7 @@ import {
   RefreshCw,
   X,
 } from 'lucide-react';
+import '../styles/checkout-return.css';
 
 export type CheckoutReturnTone = 'success' | 'pending' | 'warning' | 'danger';
 

@@ -10,7 +10,7 @@ This runbook covers production hardening for `mytimes.co`. It intentionally avoi
 | Frontend Railway | `https://slots-production-12d4.up.railway.app` |
 | API active target | Same-origin under `https://mytimes.co/api/...` |
 | API Railway | `https://api-production-067c0.up.railway.app` |
-| Optional API domain | `https://api.mytimes.co` |
+| Optional API domain | `https://api.mytimes.co` is attached in Railway metadata but not active for production traffic |
 
 ## Required DNS
 
@@ -21,11 +21,10 @@ mytimes.co      Railway/Cloudflare-routed apex for frontend and same-origin API
 www.mytimes.co  Railway/Cloudflare-routed frontend alias
 ```
 
-The optional separate API host, if we decide to use it, requires:
-
-```txt
-api.mytimes.co  CNAME  i099f43h.up.railway.app
-```
+The optional separate API host is not part of the current launch target. If we
+decide to use it later, remove and re-add `api.mytimes.co` on the Railway `api`
+service, copy the exact DNS target Railway provides, update Cloudflare, and
+verify `https://api.mytimes.co/readyz` before any frontend build points at it.
 
 After any DNS or domain-routing change, run:
 
@@ -39,7 +38,10 @@ To require the optional branded API DNS in the check:
 SLOTBOARD_REQUIRE_API_CUSTOM_DOMAIN=true npm run security:ready
 ```
 
-The readiness script validates DNS, live frontend routes, security headers, hidden email-preview files, billing readiness, email readiness, and API CORS.
+The readiness script validates DNS, live frontend routes, security headers,
+hidden email-preview files, billing readiness, email readiness, and API CORS.
+When the optional branded API host is not the active API target, a broken
+`api.mytimes.co` produces a warning rather than a launch-blocking failure.
 
 ## Security Headers
 
@@ -120,6 +122,8 @@ After API deployment:
 ```sh
 curl -sSI https://api-production-067c0.up.railway.app/readyz
 curl -sSI https://api-production-067c0.up.railway.app/api/slotboard/billing/readiness
+curl -sSI https://mytimes.co/readyz
+curl -sSI https://mytimes.co/api/slotboard/billing/readiness
 ```
 
 After frontend deployment:

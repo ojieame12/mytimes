@@ -136,8 +136,8 @@ When Stripe price IDs are configured, Checkout uses those catalog prices. When
 they are absent, Checkout falls back to inline `price_data` from the configured
 amounts and currency.
 
-Free boards get a 60-day window, publish the first 60 generated slots, and
-accept up to 25 active bookings. One-board unlock fulfillment marks one board paid,
+Free boards have a 3-day active window, publish the first 30 generated slots,
+and accept up to 15 active bookings. One-board unlock fulfillment marks one board paid,
 sets a 180-day paid window, raises limits to 75 bookings and 200 slots, and removes
 the mytimes footer on that board. Company stores the Stripe subscription against the organizer email/user
 and applies high-limit workspace entitlements to the signed-in organizer's
@@ -207,6 +207,10 @@ Sentry error tracking is optional and disabled unless `SENTRY_DSN` or
 available. Captured request URLs are redacted for public/admin/manage token
 routes, auth/reset query tokens, checkout session IDs, cookies, authorization
 headers, and ops secrets before events are sent.
+
+Check the deployed API state with `npm run observability:ready`. After setting
+`SENTRY_DSN`, send one guarded test event with
+`SLOTBOARD_OPS_SECRET=<secret> npm run observability:test`.
 
 Idempotency:
 

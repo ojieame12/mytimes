@@ -21,6 +21,7 @@ import { loadEnv } from "./env.js";
 import { hasActiveCompanyStandby } from "./entitlements.js";
 import { ApiError } from "./errors.js";
 import { logInfo } from "./logger.js";
+import { notifyWorkspaceIntegrations } from "./notificationIntegrations.js";
 import { buildShareMessage } from "./share.js";
 import type {
   CancelBookingInput,
@@ -212,6 +213,7 @@ export async function claimSlot(
   });
 
   const manageURL = await buildParticipantURL(`/m/${manageToken.rawToken}`, result.event);
+  const calendarURL = await buildParticipantCalendarURL(manageToken.rawToken, result.event);
   const response = {
     event: result.event,
     slot: {
@@ -234,6 +236,13 @@ export async function claimSlot(
     slot: response.slot,
     booking: response.booking,
     manageURL: response.links.manage,
+    calendarURL,
+  });
+  await notifyWorkspaceIntegrations({
+    type: "booking_created",
+    event: response.event,
+    slot: response.slot,
+    booking: response.booking,
   });
 
   return {
@@ -278,9 +287,11 @@ export async function resendManagedBookingEmail(rawToken: string): Promise<{
 }> {
   const response = await readManageBooking(rawToken);
   const manageURL = await buildParticipantURL(`/m/${rawToken}`, response.event);
+  const calendarURL = await buildParticipantCalendarURL(rawToken, response.event);
   const delivery = await sendManagedBookingDetailsEmail({
     ...response,
     manageURL,
+    calendarURL,
   });
   logInfo("slotboard_manage_booking_email_resent", {
     eventId: response.event.id,
@@ -356,6 +367,13 @@ export async function cancelManagedBooking(
       cancelledBy: "participant",
       reopenedSlot,
       openSlotCount: reopenedSlot ? await countPublishedOpenSlots(response.event) : undefined,
+      calendarURL: await buildParticipantCalendarURL(rawToken, response.event),
+    });
+    await notifyWorkspaceIntegrations({
+      type: "booking_cancelled",
+      event: response.event,
+      slot: response.slot,
+      booking: response.booking,
     });
   }
   return response;
@@ -478,11 +496,19 @@ export async function rescheduleManagedBooking(
 
   const response = mapManageRow(result);
   const manageURL = await buildParticipantURL(`/m/${rawToken}`, response.event);
+  const calendarURL = await buildParticipantCalendarURL(rawToken, response.event);
   const email = await sendBookingClaimedEmails({
     event: response.event,
     slot: response.slot,
     booking: response.booking,
     manageURL,
+    calendarURL,
+  });
+  await notifyWorkspaceIntegrations({
+    type: "booking_rescheduled",
+    event: response.event,
+    slot: response.slot,
+    booking: response.booking,
   });
 
   logInfo("slotboard_booking_rescheduled", {
@@ -709,17 +735,23 @@ async function setSlotStatusForEvent(
     });
     return updated;
   });
+  const slot: SlotDTO = {
+    id: row.id,
+    eventId: row.event_id,
+    startsAt: row.starts_at.toISOString(),
+    endsAt: row.ends_at.toISOString(),
+    ...sourceSlotFields(row),
+    state: row.status,
+    closeAfterBooking: row.close_after_booking,
+  };
+  await notifyWorkspaceIntegrations({
+    type: status === "closed" ? "slot_closed" : "slot_reopened",
+    event,
+    slot,
+  });
   return {
     event,
-    slot: {
-      id: row.id,
-      eventId: row.event_id,
-      startsAt: row.starts_at.toISOString(),
-      endsAt: row.ends_at.toISOString(),
-      ...sourceSlotFields(row),
-      state: row.status,
-      closeAfterBooking: row.close_after_booking,
-    },
+    slot,
   };
 }
 
@@ -796,9 +828,11 @@ async function rotateManageLinkAndSendBookingEmail(
 
   const response = mapManageRow(row);
   const manageURL = await buildParticipantURL(`/m/${manageToken.rawToken}`, response.event);
+  const calendarURL = await buildParticipantCalendarURL(manageToken.rawToken, response.event);
   const delivery = await sendManagedBookingDetailsEmail({
     ...response,
     manageURL,
+    calendarURL,
   });
 
   logInfo("slotboard_booking_email_resent_by_organizer", {
@@ -881,6 +915,12 @@ async function cancelBookingForEvent(
       booking: response.booking,
       cancelledBy: "organizer",
       reopenedSlot,
+    });
+    await notifyWorkspaceIntegrations({
+      type: "booking_cancelled",
+      event: response.event,
+      slot: response.slot,
+      booking: response.booking,
     });
   }
   return response;
@@ -1071,11 +1111,108 @@ export async function recoverAdminLinks(organizerEmail: string): Promise<{ ok: t
     await sendAdminRecoveryEmail({
       event: mapped,
       adminURL: buildAppURL(`/a/${adminToken.rawToken}`, env.publicAppURL),
+      reason: "recovery",
     });
   }
   logInfo("slotboard_admin_recovery_requested", {
     recipientDomain: emailDomain(organizerEmail),
     matches: result.rowCount ?? 0,
+  });
+
+  return { ok: true };
+}
+
+/* Self-service rotation of a single admin URL. Differs from
+ * recoverAdminLinks (which rotates every board for an email,
+ * triggered without auth from /recover) — this one is called
+ * from inside the dashboard by a holder of the current token,
+ * scoped to one board, and emails the fresh URL to the
+ * organizer so the old one is immediately dead but they can
+ * still get back in. */
+export async function rotateAdminPrivateLink(rawToken: string): Promise<{ ok: true }> {
+  const env = loadEnv();
+  const event = await resolveEventByToken("admin_token_hash", rawToken);
+  const adminToken = createTokenPair("admin", env.tokenPepper);
+
+  const updated = await withTransaction(async (client) => {
+    const result = await client.query<EventRow>(
+      `
+        update slotboard.booking_events
+        set admin_token_hash = $2
+        where id = $1
+          and deleted_at is null
+        returning ${eventColumns}
+      `,
+      [event.id, adminToken.tokenHash],
+    );
+    const row = mapEvent(rowOrThrow(result, "event_not_found", "Event not found"));
+    await recordActivity(client, {
+      eventId: row.id,
+      type: "admin_link_rotated",
+      actorType: "organizer",
+      actorLabel: row.organizerName,
+      metadata: {
+        reason: "self_rotated",
+      },
+    });
+    return row;
+  });
+
+  await sendAdminRecoveryEmail({
+    event: updated,
+    adminURL: buildAppURL(`/a/${adminToken.rawToken}`, env.publicAppURL),
+    reason: "self_rotation",
+  });
+
+  logInfo("slotboard_admin_link_self_rotated", {
+    eventId: updated.id,
+    recipientDomain: emailDomain(updated.organizerEmail),
+  });
+
+  return { ok: true };
+}
+
+export async function rotateOrganizerPrivateLink(
+  ownerUserId: string,
+  eventId: string,
+): Promise<{ ok: true }> {
+  const env = loadEnv();
+  const adminToken = createTokenPair("admin", env.tokenPepper);
+
+  const updated = await withTransaction(async (client) => {
+    const result = await client.query<EventRow>(
+      `
+        update slotboard.booking_events
+        set admin_token_hash = $3
+        where id = $1
+          and owner_user_id = $2
+          and deleted_at is null
+        returning ${eventColumns}
+      `,
+      [eventId, ownerUserId, adminToken.tokenHash],
+    );
+    const row = mapEvent(rowOrThrow(result, "event_not_found", "Event not found"));
+    await recordActivity(client, {
+      eventId: row.id,
+      type: "admin_link_rotated",
+      actorType: "organizer",
+      actorLabel: row.organizerName,
+      metadata: {
+        reason: "account_rotated",
+      },
+    });
+    return row;
+  });
+
+  await sendAdminRecoveryEmail({
+    event: updated,
+    adminURL: buildAppURL(`/a/${adminToken.rawToken}`, env.publicAppURL),
+    reason: "account_rotation",
+  });
+
+  logInfo("slotboard_admin_link_account_rotated", {
+    eventId: updated.id,
+    recipientDomain: emailDomain(updated.organizerEmail),
   });
 
   return { ok: true };
@@ -1900,6 +2037,16 @@ async function buildParticipantURL(path: string, event: Pick<EventDTO, "id" | "o
     ownerEmail: event.organizerEmail,
   }) ?? env.publicAppURL;
   return buildAppURL(path, baseURL);
+}
+
+async function buildParticipantCalendarURL(
+  rawManageToken: string,
+  event: Pick<EventDTO, "id" | "organizerEmail">,
+): Promise<string> {
+  return buildParticipantURL(
+    `/api/slotboard/manage/${encodeURIComponent(rawManageToken)}/calendar.ics`,
+    event,
+  );
 }
 
 async function readEventOwnerUserId(eventId: string): Promise<string | null> {

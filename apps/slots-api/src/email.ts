@@ -1,4 +1,5 @@
 import {
+  createBookingCalendarLinks,
   createBookingCancellationIcs,
   createBookingRequestIcs,
 } from "@fresh-feel/slotboard-core";
@@ -18,6 +19,7 @@ export type EmailType =
   | "my_boards_link"
   | "password_reset"
   | "email_verification"
+  | "contact_lead"
   | "email_test";
 
 export type EmailDeliveryResult = {
@@ -44,7 +46,7 @@ export type EmailAttachment = {
   content: string;
 };
 
-type EmailMessage = {
+export type EmailMessage = {
   to: string;
   subject: string;
   text: string;
@@ -65,48 +67,24 @@ type ProviderDelivery = {
   providerMessageId?: string | undefined;
 };
 
+export type BookingConfirmationEmailInput = {
+  event: EventDTO;
+  slot: SlotDTO;
+  booking: BookingDTO;
+  manageURL: string;
+  calendarURL: string;
+};
+
 export async function sendBookingClaimedEmails(input: {
   event: EventDTO;
   slot: SlotDTO;
   booking: BookingDTO;
   manageURL: string;
+  calendarURL: string;
 }): Promise<BookingClaimedEmailResult> {
   const organizerSlotLabel = formatSlotWindow(input.slot, input.event.timezone);
-  const participantTextLines = participantTimeTextLines(input.slot, input.event.timezone, input.booking);
-  const participantTimeBlock = buildTimeBlock(input.slot, input.event.timezone, input.booking);
   const organizerTimeBlock = buildOrganizerTimeBlock(input.slot, input.event.timezone, input.booking);
-  const ics = createBookingRequestIcs({
-    bookingId: input.booking.id,
-    sequence: input.booking.icsSequence,
-    startsAt: input.slot.startsAt,
-    endsAt: input.slot.endsAt,
-    title: input.event.title,
-    description: input.event.description,
-    organizerName: input.event.organizerName,
-    organizerEmail: input.event.organizerEmail,
-    participantName: input.booking.participantName,
-    participantEmail: input.booking.participantEmail,
-  });
-
-  const participantDetailRows: Array<[string, string]> = [
-    ["Event", input.event.title],
-    ["Organizer", `${input.event.organizerName} (${input.event.organizerEmail})`],
-    ["Duration", `${input.event.durationMinutes} minutes`],
-  ];
-  if (input.booking.notes) {
-    participantDetailRows.push(["Your note", input.booking.notes]);
-  }
-
-  const organizerDetailRows: Array<[string, string]> = [
-    ["Event", input.event.title],
-    ["Participant", input.booking.participantName],
-    ["Email", input.booking.participantEmail],
-    ["Time", organizerSlotLabel],
-    ["Booking ref", input.booking.id],
-  ];
-  if (input.booking.notes) {
-    organizerDetailRows.push(["Participant note", input.booking.notes]);
-  }
+  const participantMessage = buildBookingConfirmationEmailMessage(input);
 
   const [participantConfirmation, organizerNotice] = await Promise.all([
     deliverLoggedEmail({
@@ -114,55 +92,7 @@ export async function sendBookingClaimedEmails(input: {
       bookingId: input.booking.id,
       emailType: "booking_confirmation",
       recipientEmail: input.booking.participantEmail,
-      message: {
-        to: input.booking.participantEmail,
-        subject: `You're booked: ${input.event.title}`,
-        text: [
-          `You're booked for ${input.event.title}.`,
-          ...participantTextLines,
-          `Organizer: ${input.event.organizerName}`,
-          input.booking.notes ? `Your note: ${input.booking.notes}` : "",
-          `Manage or cancel your booking: ${input.manageURL}`,
-          "A calendar invite is attached.",
-        ].filter(Boolean).join("\n\n"),
-        html: renderEmailHtml({
-          eyebrow: "Booking confirmed",
-          title: `Confirmed with ${escapeHtml(firstName(input.event.organizerName))}.`,
-          preheader: buildPreheader([
-            participantTimeBlock.primary.timeRange,
-            participantTimeBlock.primary.timezone,
-            `${input.event.durationMinutes} min with ${input.event.organizerName}`,
-            "calendar attached",
-          ]),
-          timeBlock: participantTimeBlock,
-          timeBlockStyle: "hero",
-          personLockup: {
-            role: "Organizer",
-            name: input.event.organizerName,
-            email: input.event.organizerEmail,
-          },
-          body: `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em"><strong style="font-weight:600">${input.event.durationMinutes} minutes</strong> on <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>. A calendar invite is attached. Drop it in and you're set.</p>`,
-          pullQuote: input.booking.notes
-            ? { text: input.booking.notes, attribution: "your note, on booking" }
-            : undefined,
-          primaryCta: { href: input.manageURL, label: "Manage booking" },
-          whatsNext: [
-            `Add the attached <strong style="font-weight:600">.ics</strong> to your calendar; you'll get a reminder automatically.`,
-            `Need to reschedule or cancel? Use the <strong style="font-weight:600">Manage booking</strong> link above. It's the only way.`,
-            `Replying to this email reaches ${escapeHtml(firstName(input.event.organizerName))} directly.`,
-          ],
-          footerNote: `Sent because you booked a time on ${escapeHtml(firstName(input.event.organizerName))}'s mytimes board.`,
-          manageURL: input.manageURL,
-        }),
-        replyTo: input.event.organizerEmail,
-        attachments: [
-          {
-            filename: "slotboard-booking.ics",
-            contentType: "text/calendar; method=REQUEST; charset=utf-8",
-            content: ics,
-          },
-        ],
-      },
+      message: participantMessage,
     }),
     deliverLoggedEmail({
       eventId: input.event.id,
@@ -210,6 +140,97 @@ export async function sendBookingClaimedEmails(input: {
   return {
     participantConfirmation,
     organizerNotice,
+  };
+}
+
+export function buildBookingConfirmationEmailMessage(input: BookingConfirmationEmailInput): EmailMessage {
+  const participantTextLines = participantTimeTextLines(input.slot, input.event.timezone, input.booking);
+  const participantTimeBlock = buildTimeBlock(input.slot, input.event.timezone, input.booking);
+  const calendarLinks = createBookingCalendarLinks({
+    bookingId: input.booking.id,
+    sequence: input.booking.icsSequence,
+    startsAt: input.slot.startsAt,
+    endsAt: input.slot.endsAt,
+    title: input.event.title,
+    description: input.event.description,
+    organizerName: input.event.organizerName,
+    organizerEmail: input.event.organizerEmail,
+    participantName: input.booking.participantName,
+    participantEmail: input.booking.participantEmail,
+    manageURL: input.manageURL,
+    calendarURL: input.calendarURL,
+  });
+  const ics = createBookingRequestIcs({
+    bookingId: input.booking.id,
+    sequence: input.booking.icsSequence,
+    startsAt: input.slot.startsAt,
+    endsAt: input.slot.endsAt,
+    title: input.event.title,
+    description: input.event.description,
+    organizerName: input.event.organizerName,
+    organizerEmail: input.event.organizerEmail,
+    participantName: input.booking.participantName,
+    participantEmail: input.booking.participantEmail,
+  });
+
+  return {
+    to: input.booking.participantEmail,
+    subject: `You're booked: ${input.event.title}`,
+    text: [
+      `You're booked for ${input.event.title}.`,
+      ...participantTextLines,
+      `Organizer: ${input.event.organizerName}`,
+      input.booking.notes ? `Your note: ${input.booking.notes}` : "",
+      `Manage or cancel your booking: ${input.manageURL}`,
+      `Google Calendar: ${calendarLinks.googleUrl}`,
+      `Outlook.com: ${calendarLinks.outlookUrl}`,
+      `Office 365: ${calendarLinks.office365Url}`,
+      `Apple / iCal: ${calendarLinks.appleUrl}`,
+      "A calendar file is attached too.",
+    ].filter(Boolean).join("\n\n"),
+    html: renderEmailHtml({
+      eyebrow: "Booking confirmed",
+      title: `Confirmed with ${escapeHtml(firstName(input.event.organizerName))}.`,
+      preheader: buildPreheader([
+        participantTimeBlock.primary.timeRange,
+        participantTimeBlock.primary.timezone,
+        `${input.event.durationMinutes} min with ${input.event.organizerName}`,
+        "calendar attached",
+      ]),
+      timeBlock: participantTimeBlock,
+      timeBlockStyle: "hero",
+      personLockup: {
+        role: "Organizer",
+        name: input.event.organizerName,
+        email: input.event.organizerEmail,
+      },
+      body: `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em"><strong style="font-weight:600">${input.event.durationMinutes} minutes</strong> on <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>. Add it with the calendar option that fits your inbox, or use the attached <strong style="font-weight:600">.ics</strong> file.</p>`,
+      pullQuote: input.booking.notes
+        ? { text: input.booking.notes, attribution: "your note, on booking" }
+        : undefined,
+      primaryCta: { href: input.manageURL, label: "Manage booking" },
+      calendarCtas: [
+        { href: calendarLinks.googleUrl, label: "Google Calendar" },
+        { href: calendarLinks.outlookUrl, label: "Outlook.com" },
+        { href: calendarLinks.office365Url, label: "Office 365" },
+        { href: calendarLinks.appleUrl, label: "Apple / iCal" },
+      ],
+      whatsNext: [
+        `Add this booking using the calendar option that matches your inbox. The attached <strong style="font-weight:600">.ics</strong> file is still included as a fallback.`,
+        `Need to reschedule or cancel? Use the <strong style="font-weight:600">Manage booking</strong> link above. It's the only way.`,
+        `Replying to this email reaches ${escapeHtml(firstName(input.event.organizerName))} directly.`,
+      ],
+      footerNote: `Sent because you booked a time on ${escapeHtml(firstName(input.event.organizerName))}'s mytimes board.`,
+      manageURL: input.manageURL,
+    }),
+    replyTo: input.event.organizerEmail,
+    attachments: [
+      {
+        filename: "slotboard-booking.ics",
+        contentType: "text/calendar; method=REQUEST; charset=utf-8",
+        content: ics,
+      },
+    ],
   };
 }
 
@@ -306,6 +327,7 @@ export async function sendBookingCancellationEmails(input: {
   rebookURL?: string | undefined;
   adminURL?: string | undefined;
   openSlotCount?: number | undefined;
+  calendarURL?: string | undefined;
 }): Promise<void> {
   const organizerSlotLabel = formatSlotWindow(input.slot, input.event.timezone);
   const participantTextLines = participantTimeTextLines(input.slot, input.event.timezone, input.booking);
@@ -346,6 +368,7 @@ export async function sendBookingCancellationEmails(input: {
           ...participantTextLines,
           participantShape.textLine,
           input.rebookURL ? `Board link: ${input.rebookURL}` : "",
+          input.calendarURL ? `Remove from calendar: ${input.calendarURL}` : "",
         ].filter(Boolean).join("\n\n"),
         html: renderEmailHtml({
           eyebrow: "Booking cancelled",
@@ -368,14 +391,24 @@ export async function sendBookingCancellationEmails(input: {
             name: input.event.organizerName,
           },
           body: participantShape.body,
-          primaryCta: participantShape.primaryCta,
+          primaryCta: participantShape.primaryCta ?? (
+            input.calendarURL ? { href: input.calendarURL, label: "Remove from calendar" } : undefined
+          ),
+          secondaryCta: participantShape.primaryCta && input.calendarURL
+            ? { href: input.calendarURL, label: "Remove from calendar" }
+            : undefined,
           whatsNext: input.rebookURL
             ? [
                 `Pick another time on the board if you'd like to rebook.`,
+                input.calendarURL
+                  ? `Use the calendar button or attached cancellation file to remove the old time.`
+                  : `Use the attached cancellation file to remove the old time.`,
                 `If you didn't mean to cancel, reach out to ${escapeHtml(firstName(input.event.organizerName))} directly.`,
               ]
             : undefined,
-          footerNote: "A cancellation invite is attached so your calendar stays in sync.",
+          footerNote: input.calendarURL
+            ? "Use the calendar button or attached cancellation file to keep your calendar in sync."
+            : "A cancellation invite is attached so your calendar stays in sync.",
         }),
         replyTo: input.event.organizerEmail,
         attachments: [
@@ -486,6 +519,7 @@ export async function sendManagedBookingDetailsEmail(input: {
   slot: SlotDTO;
   booking: BookingDTO;
   manageURL: string;
+  calendarURL?: string | undefined;
 }): Promise<EmailDeliveryResult> {
   const cancelled = input.booking.status === "cancelled";
   const participantTextLines = participantTimeTextLines(input.slot, input.event.timezone, input.booking);
@@ -539,7 +573,8 @@ export async function sendManagedBookingDetailsEmail(input: {
         ...participantTextLines,
         `Organizer: ${input.event.organizerName}`,
         `Manage your booking: ${input.manageURL}`,
-      ].join("\n\n"),
+        input.calendarURL ? `${cancelled ? "Remove from calendar" : "Add to calendar"}: ${input.calendarURL}` : "",
+      ].filter(Boolean).join("\n\n"),
       html: renderEmailHtml({
         eyebrow: cancelled ? "Cancelled booking" : "Your booking",
         title: cancelled ? "This booking is cancelled." : "Here's your booking again.",
@@ -557,9 +592,12 @@ export async function sendManagedBookingDetailsEmail(input: {
           email: input.event.organizerEmail,
         },
         body: cancelled
-          ? `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">This booking for <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong> has already been cancelled. Sending a copy for your records.</p>`
-          : `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Fresh copy of your booking on <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>, with the link to manage or cancel it.</p>`,
+          ? `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">This booking for <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong> has already been cancelled. Use the calendar button or attached <strong style="font-weight:600">.ics</strong> file to remove it from your calendar.</p>`
+          : `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Fresh copy of your booking on <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>, with the link to manage it and add it to your calendar.</p>`,
         primaryCta: { href: input.manageURL, label: cancelled ? "View booking" : "Manage booking" },
+        secondaryCta: input.calendarURL
+          ? { href: input.calendarURL, label: cancelled ? "Remove from calendar" : "Add to calendar" }
+          : undefined,
         footerNote: "Sent because you asked us to resend your booking details.",
         manageURL: input.manageURL,
       }),
@@ -578,29 +616,30 @@ export async function sendManagedBookingDetailsEmail(input: {
 export async function sendAdminRecoveryEmail(input: {
   event: EventDTO;
   adminURL: string;
+  reason?: AdminLinkEmailReason;
 }): Promise<EmailDeliveryResult> {
+  const copy = adminLinkEmailCopy({
+    reason: input.reason ?? "recovery",
+    eventTitle: input.event.title,
+  });
   return deliverLoggedEmail({
     eventId: input.event.id,
     emailType: "admin_link_recovery",
     recipientEmail: input.event.organizerEmail,
     message: {
       to: input.event.organizerEmail,
-      subject: `Admin link recovery: ${input.event.title}`,
+      subject: copy.subject,
       text: [
-        `A new admin link was requested for ${input.event.title}.`,
+        copy.textIntro,
         `Open admin dashboard: ${input.adminURL}`,
         "This link replaces the previous admin link for this board.",
       ].join("\n\n"),
       html: renderEmailHtml({
-        eyebrow: "Admin link recovery",
-        title: "Here's a fresh admin link.",
-        preheader: buildPreheader([
-          "fresh admin link",
-          input.event.title,
-          "replaces the previous one",
-        ]),
+        eyebrow: copy.eyebrow,
+        title: copy.title,
+        preheader: buildPreheader(copy.preheaderParts),
         body: [
-          `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">Someone requested a new admin link for <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>. If that was you, this one replaces the previous.</p>`,
+          `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">${copy.htmlIntro}</p>`,
           renderLinkCard({
             variant: "admin",
             label: "Private admin link",
@@ -613,11 +652,63 @@ export async function sendAdminRecoveryEmail(input: {
           `Save this link somewhere safe. It's the only way to manage <strong style="font-weight:600">${escapeHtml(input.event.title)}</strong>.`,
           `The previous admin link has been replaced and no longer works.`,
         ],
-        footerNote: "If you didn't request this, you can safely ignore this email.",
+        footerNote: copy.footerNote,
       }),
       replyTo: input.event.organizerEmail,
     },
   });
+}
+
+export type AdminLinkEmailReason = "recovery" | "self_rotation" | "account_rotation";
+
+export function adminLinkEmailCopy(input: {
+  reason: AdminLinkEmailReason;
+  eventTitle: string;
+}): {
+  subject: string;
+  eyebrow: string;
+  title: string;
+  textIntro: string;
+  htmlIntro: string;
+  preheaderParts: string[];
+  footerNote: string;
+} {
+  const eventTitle = input.eventTitle;
+  const escapedTitle = escapeHtml(eventTitle);
+
+  if (input.reason === "self_rotation") {
+    return {
+      subject: `Admin URL rotated: ${eventTitle}`,
+      eyebrow: "Admin URL rotated",
+      title: "Your new admin URL is ready.",
+      textIntro: `You rotated the private admin URL for ${eventTitle}.`,
+      htmlIntro: `You rotated the private admin URL for <strong style="font-weight:600">${escapedTitle}</strong>. This one replaces the previous.`,
+      preheaderParts: ["admin URL rotated", eventTitle, "previous URL replaced"],
+      footerNote: "Sent because the private admin URL was rotated from the organizer dashboard.",
+    };
+  }
+
+  if (input.reason === "account_rotation") {
+    return {
+      subject: `Private admin URL replaced: ${eventTitle}`,
+      eyebrow: "Private admin URL replaced",
+      title: "Replacement admin URL is ready.",
+      textIntro: `Your account dashboard sent a replacement private admin URL for ${eventTitle}.`,
+      htmlIntro: `Your account dashboard sent a replacement private admin URL for <strong style="font-weight:600">${escapedTitle}</strong>. Your signed-in dashboard stays open.`,
+      preheaderParts: ["replacement admin URL", eventTitle, "account dashboard still works"],
+      footerNote: "Sent because the private admin URL was replaced from the account dashboard.",
+    };
+  }
+
+  return {
+    subject: `Admin link recovery: ${eventTitle}`,
+    eyebrow: "Admin link recovery",
+    title: "Here's a fresh admin link.",
+    textIntro: `A fresh admin link was requested for ${eventTitle}.`,
+    htmlIntro: `Someone requested a fresh admin link for <strong style="font-weight:600">${escapedTitle}</strong>. If that was you, this one replaces the previous.`,
+    preheaderParts: ["fresh admin link", eventTitle, "replaces the previous one"],
+    footerNote: "If you did not request this, you can safely ignore this email.",
+  };
 }
 
 export async function sendManageLinkRecoveryEmail(input: {
@@ -860,6 +951,7 @@ export async function sendEmailDesignTestBatch(input: {
   };
 
   const manageURL = "https://mytimes.co/m/k3J9-2Xm-4Tn8";
+  const calendarURL = "https://mytimes.co/api/slotboard/manage/k3J9-2Xm-4Tn8/calendar.ics";
   const publicURL = "https://mytimes.co/b/vision-assessment-2026";
   const adminURL = "https://mytimes.co/admin/k3J9-2Xm-4Tn8";
   const boardsURL = "https://mytimes.co/my-boards?token=design-test";
@@ -871,7 +963,7 @@ export async function sendEmailDesignTestBatch(input: {
       id: "01",
       aliases: ["1", "booking-confirmation", "confirmation"],
       label: "Booking confirmation (+ organizer notice)",
-      run: () => sendBookingClaimedEmails({ event: mockEvent, slot: mockSlot, booking: mockBooking, manageURL }),
+      run: () => sendBookingClaimedEmails({ event: mockEvent, slot: mockSlot, booking: mockBooking, manageURL, calendarURL }),
     },
     {
       id: "02",
@@ -883,7 +975,7 @@ export async function sendEmailDesignTestBatch(input: {
       id: "03",
       aliases: ["3", "cancellation-participant"],
       label: "Cancellation (participant + organizer notice)",
-      run: () => sendBookingCancellationEmails({ event: mockEvent, slot: mockSlot, booking: mockBooking, cancelledBy: "participant", reopenedSlot: true, rebookURL: publicURL, adminURL, openSlotCount: 4 }),
+      run: () => sendBookingCancellationEmails({ event: mockEvent, slot: mockSlot, booking: mockBooking, cancelledBy: "participant", reopenedSlot: true, rebookURL: publicURL, adminURL, openSlotCount: 4, calendarURL }),
     },
     {
       id: "04",
@@ -901,7 +993,7 @@ export async function sendEmailDesignTestBatch(input: {
       id: "08",
       aliases: ["8", "managed-booking-resend"],
       label: "Managed booking details",
-      run: () => sendManagedBookingDetailsEmail({ event: mockEvent, slot: mockSlot, booking: mockBooking, manageURL }),
+      run: () => sendManagedBookingDetailsEmail({ event: mockEvent, slot: mockSlot, booking: mockBooking, manageURL, calendarURL }),
     },
     {
       id: "09",
@@ -987,6 +1079,83 @@ export async function sendOperationalTestEmail(input: {
         preheader: "Provider delivery reached this inbox.",
         body: `<p style="margin:0 0 18px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">If you received this, the configured production email provider can deliver mail from the API service.</p>`,
         footerNote: "This is an operational test message.",
+      }),
+    },
+  });
+}
+
+export async function sendContactLeadEmail(input: {
+  lead: {
+    id: string;
+    intent: string;
+    name: string;
+    email: string;
+    company?: string | undefined;
+    role?: string | undefined;
+    teamSize?: string | undefined;
+    message: string;
+    sourcePath?: string | undefined;
+    integrationInterest: string[];
+    createdAt: string;
+  };
+  userAgent?: string | undefined;
+}): Promise<EmailDeliveryResult> {
+  const env = loadEnv();
+  const subjectContext = input.lead.company ?? input.lead.name;
+  const integrationInterest =
+    input.lead.integrationInterest.length > 0
+      ? input.lead.integrationInterest.map(formatContactToken).join(", ")
+      : "None selected";
+  const detailRows: Array<[string, string]> = [
+    ["Intent", formatContactToken(input.lead.intent)],
+    ["Name", input.lead.name],
+    ["Email", input.lead.email],
+    ["Company", input.lead.company ?? "Not provided"],
+    ["Role", input.lead.role ?? "Not provided"],
+    ["Team size", input.lead.teamSize ?? "Not provided"],
+    ["Integrations", integrationInterest],
+    ["Source", input.lead.sourcePath ?? "Not provided"],
+    ["Lead ref", input.lead.id],
+  ];
+  if (input.userAgent) {
+    detailRows.push(["User agent", input.userAgent.slice(0, 240)]);
+  }
+
+  return deliverLoggedEmail({
+    eventId: null,
+    emailType: "contact_lead",
+    recipientEmail: env.contactRecipientEmail,
+    message: {
+      to: env.contactRecipientEmail,
+      replyTo: input.lead.email,
+      subject: `[mytimes] ${formatContactToken(input.lead.intent)} contact from ${subjectContext}`,
+      text: [
+        "New mytimes contact request",
+        `Intent: ${formatContactToken(input.lead.intent)}`,
+        `Name: ${input.lead.name}`,
+        `Email: ${input.lead.email}`,
+        `Company: ${input.lead.company ?? "Not provided"}`,
+        `Role: ${input.lead.role ?? "Not provided"}`,
+        `Team size: ${input.lead.teamSize ?? "Not provided"}`,
+        `Integrations: ${integrationInterest}`,
+        `Source: ${input.lead.sourcePath ?? "Not provided"}`,
+        `Lead ref: ${input.lead.id}`,
+        "",
+        input.lead.message,
+      ].join("\n"),
+      html: renderEmailHtml({
+        eyebrow: "Contact request",
+        title: `${formatContactToken(input.lead.intent)} request`,
+        preheader: `New contact request from ${subjectContext}`,
+        body: [
+          `<p style="margin:0 0 16px 0;font-family:${FONT_BODY};font-size:17px;line-height:1.55;color:${COLOR_BODY};letter-spacing:-0.003em">A new contact request was submitted on mytimes.</p>`,
+          `<div style="margin:0 0 18px 0;padding:14px 16px;border:1px solid ${COLOR_HAIRLINE};border-radius:10px;background:#fffaf4">`,
+          `<p style="margin:0 0 8px 0;font-family:${FONT_MONO};font-size:11px;line-height:1.3;text-transform:uppercase;letter-spacing:0.08em;color:${COLOR_MUTED}">Message</p>`,
+          `<p style="margin:0;font-family:${FONT_BODY};font-size:16px;line-height:1.55;color:${COLOR_BODY};white-space:pre-wrap">${escapeHtml(input.lead.message)}</p>`,
+          `</div>`,
+        ].join(""),
+        detailRows,
+        footerNote: "Reply directly to this email to reach the sender.",
       }),
     },
   });
@@ -1338,6 +1507,7 @@ type RenderEmailOptions = {
   pullQuote?: PullQuote | undefined;
   primaryCta?: EmailButton | undefined;
   secondaryCta?: EmailButton | undefined;
+  calendarCtas?: EmailButton[] | undefined;
   // Numbered scaffolding under the CTA. Each string is one step.
   whatsNext?: string[] | undefined;
   detailRows?: Array<[string, string]> | undefined;
@@ -1357,6 +1527,7 @@ export function renderEmailHtml(opts: RenderEmailOptions): string {
     `<tr><td style="padding:0 32px 8px 32px">${opts.body}</td></tr>`,
     opts.pullQuote ? renderPullQuote(opts.pullQuote) : "",
     opts.primaryCta ? renderButtonRow(opts.primaryCta) : "",
+    opts.calendarCtas && opts.calendarCtas.length > 0 ? renderCalendarCtaGrid(opts.calendarCtas) : "",
     opts.secondaryCta ? renderSecondaryLinkRow(opts.secondaryCta) : "",
     opts.whatsNext && opts.whatsNext.length > 0 ? renderWhatsNext(opts.whatsNext) : "",
     opts.detailRows && opts.detailRows.length > 0 ? renderDetailRows(opts.detailRows) : "",
@@ -1560,6 +1731,27 @@ function renderButtonRow(button: EmailButton): string {
     `</tr>`,
     `</table>`,
     `<!--<![endif]-->`,
+    `</td></tr>`,
+  ].join("");
+}
+
+function renderCalendarCtaGrid(buttons: EmailButton[]): string {
+  const rows = buttons.map((button) => {
+    const safeHref = escapeAttribute(button.href);
+    const safeLabel = escapeHtml(button.label);
+    return [
+      `<tr>`,
+      `<td style="padding:0 0 8px 0">`,
+      `<a href="${safeHref}" target="_blank" style="display:block;padding:12px 14px;border:1px solid ${COLOR_HAIRLINE};border-radius:12px;background-color:${COLOR_CARD_BG};font-family:${FONT_BODY};font-size:14px;font-weight:600;color:${COLOR_BRAND};text-decoration:none;letter-spacing:-0.005em;line-height:1.2">${safeLabel} &rarr;</a>`,
+      `</td>`,
+      `</tr>`,
+    ].join("");
+  }).join("");
+
+  return [
+    `<tr><td style="padding:0 32px 16px 32px">`,
+    `<div style="font-family:${FONT_BODY};font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${COLOR_MUTED};margin:0 0 10px 0;line-height:1;mso-line-height-rule:exactly">Add to calendar</div>`,
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows}</table>`,
     `</td></tr>`,
   ].join("");
 }
@@ -1814,6 +2006,13 @@ function errorMessage(error: unknown): string {
 
 function emailDomain(email: string): string {
   return email.split("@").at(1)?.toLowerCase() ?? "unknown";
+}
+
+function formatContactToken(value: string): string {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function escapeHtml(value: string): string {

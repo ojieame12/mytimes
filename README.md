@@ -139,7 +139,7 @@ Recommended Railway setup:
 7. Set `SLOTBOARD_AUTH_SECRET` or `BETTER_AUTH_SECRET` to a separate long production secret.
 8. Set `SLOTBOARD_AUTH_BASE_URL` to the public app origin when the frontend proxies `/api`, for example `https://mytimes.co`.
 9. Add the frontend service from this repo and use `railway.slots.toml` as its config file.
-10. Leave `VITE_SLOTBOARD_API_URL` unset, or set it to the public app origin, so auth and account calls go through same-origin `/api`.
+10. Leave `VITE_SLOTBOARD_API_URL` unset so browser calls go through same-origin `/api`.
 11. Set SLOTBOARD_WEB_ORIGINS and SLOTBOARD_PUBLIC_APP_URL on the API service to the frontend domain.
 12. Set transactional email vars:
    - `SLOTBOARD_EMAIL_PROVIDER=console`, `resend`, or `postmark`
@@ -162,6 +162,7 @@ Recommended Railway setup:
    - Frontend service: `VITE_SENTRY_DSN`, `VITE_SENTRY_ENVIRONMENT=production`, `VITE_SENTRY_RELEASE=<git-sha-or-release>`
    - Frontend performance tracing is disabled by default. Set `VITE_SENTRY_TRACES_SAMPLE_RATE=0.05` only if you want sampled browser traces.
    - The frontend CSP automatically allows the Sentry ingest origin when `VITE_SENTRY_DSN` is present.
+   - Verify API wiring with `npm run observability:ready`; after setting `SENTRY_DSN`, send one guarded test event with `SLOTBOARD_OPS_SECRET=<secret> npm run observability:test`.
 16. Optional retention vars:
    - `SLOTBOARD_RETENTION_ARCHIVE_AFTER_DAYS=30`
    - `SLOTBOARD_RETENTION_DELETE_ARCHIVED_AFTER_DAYS=365`
@@ -209,7 +210,7 @@ To verify Railway SSH backup wiring without copying production data, run a
 schema-only dump:
 
 ```sh
-SLOTBOARD_BACKUP_SCHEMA_ONLY=true npm run db:backup:railway
+npm run db:backup:railway:schema
 ```
 
 The scripts prefer local `pg_dump`, `pg_restore`, and `psql` when installed.
@@ -444,10 +445,24 @@ to `/railway.retention.toml`, and keep its cron schedule at `0 2 * * *`
 (02:00 UTC). The command must exit after each run; `retention:prod` closes the
 database pool before exiting.
 
+Check whether the linked Railway project has the cron service wired:
+
+```sh
+npm run retention:ready
+SLOTBOARD_REQUIRE_RETENTION_SERVICE=true npm run retention:ready
+```
+
 For a production-equivalent one-off run:
 
 ```sh
 npm run retention:prod
+```
+
+When testing against Railway production, run the command inside a deployed
+service container so `postgres.railway.internal` is reachable:
+
+```sh
+railway ssh --service api --environment production -- npm run retention:prod --workspace @fresh-feel/slots-api
 ```
 
 Retention archives expired boards, soft-deletes old archived boards, scrubs PII
@@ -457,6 +472,21 @@ for deleted boards, and removes stale rate-limit rows. Tune with
 `SLOTBOARD_RETENTION_PII_SCRUB_AFTER_DAYS`, and
 `SLOTBOARD_RETENTION_RATE_LIMIT_AFTER_DAYS`.
 
-For a separately hosted frontend build, set `VITE_SLOTBOARD_API_URL` to the API
-origin at build time. Local development infers `http://127.0.0.1:3014` when the
-frontend is served from `127.0.0.1` or `localhost`.
+For a separately hosted frontend build, set `VITE_SLOTBOARD_API_URL` to a live
+API origin at build time. Do not point it at `https://api.mytimes.co` until that
+host returns `ok=true` from `/readyz`. Local development infers
+`http://127.0.0.1:3014` when the frontend is served from `127.0.0.1` or
+`localhost`.
+
+Check the branded API host with:
+
+```sh
+npm run api-domain:ready
+```
+
+The script verifies public DNS, Railway service metadata, the generated Railway
+API domain, and `https://api.mytimes.co/readyz`. If it reports Railway fallback
+`404`, the generated Railway API domain is healthy but `api.mytimes.co` needs to
+be set to DNS-only/unproxied in Cloudflare, then removed/re-added on the Railway
+`api` service or reverified in DNS. The browser bundle should keep using
+same-origin `/api` until `api.mytimes.co/readyz` returns `ok=true`.

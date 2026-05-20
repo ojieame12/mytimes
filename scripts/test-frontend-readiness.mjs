@@ -31,6 +31,7 @@ assertFileIncludes("apps/slots/src/views/PricingPage.tsx", [
   "$480",
   "$49 monthly available",
   "Free for small rounds. Company for repeat hiring.",
+  "My boards email recovery",
 ]);
 assertFileExcludes("apps/slots/src/views/PricingPage.tsx", [
   "Event Pass",
@@ -43,17 +44,63 @@ assertFileIncludes("apps/slots/src/lib/routing.ts", [
   "/verify-email",
   "/forgot-password",
   "/reset-password",
+  "/enterprise",
+  "/contact",
   "/privacy",
   "/terms",
 ]);
 assertFileIncludes("apps/slots/src/components/AppShell.tsx", [
   'href="/privacy"',
   'href="/terms"',
+  'href="/contact"',
+  'href="/my-boards/request"',
+  "My boards",
+]);
+assertFileIncludes("apps/slots/src/views/create/ReviewStep.tsx", [
+  "active_board_limit_reached",
+  "Find previous board",
+  "navigate('/my-boards/request')",
+]);
+assertFileIncludes("apps/slots/src/views/create/DoneStep.tsx", [
+  "Find previous boards",
+  "navigate('/my-boards/request')",
+  "Free includes one active board",
+]);
+assertFileIncludes("apps/slots/src/views/MyBoardsPage.tsx", [
+  "Free board limit",
+  "archive",
+  "admin view",
+  "Compare Company",
+]);
+assertFileIncludes("apps/slots/src/lib/errorMessages.ts", [
+  "Free includes one active board",
 ]);
 assertFileIncludes("apps/slots/src/views/LegalPage.tsx", [
   "Privacy Policy",
   "Terms of Service",
-  "hello@mytimes.co",
+  "support@getcaboo.com",
+]);
+assertFileIncludes("apps/slots/src/views/ContactPage.tsx", [
+  "support@getcaboo.com",
+  "submitContactLead",
+  "Slack",
+  "Teams",
+]);
+assertFileIncludes("apps/slots/src/views/EnterprisePage.tsx", [
+  "Slack &amp; Teams setup",
+  "Microsoft Entra ID",
+  "Teams",
+  "SSO",
+]);
+assertFileExcludes("apps/slots/src/views/EnterprisePage.tsx", [
+  "Azure AD",
+  "mark: 'O'",
+  "mark: 'A'",
+  "mark: 'G'",
+]);
+assertFileIncludes("apps/slots/scripts/prerender.mts", [
+  "/enterprise",
+  "/contact",
 ]);
 assertFileIncludes("apps/slots/src/views/PasswordResetPage.tsx", [
   "Reset your password",
@@ -103,6 +150,11 @@ assertIncludes(bundleText, "Email verified", "bundle must include email verifica
 assertIncludes(bundleText, "Verification link expired", "bundle must include email verification error copy");
 assertIncludes(bundleText, "Privacy Policy", "bundle must include privacy page copy");
 assertIncludes(bundleText, "Terms of Service", "bundle must include terms page copy");
+assertIncludes(bundleText, "support@getcaboo.com", "bundle must include support contact email");
+assertIncludes(bundleText, "Slack & Teams setup", "bundle must include Enterprise page copy");
+assertIncludes(bundleText, "Microsoft Entra ID", "bundle must include current SSO provider copy");
+assertIncludes(bundleText, "Teams notification setup", "bundle must include Enterprise page copy");
+assertExcludes(bundleText, "Azure AD", "bundle must not include old Azure AD naming");
 assertExcludes(bundleText, "Email previews", "bundle must not include email preview index copy");
 assertExcludes(bundleText, "mytimes.app", "bundle must not include old mytimes.app origin");
 assertExcludes(bundleText, "MT-2026", "bundle must not include fake receipt ids");

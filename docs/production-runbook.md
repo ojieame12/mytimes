@@ -23,7 +23,7 @@ npm run db:backup:railway
 Railway backup wiring check without copying production data:
 
 ```sh
-SLOTBOARD_BACKUP_SCHEMA_ONLY=true npm run db:backup:railway
+npm run db:backup:railway:schema
 ```
 
 The Railway backup mode streams `pg_dump` from the `postgres` service over
@@ -33,8 +33,9 @@ ignored by git. Store long-lived copies in an encrypted location only.
 Before launch, record:
 
 ```txt
-Last production backup: 2026-05-15T08:22:12Z, `/Users/ojieame/caboo-slots-mini/backups/mytimes-railway-2026-05-15T08-22-12-741Z.dump`, 220004 bytes
-Last restore-check result: passed on 2026-05-15T08:22Z, restored into temporary local database `slotboard_restore_1778833351979_r988tq`, verified 19 slotboard tables, 119 booking events, 227 time slots, 93 bookings, then dropped temporary database
+Last production backup: 2026-05-17T09:35:55Z, `/Users/ojieame/caboo-slots-mini/backups/mytimes-railway-2026-05-17T09-35-55-936Z.dump`, 250233 bytes
+Last restore-check result: passed on 2026-05-17T09:36Z, restored into temporary local database `slotboard_restore_1779010581476_swh8ae`, verified 25 slotboard tables, 120 booking events, 251 time slots, 94 bookings, then dropped temporary database
+Last schema-only Railway backup check: passed on 2026-05-17T09:35Z, restored into temporary local database `slotboard_restore_1779010536384_xek91x`, verified 25 slotboard tables, then dropped temporary database
 Encrypted storage location:
 Railway snapshot/backups enabled:
 Restore owner:
@@ -145,6 +146,32 @@ Retention must run as a separate Railway cron service. The service should use:
 Config file: /railway.retention.toml
 Schedule: 0 2 * * * (02:00 UTC daily)
 Command: npm run retention:prod --workspace @fresh-feel/slots-api
+```
+
+Latest local behavior check:
+
+```txt
+2026-05-17T11:43 SAST: `npm run smoke:retention` passed.
+Verified auto-archive, archived-board public reads, old archived-board deletion,
+deleted-event PII scrubbing, email/activity/product-event scrubbing, rate-limit
+cleanup, and idempotency-key cleanup.
+```
+
+Latest production wiring check:
+
+```txt
+2026-05-17T12:13 SAST: `SLOTBOARD_REQUIRE_RETENTION_SERVICE=true npm run retention:ready` passed.
+Railway production has a `retention` service using `/railway.retention.toml`,
+cron schedule `0 2 * * *`, and start command
+`npm run retention:prod --workspace @fresh-feel/slots-api`.
+Manual production run over Railway SSH completed with
+`slotboard_retention_completed`; zero rows required action.
+```
+
+Use the strict form for a failing pre-launch check:
+
+```sh
+SLOTBOARD_REQUIRE_RETENTION_SERVICE=true npm run retention:ready
 ```
 
 ## 6. Observability

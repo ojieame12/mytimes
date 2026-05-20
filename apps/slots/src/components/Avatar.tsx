@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Style } from '@dicebear/core';
 import type { AvatarStyle } from '../lib/types';
+import '../styles/avatar.css';
 
 /* ─── Avatar ──────────────────────────────────────────────
  * Renders a DiceBear illustration deterministically seeded by
@@ -23,6 +24,7 @@ const STYLE_LOADERS: Record<AvatarStyle, () => Promise<AvatarAdapter>> = {
 const BG_PALETTE = ['fcebd7', 'fde9da', 'ffd4bc', 'fff1e3'];
 const DATA_URI_CACHE = new Map<string, string>();
 const DATA_URI_PROMISES = new Map<string, Promise<string>>();
+const AVATAR_LOAD_DELAY_MS = 4000;
 
 export interface AvatarProps {
   /** Stable seed — typically the organizer's email. */
@@ -35,6 +37,8 @@ export interface AvatarProps {
   className?: string;
   /** Aria label override. Defaults to a generic "Avatar for {seed}". */
   ariaLabel?: string;
+  /** Delay before loading the DiceBear style chunk after the avatar is near the viewport. */
+  loadDelayMs?: number;
 }
 
 export function Avatar({
@@ -43,13 +47,38 @@ export function Avatar({
   size = 56,
   className,
   ariaLabel,
+  loadDelayMs = AVATAR_LOAD_DELAY_MS,
 }: AvatarProps) {
   const cacheKey = `${style}:${seed}`;
+  const rootRef = useRef<HTMLSpanElement | null>(null);
+  const [nearViewport, setNearViewport] = useState(false);
   const [dataUri, setDataUri] = useState(() => DATA_URI_CACHE.get(cacheKey));
   const initials = useMemo(() => fallbackInitials(seed), [seed]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const node = rootRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setNearViewport(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setNearViewport(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '180px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (isReactActTestEnvironment()) return;
+    if (!nearViewport) return;
 
     let cancelled = false;
     const cached = DATA_URI_CACHE.get(cacheKey);
@@ -60,7 +89,7 @@ export function Avatar({
       };
     }
     setDataUri(undefined);
-    const cancelScheduledLoad = scheduleIdle(() => {
+    const cancelScheduledLoad = scheduleIdleAfterCriticalPaint(loadDelayMs, () => {
       void loadAvatarDataUri(style, seed, cacheKey).then((next) => {
         if (!cancelled) setDataUri(next);
       });
@@ -69,10 +98,11 @@ export function Avatar({
       cancelled = true;
       cancelScheduledLoad();
     };
-  }, [cacheKey, seed, style]);
+  }, [cacheKey, loadDelayMs, nearViewport, seed, style]);
 
   return (
     <span
+      ref={rootRef}
       className={`avatar${className ? ` ${className}` : ''}`}
       style={{ width: size, height: size }}
       aria-hidden={ariaLabel ? undefined : true}
@@ -126,15 +156,21 @@ function isReactActTestEnvironment(): boolean {
   return Boolean((globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT);
 }
 
-function scheduleIdle(callback: () => void): () => void {
+function scheduleIdleAfterCriticalPaint(delayMs: number, callback: () => void): () => void {
   const idleWindow = window as Window & {
     requestIdleCallback?: (cb: IdleRequestCallback, options?: IdleRequestOptions) => number;
     cancelIdleCallback?: (handle: number) => void;
   };
-  if (typeof idleWindow.requestIdleCallback === 'function') {
-    const handle = idleWindow.requestIdleCallback(callback, { timeout: 1200 });
-    return () => idleWindow.cancelIdleCallback?.(handle);
-  }
-  const handle = window.setTimeout(callback, 180);
-  return () => window.clearTimeout(handle);
+  let idleHandle: number | undefined;
+  const delayHandle = window.setTimeout(() => {
+    if (typeof idleWindow.requestIdleCallback === 'function') {
+      idleHandle = idleWindow.requestIdleCallback(callback, { timeout: 1800 });
+    } else {
+      callback();
+    }
+  }, delayMs);
+  return () => {
+    window.clearTimeout(delayHandle);
+    if (idleHandle !== undefined) idleWindow.cancelIdleCallback?.(idleHandle);
+  };
 }

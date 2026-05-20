@@ -1,14 +1,26 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useRoute, navigate } from './lib/routing';
 import { AppShell } from './components/AppShell';
-import { AuthPage } from './views/AuthPage';
 import { LandingPage } from './views/LandingPage';
-import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from './views/PasswordResetPage';
 import { PricingPage } from './views/PricingPage';
+import { EnterprisePage } from './views/EnterprisePage';
+import { ContactPage } from './views/ContactPage';
 import { PrivacyPage, TermsPage } from './views/LegalPage';
 import { ApiClientError, readPublicBoard, type ClaimSlotResponse, type PublicBoardResponse } from './lib/api';
 import { MOCK_EVENT, MOCK_SLOTS } from './lib/mockData';
 
+const AuthPage = lazy(() =>
+  import('./views/AuthPage').then(({ AuthPage }) => ({ default: AuthPage })),
+);
+const ForgotPasswordPage = lazy(() =>
+  import('./views/PasswordResetPage').then(({ ForgotPasswordPage }) => ({ default: ForgotPasswordPage })),
+);
+const ResetPasswordPage = lazy(() =>
+  import('./views/PasswordResetPage').then(({ ResetPasswordPage }) => ({ default: ResetPasswordPage })),
+);
+const VerifyEmailPage = lazy(() =>
+  import('./views/PasswordResetPage').then(({ VerifyEmailPage }) => ({ default: VerifyEmailPage })),
+);
 const loadBookingPage = () =>
   import('./views/BookingPage').then(({ BookingPage }) => ({ default: BookingPage }));
 const BookingPage = lazy(loadBookingPage);
@@ -83,11 +95,9 @@ export function App() {
       );
     }
     return (
-      <AppShell>
-        <RouteSuspense title="Loading booking board">
-          <PublicBookingRoute publicToken={route.publicToken} />
-        </RouteSuspense>
-      </AppShell>
+      <RouteSuspense title="Loading booking board">
+        <PublicBookingRoute publicToken={route.publicToken} />
+      </RouteSuspense>
     );
   }
 
@@ -151,10 +161,28 @@ export function App() {
     );
   }
 
+
+
   if (route.type === 'pricing') {
     return (
       <AppShell>
         <PricingPage />
+      </AppShell>
+    );
+  }
+
+  if (route.type === 'enterprise') {
+    return (
+      <AppShell>
+        <EnterprisePage />
+      </AppShell>
+    );
+  }
+
+  if (route.type === 'contact') {
+    return (
+      <AppShell>
+        <ContactPage />
       </AppShell>
     );
   }
@@ -178,7 +206,9 @@ export function App() {
   if (route.type === 'signin') {
     return (
       <AppShell>
-        <AuthPage mode="signin" />
+        <RouteSuspense title="Loading sign in">
+          <AuthPage mode="signin" />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -186,7 +216,9 @@ export function App() {
   if (route.type === 'signup') {
     return (
       <AppShell>
-        <AuthPage mode="signup" />
+        <RouteSuspense title="Loading sign up">
+          <AuthPage mode="signup" />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -194,7 +226,9 @@ export function App() {
   if (route.type === 'verify-email') {
     return (
       <AppShell>
-        <VerifyEmailPage />
+        <RouteSuspense title="Loading verification">
+          <VerifyEmailPage />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -202,7 +236,9 @@ export function App() {
   if (route.type === 'forgot-password') {
     return (
       <AppShell>
-        <ForgotPasswordPage />
+        <RouteSuspense title="Loading password reset">
+          <ForgotPasswordPage />
+        </RouteSuspense>
       </AppShell>
     );
   }
@@ -210,14 +246,16 @@ export function App() {
   if (route.type === 'reset-password') {
     return (
       <AppShell>
-        <ResetPasswordPage />
+        <RouteSuspense title="Loading password reset">
+          <ResetPasswordPage />
+        </RouteSuspense>
       </AppShell>
     );
   }
 
   if (route.type === 'account') {
     return (
-      <AppShell>
+      <AppShell resolveSession>
         <RouteSuspense title="Loading account">
           <AccountEventsPage />
         </RouteSuspense>
@@ -227,7 +265,7 @@ export function App() {
 
   if (route.type === 'account-event') {
     return (
-      <AppShell>
+      <AppShell resolveSession>
         <RouteSuspense title="Loading account board">
           <AdminDashboardPage accountEventId={route.eventId} />
         </RouteSuspense>
@@ -342,32 +380,36 @@ function PublicBookingRoute({ publicToken }: { publicToken: string }) {
 
   if (state.status === 'loading') {
     return (
-      <section className="account-shell">
-        <section className="account-placeholder" aria-live="polite">
-          <h1 className="account-placeholder__title">Loading booking board</h1>
-          <p className="account-placeholder__body">Fetching the latest open slots.</p>
+      <AppShell>
+        <section className="account-shell">
+          <section className="account-placeholder" aria-live="polite">
+            <h1 className="account-placeholder__title">Loading booking board</h1>
+            <p className="account-placeholder__body">Fetching the latest open slots.</p>
+          </section>
         </section>
-      </section>
+      </AppShell>
     );
   }
 
   if (state.status === 'error') {
     return (
-      <section className="account-shell">
-        <section className="account-placeholder" aria-live="polite">
-          <h1 className="account-placeholder__title">This link is invalid or unavailable</h1>
-          <p className="account-placeholder__body">{state.message}</p>
-          <div className="account-placeholder__actions">
-            <button
-              type="button"
-              className="material-stamp-dark is-md"
-              onClick={() => navigate('/')}
-            >
-              Go home →
-            </button>
-          </div>
+      <AppShell>
+        <section className="account-shell">
+          <section className="account-placeholder" aria-live="polite">
+            <h1 className="account-placeholder__title">This link is invalid or unavailable</h1>
+            <p className="account-placeholder__body">{state.message}</p>
+            <div className="account-placeholder__actions">
+              <button
+                type="button"
+                className="material-stamp-dark is-md"
+                onClick={() => navigate('/')}
+              >
+                Go home →
+              </button>
+            </div>
+          </section>
         </section>
-      </section>
+      </AppShell>
     );
   }
 
@@ -398,7 +440,12 @@ function PublicBookingRoute({ publicToken }: { publicToken: string }) {
       });
   };
 
+  const hideFooter =
+    state.board.event.paymentStatus === 'paid' &&
+    (state.board.event.planKey === 'event_pass' || state.board.event.planKey === 'company_standby');
+
   return (
+    <AppShell hideFooter={hideFooter}>
     <BookingPage
       publicToken={publicToken}
       event={state.board.event}
@@ -406,6 +453,7 @@ function PublicBookingRoute({ publicToken }: { publicToken: string }) {
       onClaimed={onClaimed}
       onConflict={onConflict}
     />
+    </AppShell>
   );
 }
 
@@ -423,8 +471,10 @@ function NotFoundPage() {
     <section className="account-shell">
       <section className="account-placeholder">
         <img
-          src="/assets/bg/vignette-bicycle-bag.png"
+          src="/assets/bg/vignette-bicycle-bag.webp"
           alt=""
+          loading="lazy"
+          decoding="async"
           style={{
             width: '140px',
             height: '140px',

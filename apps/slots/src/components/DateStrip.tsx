@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { TimeSlot } from '../lib/types';
+import { expressiveScrollBehavior, syncScrollBehavior } from '../lib/motion';
+import '../styles/carousel.css';
 
 /* ─── DateStrip ───────────────────────────────────────
  * Horizontal nav at the top of the picker. Each cell
@@ -111,7 +113,7 @@ export function DateStrip({ slots, viewerTz, currentDateKey }: DateStripProps) {
     const t = trackRef.current;
     if (!t) return;
     /* Scroll one "page" (~75% of the visible width) for a meaningful jump. */
-    t.scrollBy({ left: direction * t.clientWidth * 0.75, behavior: 'smooth' });
+    t.scrollBy({ left: direction * t.clientWidth * 0.75, behavior: expressiveScrollBehavior() });
   };
 
   /* When the current date changes externally (band scrolled into view),
@@ -127,7 +129,7 @@ export function DateStrip({ slots, viewerTz, currentDateKey }: DateStripProps) {
     const viewLeft = t.scrollLeft;
     const viewRight = viewLeft + t.clientWidth;
     if (cellLeft < viewLeft || cellRight > viewRight) {
-      cell.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      cell.scrollIntoView({ behavior: syncScrollBehavior(), block: 'nearest', inline: 'nearest' });
     }
   }, [currentDateKey]);
 
@@ -164,7 +166,7 @@ export function DateStrip({ slots, viewerTz, currentDateKey }: DateStripProps) {
                 className={`date-strip__cell${isCurrent ? ' is-current' : ''}${isToday ? ' is-today' : ''}`}
                 onClick={() => {
                   const anchor = document.getElementById(`day-${day.dateKey}`);
-                  anchor?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  anchor?.scrollIntoView({ behavior: expressiveScrollBehavior(), block: 'start' });
                 }}
                 aria-current={isCurrent ? 'true' : undefined}
                 aria-label={`${day.dayShort} ${day.dayNum} ${day.monthShort}: ${day.count} slot${day.count === 1 ? '' : 's'}`}

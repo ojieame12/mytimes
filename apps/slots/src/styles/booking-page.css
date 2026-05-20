@@ -23,9 +23,8 @@
 
 /* ─── BookingCompact — slim sticky bar shown after the full
  *  header card scrolls out. Position: fixed at the very top so
- *  day-rows visibly slide UNDER it. Backdrop-blur on a faintly
- *  peach-tinted surface gives the "scroll under" feel without
- *  needing extra fade masks. */
+ *  day-rows visibly slide under it. The flat warm-paper surface
+ *  avoids scroll-frame backdrop blur while keeping the visual. */
 .booking-compact {
   position: fixed;
   top: 0;
@@ -33,16 +32,9 @@
   right: 0;
   z-index: 40;
   pointer-events: none;
-  /* Lighter blur (was 14px + saturate 140%) — backdrop-filter
-   *  repaints every scroll frame, so a heavier blur causes
-   *  jank visible on the toolbar/SpinPill below. 6px is enough
-   *  to soften the day-rows scrolling underneath, and dropping
-   *  saturate removes the most expensive part of the filter. */
-  background: hsla(28, 100%, 97%, 0.88);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid hsla(16, 88%, 55%, 0.12);
-  box-shadow: 0 6px 18px -10px hsla(16, 88%, 45%, 0.18);
+  background: color-mix(in srgb, var(--white) 94%, var(--primary-soft) 6%);
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 14%, transparent);
+  box-shadow: 0 8px 20px -14px color-mix(in srgb, var(--primary) 28%, transparent);
   opacity: 0;
   transform: translateY(-100%);
   /* will-change hints the compositor to keep this on its own

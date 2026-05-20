@@ -10,13 +10,15 @@
 
 export const FREE_LIMITS = {
   /** Maximum number of active (non-archived) boards on free. */
-  activeBoards: 2,
+  activeBoards: 1,
   /** Bookings accepted per board on free before upgrade is required. */
-  bookingsPerBoard: 25,
+  bookingsPerBoard: 15,
   /** Maximum generated slots a free board will publish. */
-  slotsPerBoard: 60,
-  /** How long a free board stays live, in days. */
-  retentionDays: 60,
+  slotsPerBoard: 30,
+  /** Maximum source dates a free board can actively book across. */
+  bookingDays: 3,
+  /** Fallback expiry in days when no slot window can be derived. */
+  retentionDays: 3,
 } as const;
 
 export type FreeLimitKey = keyof typeof FREE_LIMITS;

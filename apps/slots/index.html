@@ -9,7 +9,7 @@
          via react-helmet-async from the App/views, so anything here
          is the "no JS" baseline that crawlers, link unfurlers, and
          AI agents see before the SPA hydrates. -->
-    <title>mytimes — scheduling for one-off interview rounds</title>
+    <title>mytimes: scheduling for one-off interview rounds</title>
     <meta
       name="description"
       content="Scheduling for one-off interview rounds, candidate demos, and vendor calls. Fixed times, one shareable link, no participant accounts."
@@ -42,7 +42,7 @@
          link previews. Image is 1200×630 to match the OG spec. -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://mytimes.co/" />
-    <meta property="og:title" content="mytimes — scheduling for one-off interview rounds" />
+    <meta property="og:title" content="mytimes: scheduling for one-off interview rounds" />
     <meta
       property="og:description"
       content="Fixed times, one shareable link, no participant accounts. Five minutes from idea to live booking board for interview rounds, demos, and vendor calls."
@@ -57,7 +57,7 @@
     <!-- ─── Twitter / X card ─────────────────────────────────────
          summary_large_image renders the OG image as a hero. -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="mytimes — scheduling for one-off interview rounds" />
+    <meta name="twitter:title" content="mytimes: scheduling for one-off interview rounds" />
     <meta
       name="twitter:description"
       content="Fixed times, one shareable link, no participant accounts. Five minutes from idea to live booking board for interview rounds, demos, and vendor calls."
@@ -67,10 +67,10 @@
 
     <!-- ─── Structured data ──────────────────────────────────────
          A single JSON-LD @graph carrying:
-         · Organization  — entity for knowledge-panel surfaces
-         · SoftwareApplication — pricing/category for product
+         · Organization: entity for knowledge-panel surfaces
+         · SoftwareApplication: pricing/category for product
            listings (Free $0, Company $49/mo founding monthly)
-         · FAQPage — Q&A pairs verified against LandingPage.tsx
+         · FAQPage: Q&A pairs verified against LandingPage.tsx
            and PricingPage.tsx so the answers match what the
            product actually does. -->
     <script type="application/ld+json">
@@ -84,7 +84,7 @@
           "url": "https://mytimes.co",
           "logo": "https://mytimes.co/assets/brand/wordmark-dark.png",
           "description": "Scheduling for one-off interview rounds, candidate demos, and vendor calls. Fixed times, one shareable link, no participant accounts.",
-          "email": "hello@mytimes.co"
+          "email": "support@getcaboo.com"
         },
         {
           "@type": "SoftwareApplication",
@@ -104,7 +104,7 @@
               "price": "0",
               "priceCurrency": "USD",
               "category": "Free",
-              "description": "Forever-free tier with 2 active boards, 25 bookings per board, 60 published slots, and a 60-day active window."
+              "description": "Forever-free tier with 1 active board, 15 bookings per board, 30 published slots, and a 3-day active window. Per-board CSV export included."
             },
             {
               "@type": "Offer",
@@ -124,6 +124,20 @@
                   "unitCode": "MON"
                 }
               }
+            },
+            {
+              "@type": "Offer",
+              "name": "Enterprise",
+              "priceCurrency": "USD",
+              "category": "Enterprise",
+              "description": "For hiring teams that need Slack and Teams booking alerts, SSO, security review, custom booking limits, and annual contract paperwork. Contact sales for pricing.",
+              "priceSpecification": {
+                "@type": "PriceSpecification",
+                "priceCurrency": "USD",
+                "price": "0",
+                "description": "Custom pricing. Contact sales."
+              },
+              "url": "https://mytimes.co/enterprise"
             }
           ]
         },
@@ -144,7 +158,7 @@
               "name": "Does mytimes connect to my calendar?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "No. There is no calendar OAuth. After a booking is confirmed, mytimes emails an .ics calendar file that drops into any calendar app. No third-party tracking, no marketing email."
+                "text": "No. There is no calendar OAuth. After a booking is confirmed, mytimes emails Google, Outlook, Office 365, and Apple/iCal calendar buttons plus an attached .ics file. No third-party tracking, no marketing email."
               }
             },
             {
@@ -176,7 +190,7 @@
               "name": "How does pricing work?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Free is $0 forever for individuals running small rounds, capped at 2 active boards, 25 bookings per board, 60 slots, and a 60-day window. Company is $49 per month (or $480 per year) with unlimited boards, 10 seats, custom subdomain, and company-wide admin recovery."
+                "text": "Free is $0 forever for one small round, capped at 1 active board, 15 bookings per board, 30 published slots, and a 3-day active window. Company is $49 per month (or $480 per year) with unlimited boards, 10 seats, custom subdomain, and company-wide admin recovery. Enterprise pricing is custom for teams that need Slack and Teams booking alerts, SSO with security review, custom booking limits, and annual contract paperwork."
               }
             }
           ]
@@ -208,12 +222,12 @@
           Create a booking board in about four minutes. Pick a date window and a slot
           length; mytimes generates the slots. Share one public link with candidates.
           Each candidate picks a time. The organizer gets one admin link to manage
-          everything. The product needs JavaScript to run — open one of the links
+          everything. The product needs JavaScript to run. Open one of the links
           below in a modern browser.
         </p>
         <ul style="font-size: 16px; line-height: 1.8; padding-left: 20px;">
           <li><a href="https://mytimes.co/" style="color: #F05A28;">Product overview</a></li>
-          <li><a href="https://mytimes.co/pricing" style="color: #F05A28;">Pricing — Free and Company ($49/mo)</a></li>
+          <li><a href="https://mytimes.co/pricing" style="color: #F05A28;">Pricing: Free and Company ($49/mo)</a></li>
           <li><a href="https://mytimes.co/new" style="color: #F05A28;">Create a board</a></li>
           <li><a href="https://mytimes.co/b/preview" style="color: #F05A28;">See the demo board</a></li>
         </ul>

@@ -18,6 +18,7 @@
 @import './styles/tokens.primitives.css';
 @import './styles/tokens.semantic.css';
 @import './styles/paywall.css';
+@import './styles/limit-indicator-v2.css';
 
 /* Mytimes Heading — poster-weight display face used only for
    real headings. Figure-like content is protected later by
@@ -28,32 +29,30 @@
   src: url('/fonts/mytimes-heading.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
 
 /* SF Compact Rounded — Apple's softened sans, used here for
-   body text and controls. Numerals still go through Geist Mono. */
+   body text and controls when available locally. We intentionally
+   do not ship the full OTF as a webfont: the source file is several
+   megabytes, so non-Apple platforms fall back to the semantic sans
+   stack instead of blocking first render on a decorative body face. */
 @font-face {
   font-family: 'SF Compact Rounded';
   src:
     local('SF Compact Rounded'),
-    local('SFCompactRounded-Regular'),
-    url('/fonts/SF-Compact-Rounded-Regular.otf') format('opentype');
+    local('SFCompactRounded-Regular');
   font-weight: 100 900;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
 
 /* ─── Page reset ────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 html, body, #root { height: 100%; }
-/* Smooth easing on programmatic scrolls (scrollIntoView from the
- *  date dial, the day-band anchors, etc.). User wheel / touchpad
- *  scrolling is unaffected — the browser handles its own inertia. */
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-}
+/* Keep route changes immediate. Components opt into expressive smooth
+ * scrolling only for deliberate anchor/date jumps. */
+html { scroll-behavior: auto; }
 body {
   margin: 0;
   font-family: var(--font-sans);

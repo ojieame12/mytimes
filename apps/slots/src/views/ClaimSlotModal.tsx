@@ -393,5 +393,5 @@ function confirmationDeliveryCopy(delivery?: EmailDeliveryResult): string {
   if (delivery.provider === 'console') {
     return 'Your booking is saved. Email delivery is not configured here, so keep the manage link below.';
   }
-  return "We've sent a confirmation email with a calendar invite.";
+  return "We've sent a confirmation email with calendar buttons and an .ics file.";
 }

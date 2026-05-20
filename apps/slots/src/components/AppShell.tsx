@@ -1,6 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { navigate } from '../lib/routing';
 import { getOrganizerSession, type OrganizerSessionResponse } from '../lib/api';
+import {
+  prefetchAccountArea,
+  prefetchAuthPage,
+  prefetchBookingPage,
+  prefetchCreateFlow,
+} from '../lib/prefetch';
 
 /* ─── AppShell ────────────────────────────────────────────
  * Letterpress page chrome. Provides the top bar (brand mark,
@@ -16,14 +22,28 @@ export interface AppShellProps {
   /** When true, the canvas under the children gets the
    *  warm postmark-corner accents. Default true. */
   postmark?: boolean;
+  /** Hide global mytimes footer for paid/white-label booking surfaces. */
+  hideFooter?: boolean;
+  /** Resolve organizer session for account-owned surfaces. */
+  resolveSession?: boolean;
 }
 
-export function AppShell({ children, topBarRight, postmark = true }: AppShellProps) {
+export function AppShell({
+  children,
+  topBarRight,
+  postmark = true,
+  hideFooter = false,
+  resolveSession = false,
+}: AppShellProps) {
   /* Session resolves async. Default to the logged-out treatment
    * and swap once the request returns — no loading flicker.   */
   const [session, setSession] = useState<OrganizerSessionResponse | undefined>(undefined);
 
   useEffect(() => {
+    if (!resolveSession) {
+      setSession(undefined);
+      return;
+    }
     let cancelled = false;
     getOrganizerSession()
       .then((value) => {
@@ -36,7 +56,7 @@ export function AppShell({ children, topBarRight, postmark = true }: AppShellPro
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [resolveSession]);
 
   const isAuthed = Boolean(session);
 
@@ -63,22 +83,25 @@ export function AppShell({ children, topBarRight, postmark = true }: AppShellPro
 
       <main className="app-shell__main">{children}</main>
 
-      <footer className="app-footer">
-        <span className="app-footer__brand">
-          <img
-            src="/assets/brand/wordmark-dark.svg"
-            alt="mytimes"
-            style={{ height: '16px', width: 'auto', display: 'block', opacity: 0.7 }}
-          />
-        </span>
-        <span className="app-footer__rule" aria-hidden="true" />
-        <span className="app-footer__year">© {new Date().getFullYear()}</span>
-        <FooterRouteLink href="/privacy">Privacy</FooterRouteLink>
-        <FooterRouteLink href="/terms">Terms</FooterRouteLink>
-        <a href="mailto:hello@mytimes.co" className="app-footer__link">Contact</a>
-        <span className="app-footer__hairline" aria-hidden="true">·</span>
-        <span className="app-footer__credit">mytimes booking boards</span>
-      </footer>
+      {!hideFooter && (
+        <footer className="app-footer">
+          <span className="app-footer__brand">
+            <img
+              src="/assets/brand/wordmark-dark.svg"
+              alt="mytimes"
+              style={{ height: '16px', width: 'auto', display: 'block', opacity: 0.7 }}
+            />
+          </span>
+          <span className="app-footer__rule" aria-hidden="true" />
+          <span className="app-footer__year">© {new Date().getFullYear()}</span>
+          <FooterRouteLink href="/privacy">Privacy</FooterRouteLink>
+          <FooterRouteLink href="/terms">Terms</FooterRouteLink>
+          <FooterRouteLink href="/contact">Contact</FooterRouteLink>
+          <FooterRouteLink href="/my-boards/request">My boards</FooterRouteLink>
+          <span className="app-footer__hairline" aria-hidden="true">·</span>
+          <span className="app-footer__credit">mytimes booking boards</span>
+        </footer>
+      )}
     </div>
   );
 }
@@ -109,16 +132,42 @@ function GuestNav() {
         <button type="button" className="app-bar__link" onClick={() => navigate('/pricing')}>
           Pricing
         </button>
-        <button type="button" className="app-bar__link" onClick={() => navigate('/b/preview')}>
+        <button type="button" className="app-bar__link" onClick={() => navigate('/enterprise')}>
+          Enterprise
+        </button>
+        <button
+          type="button"
+          className="app-bar__link"
+          onPointerEnter={prefetchAccountArea}
+          onFocus={prefetchAccountArea}
+          onClick={() => navigate('/my-boards/request')}
+        >
+          My boards
+        </button>
+        <button
+          type="button"
+          className="app-bar__link"
+          onPointerEnter={prefetchBookingPage}
+          onFocus={prefetchBookingPage}
+          onClick={() => navigate('/b/preview')}
+        >
           Demo
         </button>
-        <button type="button" className="app-bar__link" onClick={() => navigate('/signin')}>
+        <button
+          type="button"
+          className="app-bar__link"
+          onPointerEnter={prefetchAuthPage}
+          onFocus={prefetchAuthPage}
+          onClick={() => navigate('/signin')}
+        >
           Sign in
         </button>
       </nav>
       <button
         type="button"
         className="app-bar__cta"
+        onPointerEnter={prefetchCreateFlow}
+        onFocus={prefetchCreateFlow}
         onClick={() => navigate('/new')}
       >
         Create board
@@ -140,13 +189,24 @@ function AuthedNav() {
         <button type="button" className="app-bar__link" onClick={() => navigate('/pricing')}>
           Pricing
         </button>
-        <button type="button" className="app-bar__link" onClick={() => navigate('/my-boards')}>
+        <button type="button" className="app-bar__link" onClick={() => navigate('/enterprise')}>
+          Enterprise
+        </button>
+        <button
+          type="button"
+          className="app-bar__link"
+          onPointerEnter={prefetchAccountArea}
+          onFocus={prefetchAccountArea}
+          onClick={() => navigate('/my-boards')}
+        >
           My boards
         </button>
       </nav>
       <button
         type="button"
         className="app-bar__account"
+        onPointerEnter={prefetchAccountArea}
+        onFocus={prefetchAccountArea}
         onClick={() => navigate('/account')}
         aria-haspopup="menu"
       >

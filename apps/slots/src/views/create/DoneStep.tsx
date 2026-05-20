@@ -70,8 +70,10 @@ export function DoneStep({ variant: variantProp }: DoneStepProps = {}) {
           <section className="done-hero">
             <img
               className="done-hero__vignette"
-              src="/assets/bg/vignette-laptop-only.png"
+              src="/assets/bg/vignette-laptop-only.webp"
               alt=""
+              loading="lazy"
+              decoding="async"
             />
             <p className="done-hero__eyebrow">
               <span>NOTHING POSTED YET</span>
@@ -140,8 +142,10 @@ export function DoneStep({ variant: variantProp }: DoneStepProps = {}) {
         <section className="done-hero">
           <img
             className="done-hero__vignette"
-            src="/assets/bg/vignette-laptop-only.png"
+            src="/assets/bg/vignette-laptop-only.webp"
             alt=""
+            loading="lazy"
+            decoding="async"
           />
           <p className="done-hero__eyebrow">
             <span>{postedEyebrow}</span>
@@ -214,6 +218,13 @@ export function DoneStep({ variant: variantProp }: DoneStepProps = {}) {
             Go to public board →
           </a>
         </div>
+
+        {!isPaid && (
+          <p className="done-actions__note">
+            Free includes one active board. To create another free board later,
+            open this board from My boards and archive it from the admin view.
+          </p>
+        )}
 
         {(created.event.title || draft.title) && (
           <p className="done-footnote">
@@ -367,7 +378,7 @@ function EventPassUpgradeCard({
           <span className="event-pass-card__dot" aria-hidden="true" />
           Board unlock
         </span>
-        <h2 className="event-pass-card__title">Unlock this board for $19.</h2>
+        <h2 className="event-pass-card__title">Add capacity to this board for $19.</h2>
         <p className="event-pass-card__body">
           Upgrade this board when the round matters: 75 bookings, 200 generated
           slots, 180-day activity window, no mytimes footer, and the same private admin link.
@@ -387,7 +398,7 @@ function EventPassUpgradeCard({
             ? 'Opening Checkout.'
             : billingReady === false
               ? 'Payments not active yet'
-              : 'Unlock this board: $19'}
+              : 'Add capacity: $19'}
         </button>
         {(error || billingReady === false) && (
           <p className="event-pass-card__error" aria-live="polite">
@@ -566,18 +577,23 @@ function AccessCallout({ email, isPaid }: { email: string; isPaid: boolean }) {
   return (
     <aside className="access-callout" role="note">
       <KeyRound size={16} strokeWidth={1.8} aria-hidden="true" className="access-callout__icon" />
-      <p className="access-callout__copy">
-        This email is your access. Save the admin link or bookmark it.
-        There's no password.
-        {isPaid && (
-          <>
-            {' '}
-            If you lose the email, run admin-link recovery. We'll resend every
-            admin link tied to{' '}
-            <span className="access-callout__email">{email || 'your address'}</span>.
-          </>
-        )}
-      </p>
+      <div className="access-callout__body">
+        <p className="access-callout__copy">
+          This email is your access. Save the admin link or bookmark it.
+          There's no password.
+          {' '}
+          If you lose it, use My boards and we'll send every board tied to{' '}
+          <span className="access-callout__email">{email || 'your address'}</span>.
+          {isPaid && ' Paid boards are listed there too.'}
+        </p>
+        <button
+          type="button"
+          className="access-callout__link"
+          onClick={() => navigate('/my-boards/request')}
+        >
+          Find previous boards
+        </button>
+      </div>
     </aside>
   );
 }

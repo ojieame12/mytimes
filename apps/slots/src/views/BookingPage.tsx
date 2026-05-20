@@ -17,8 +17,10 @@ import {
   hourInTz,
   viewerTimezone,
 } from '../lib/time';
+import { expressiveScrollBehavior } from '../lib/motion';
 import { MOCK_EVENT, MOCK_SLOTS } from '../lib/mockData';
 import type { ClaimSlotResponse } from '../lib/api';
+import '../styles/booking-page.css';
 
 /* ─── BookingPage (public, /b/<public_token>) ─────────────
  * Single-column document: a consolidated header card holds the
@@ -184,6 +186,11 @@ export function BookingPage({
     () => carouselSlots.find((s) => s.id === selectedSlotId),
     [carouselSlots, selectedSlotId],
   );
+  const selectedSlotIdRef = useRef<string | undefined>(selectedSlotId);
+
+  useEffect(() => {
+    selectedSlotIdRef.current = selectedSlotId;
+  }, [selectedSlotId]);
 
   useEffect(() => {
     if (selectedSlotId && !selectedSlot) {
@@ -195,8 +202,8 @@ export function BookingPage({
      it before the click bubbles to a chip in another band. ESC also
      closes via a global keydown. */
   useEffect(() => {
-    if (!selectedSlotId) return;
     const onDown = (e: PointerEvent) => {
+      if (!selectedSlotIdRef.current) return;
       const target = e.target as HTMLElement;
       if (target.closest('.day-band.is-selected')) return;
       /* Allow clicking another chip in another band — that handler
@@ -205,6 +212,7 @@ export function BookingPage({
       setSelectedSlotId(undefined);
     };
     const onKey = (e: KeyboardEvent) => {
+      if (!selectedSlotIdRef.current) return;
       if (e.key === 'Escape') setSelectedSlotId(undefined);
     };
     window.addEventListener('pointerdown', onDown);
@@ -213,7 +221,7 @@ export function BookingPage({
       window.removeEventListener('pointerdown', onDown);
       window.removeEventListener('keydown', onKey);
     };
-  }, [selectedSlotId]);
+  }, []);
 
   /* Combined IntersectionObserver — does double duty:
    *    1. tracks the most-visible band for the date dial
@@ -223,6 +231,10 @@ export function BookingPage({
    *  many thresholds each. */
   const [visibleDateKey, setVisibleDateKey] = useState<string | undefined>();
   const dayListRef = useRef<HTMLDivElement | null>(null);
+  const dayGroupSignature = useMemo(
+    () => dayGroups.map((group) => group.dateKey).join('|'),
+    [dayGroups],
+  );
   useEffect(() => {
     const root = dayListRef.current;
     if (!root) return;
@@ -252,7 +264,7 @@ export function BookingPage({
     );
     root.querySelectorAll('.day-band').forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [dayGroups]);
+  }, [dayGroupSignature]);
 
   const uniqueDays = useMemo(() => {
     const set = new Set<string>();
@@ -315,7 +327,7 @@ export function BookingPage({
                 onSelectDate={(dateKey) => {
                   const anchor = document.getElementById(`day-${dateKey}`);
                   anchor?.scrollIntoView({
-                    behavior: 'smooth',
+                    behavior: expressiveScrollBehavior(),
                     block: 'start',
                   });
                 }}

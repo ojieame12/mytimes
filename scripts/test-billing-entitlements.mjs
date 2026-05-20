@@ -21,7 +21,10 @@ const {
   isActiveCustomDomainOrigin,
   readActiveCustomDomainBaseURL,
 } = await import("../apps/slots-api/src/customDomains.ts");
-const { readCreationEntitlement } = await import("../apps/slots-api/src/entitlements.ts");
+const {
+  FREE_ACTIVE_BOARD_LIMIT,
+  readCreationEntitlement,
+} = await import("../apps/slots-api/src/entitlements.ts");
 const { closePool: closeApiPool } = await import("../apps/slots-api/src/db.ts");
 
 let closeStartedApi;
@@ -33,6 +36,49 @@ try {
   }
   await request("/healthz");
   await request("/readyz");
+
+  assert(FREE_ACTIVE_BOARD_LIMIT === 1, `expected Free active board limit to be 1, got ${FREE_ACTIVE_BOARD_LIMIT}`);
+  const freeLimitEmail = `free-active-limit+${suffix}@example.com`;
+  const firstFreeBoard = await createBoard({
+    title: `Billing Free Active Limit ${suffix}`,
+    organizerEmail: freeLimitEmail,
+    dayOffset: 42,
+    days: 1,
+  });
+  await request("/api/slotboard/events", {
+    method: "POST",
+    expectedStatus: 402,
+    expectedError: "active_board_limit_reached",
+    json: {
+      title: `Billing Free Active Limit Blocked ${suffix}`,
+      description: "Automated billing entitlement active-board limit test.",
+      organizerName: "Billing Test Organizer",
+      organizerEmail: freeLimitEmail,
+      timezone: "Africa/Johannesburg",
+      allowMultipleBookings: false,
+      availability: {
+        startDate: isoDateAfterDays(43),
+        endDate: isoDateAfterDays(43),
+        weekdays: [new Date(`${isoDateAfterDays(43)}T00:00:00.000Z`).getUTCDay()],
+        dailyStart: "09:00",
+        dailyEnd: "10:00",
+        durationMinutes: 60,
+        timezone: "Africa/Johannesburg",
+        blockedRanges: [],
+      },
+    },
+  });
+  const archivedFreeBoard = await request("/api/slotboard/admin/archive", {
+    method: "POST",
+    token: tokenFromLink(firstFreeBoard.links.admin),
+  });
+  assert(archivedFreeBoard.event.status === "archived", "expected archived free board to release active-board slot");
+  await createBoard({
+    title: `Billing Free Active Limit Replacement ${suffix}`,
+    organizerEmail: freeLimitEmail,
+    dayOffset: 44,
+    days: 1,
+  });
 
   const pendingBoard = await createBoard({
     title: `Billing Pending Event Pass ${suffix}`,
@@ -221,8 +267,8 @@ try {
   }));
   const downgradedCompanyOnly = await eventRow(companyOnly.event.id);
   assert(downgradedCompanyOnly.plan_key === "free", `expected company-only board to downgrade to free, got ${downgradedCompanyOnly.plan_key}`);
-  assert(downgradedCompanyOnly.booking_limit === 25, "expected company-only booking limit to return to free");
-  assert(downgradedCompanyOnly.slot_limit === 60, "expected company-only slot limit to return to free");
+  assert(downgradedCompanyOnly.booking_limit === 15, "expected company-only booking limit to return to free");
+  assert(downgradedCompanyOnly.slot_limit === 30, "expected company-only slot limit to return to free");
   const restoredPass = await eventRow(eventPassThenCompany.event.id);
   assert(restoredPass.plan_key === "event_pass", `expected paid pass board to restore Event Pass, got ${restoredPass.plan_key}`);
   assert(restoredPass.booking_limit === 75, "expected restored Event Pass booking limit");
@@ -246,6 +292,8 @@ try {
     baseURL,
     checked: [
       "event-pass-pending-stays-free",
+      "free-active-board-limit-enforced",
+      "archived-free-board-allows-replacement-board",
       "pending-public-slots-hidden",
       "pending-csv-export-available",
       "pending-claim-blocked",

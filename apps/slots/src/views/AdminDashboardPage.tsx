@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Copy, RefreshCw } from 'lucide-react';
 import {
   accountCsvURL,
@@ -17,7 +17,9 @@ import {
   readBillingReadiness,
   resendBookingEmailByAccount,
   resendBookingEmailByAdmin,
+  rotateAccountPrivateLink,
   rotateAccountPublicLink,
+  rotateAdminPrivateLink,
   rotateAdminPublicLink,
   setAccountSlotStatus,
   setAdminSlotStatus,
@@ -42,6 +44,10 @@ import {
   CheckoutReturnNotice,
   type CheckoutReturnTone,
 } from '../components/CheckoutReturnNotice';
+import { AccountAdminAccessPanel, AdminAccessPanel } from '../components/AdminAccessPanel';
+import { AdminLinkRotatedView } from '../components/AdminLinkRotatedView';
+import { RotateAdminLinkModal } from '../components/RotateAdminLinkModal';
+import '../styles/management.css';
 
 export type AdminDashboardPageProps =
   | { adminToken: string; accountEventId?: never }
@@ -58,6 +64,8 @@ type EventForm = {
   organizerName: string;
   organizerEmail: string;
 };
+
+const EMPTY_DASHBOARD_STATS = { open: 0, booked: 0, closed: 0, total: 0 };
 
 export function AdminDashboardPage(props: AdminDashboardPageProps) {
   const accountEventId = 'accountEventId' in props ? props.accountEventId : undefined;
@@ -79,11 +87,18 @@ export function AdminDashboardPage(props: AdminDashboardPageProps) {
   const [freshPublicLink, setFreshPublicLink] = useState<string | undefined>();
   const [freshShareMessage, setFreshShareMessage] = useState<string | undefined>();
   const [freshLinkCopied, setFreshLinkCopied] = useState(false);
+  const [accountPrivateLinkSent, setAccountPrivateLinkSent] = useState(false);
+  const [rotateModalOpen, setRotateModalOpen] = useState(false);
+  /* Once rotation succeeds the admin token in the URL is dead.
+     We can't re-render the dashboard, so we keep a "rotated"
+     pin on the parent and swap the whole view for a success
+     state until the user navigates away. */
+  const [adminLinkRotated, setAdminLinkRotated] = useState(false);
   const [billingReady, setBillingReady] = useState<boolean | undefined>();
   const [checkoutReturn, setCheckoutReturn] = useState<CheckoutReturn | undefined>(() =>
     readCheckoutReturn(),
   );
-  const viewerTz = viewerTimezone();
+  const viewerTz = useMemo(() => viewerTimezone(), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,6 +124,7 @@ export function AdminDashboardPage(props: AdminDashboardPageProps) {
     setFreshPublicLink(undefined);
     setFreshShareMessage(undefined);
     setFreshLinkCopied(false);
+    setAccountPrivateLinkSent(false);
 
     readDashboard()
       .then((dashboard) => {
@@ -129,10 +145,19 @@ export function AdminDashboardPage(props: AdminDashboardPageProps) {
     };
   }, [routeKey]);
 
-  const stats =
-    state.status === 'ready'
-      ? dashboardStats(state.dashboard.slots)
-      : { open: 0, booked: 0, closed: 0, total: 0 };
+  const dashboardSlots = state.status === 'ready' ? state.dashboard.slots : undefined;
+  const stats = useMemo(
+    () => (dashboardSlots ? dashboardStats(dashboardSlots) : EMPTY_DASHBOARD_STATS),
+    [dashboardSlots],
+  );
+
+  const selectSlot = useCallback((slot: TimeSlot) => {
+    if (state.status !== 'ready' || state.dashboard.event.status === 'deleted') return;
+    setSelectedSlot(slot);
+    setCancelReason('');
+    setActionMessage(undefined);
+    setActionError(undefined);
+  }, [state]);
 
   const refreshDashboard = async (slotToKeep?: string) => {
     const dashboard = await readDashboard();
@@ -237,23 +262,31 @@ export function AdminDashboardPage(props: AdminDashboardPageProps) {
   };
 
   const cancelBooking = async (slot: TimeSlot, reopenSlot: boolean) => {
-    if (busy || !slot.bookingId) return;
+    if (busy || !slot.bookingId || state.status !== 'ready') return;
     setBusy(true);
     setActionMessage(undefined);
     setActionError(undefined);
     try {
-      if (accountEventId) {
-        await cancelBookingByAccount(accountEventId, slot.bookingId, {
+      const response = accountEventId
+        ? await cancelBookingByAccount(accountEventId, slot.bookingId, {
+          reason: cancelReason,
+          reopenSlot,
+        })
+        : await cancelBookingByAdmin(adminToken ?? '', slot.bookingId, {
           reason: cancelReason,
           reopenSlot,
         });
-      } else {
-        await cancelBookingByAdmin(adminToken ?? '', slot.bookingId, {
-          reason: cancelReason,
-          reopenSlot,
-        });
-      }
-      await refreshDashboard(slot.id);
+      setState({
+        status: 'ready',
+        dashboard: {
+          ...state.dashboard,
+          event: response.event,
+          slots: state.dashboard.slots.map((current) =>
+            current.id === response.slot.id ? response.slot : current,
+          ),
+        },
+      });
+      setSelectedSlot(response.slot);
       setCancelReason('');
       setActionMessage(
         reopenSlot
@@ -270,7 +303,7 @@ export function AdminDashboardPage(props: AdminDashboardPageProps) {
   };
 
   const resendBookingEmail = async (slot: TimeSlot) => {
-    if (busy || !slot.bookingId) return;
+    if (busy || !slot.bookingId || state.status !== 'ready') return;
     setBusy(true);
     setActionMessage(undefined);
     setActionError(undefined);
@@ -278,7 +311,17 @@ export function AdminDashboardPage(props: AdminDashboardPageProps) {
       const response = accountEventId
         ? await resendBookingEmailByAccount(accountEventId, slot.bookingId)
         : await resendBookingEmailByAdmin(adminToken ?? '', slot.bookingId);
-      await refreshDashboard(slot.id);
+      setState({
+        status: 'ready',
+        dashboard: {
+          ...state.dashboard,
+          event: response.event,
+          slots: state.dashboard.slots.map((current) =>
+            current.id === response.slot.id ? response.slot : current,
+          ),
+        },
+      });
+      setSelectedSlot(response.slot);
       setActionMessage(
         response.delivery.status === 'sent'
           ? 'Booking email resent with a fresh manage link.'
@@ -423,6 +466,33 @@ export function AdminDashboardPage(props: AdminDashboardPageProps) {
     }
   };
 
+  const sendAccountPrivateAdminLink = async () => {
+    if (busy || state.status !== 'ready' || !accountEventId) return;
+    const confirmed = window.confirm(
+      'Send a replacement private admin URL? Older private admin URLs for this board will stop working.',
+    );
+    if (!confirmed) return;
+
+    setBusy(true);
+    setActionMessage(undefined);
+    setActionError(undefined);
+    try {
+      await rotateAccountPrivateLink(accountEventId);
+      setAccountPrivateLinkSent(true);
+      setActionMessage(
+        `Replacement private admin URL sent to ${state.dashboard.event.organizerEmail}. Older private admin URLs no longer work.`,
+      );
+    } catch (error) {
+      setActionError(
+        error instanceof ApiClientError
+          ? error.message
+          : 'Could not send a replacement private admin URL.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (state.status === 'loading') {
     return <AdminPlaceholder title="Loading admin dashboard." body="Fetching board controls." />;
   }
@@ -445,8 +515,40 @@ export function AdminDashboardPage(props: AdminDashboardPageProps) {
     ? adminCheckoutNotice(event, checkoutReturn)
     : undefined;
 
+  /* Post-rotation full-page state. The admin token in the URL is
+     dead, so the dashboard cannot re-fetch; we own the success
+     view here until the user navigates away. */
+  if (adminLinkRotated && !isAccountMode) {
+    return (
+      <section className="management-layout management-layout--wide">
+        <AdminLinkRotatedView
+          eventTitle={event.title}
+          organizerEmail={event.organizerEmail}
+          onResend={async () => {
+            await rotateAdminPrivateLink(adminToken ?? '');
+          }}
+        />
+      </section>
+    );
+  }
+
   return (
     <section className="management-layout management-layout--wide">
+      {rotateModalOpen && !isAccountMode ? (
+        <RotateAdminLinkModal
+          eventTitle={event.title}
+          organizerEmail={event.organizerEmail}
+          currentUrlDisplay={currentAdminUrlDisplay(adminToken)}
+          onCancel={() => setRotateModalOpen(false)}
+          onRotated={() => {
+            setRotateModalOpen(false);
+            setAdminLinkRotated(true);
+          }}
+          rotate={async () => {
+            await rotateAdminPrivateLink(adminToken ?? '');
+          }}
+        />
+      ) : null}
       {checkoutNotice && (
         <CheckoutReturnNotice
           tone={checkoutNotice.tone}
@@ -539,13 +641,7 @@ export function AdminDashboardPage(props: AdminDashboardPageProps) {
               viewerTz={viewerTz}
               sourceTz={event.timezone}
               mode="admin"
-              onSlotClick={(slot) => {
-                if (isDeleted) return;
-                setSelectedSlot(slot);
-                setCancelReason('');
-                setActionMessage(undefined);
-                setActionError(undefined);
-              }}
+              onSlotClick={selectSlot}
             />
           </section>
 
@@ -556,6 +652,22 @@ export function AdminDashboardPage(props: AdminDashboardPageProps) {
               billingReady={billingReady}
               onUpgrade={() => void startEventPassCheckout()}
             />
+
+            {!isAccountMode ? (
+              <AdminAccessPanel
+                organizerEmail={event.organizerEmail}
+                currentUrlDisplay={currentAdminUrlDisplay(adminToken)}
+                disabled={busy || isDeleted}
+                onRotateAdminUrl={() => setRotateModalOpen(true)}
+              />
+            ) : (
+              <AccountAdminAccessPanel
+                organizerEmail={event.organizerEmail}
+                disabled={busy || isDeleted}
+                sent={accountPrivateLinkSent}
+                onRotatePrivateUrl={() => void sendAccountPrivateAdminLink()}
+              />
+            )}
 
             <BookingLinkPanel
               eventStatus={event.status}
@@ -689,7 +801,7 @@ function EventPassPanel({
             ? `Unlocked capacity is active: ${event.bookingLimit ?? 75} bookings, ${event.slotLimit ?? 200} generated slots, and the longer active window for this board.`
             : isPending
               ? 'Checkout has started. Refresh after payment completes, or use the Stripe return link.'
-              : 'Unlock this board for one larger interview round: 75 bookings, 200 generated slots, 180-day activity, and no mytimes footer on the booking page.'}
+              : 'Add capacity for one larger interview round: 75 bookings, 200 generated slots, 180-day activity, and no mytimes footer on the booking page.'}
       </p>
       {event.expiresAt && (
         <p className="admin-billing__meta mono">
@@ -709,7 +821,7 @@ function EventPassPanel({
               ? 'Payments inactive'
               : isPending
                 ? 'Resume Checkout'
-                : 'Unlock: $19'}
+                : 'Add capacity: $19'}
         </button>
       )}
     </section>
@@ -738,7 +850,7 @@ function BookingLinkPanel({
     <section className="admin-link-panel material-panel-mini">
       <header className="admin-section-head">
         <span>Booking link</span>
-        <strong>{publicLink ? 'Fresh' : 'Private token'}</strong>
+        <strong>{publicLink ? 'Fresh' : 'Participant URL'}</strong>
       </header>
       <p className="admin-link-panel__body">
         Public links are not stored in readable form. Create a fresh one when you
@@ -778,6 +890,25 @@ function BookingLinkPanel({
       </button>
     </section>
   );
+}
+
+/* Renders the current admin URL as host + truncated token,
+ * e.g. "mytimes.co/a/…4Tn8". Used in the rotate modal so the
+ * user can see the artifact being invalidated without us
+ * splashing the full token across the dialog. SSR-safe. */
+function currentAdminUrlDisplay(adminToken: string | undefined): string {
+  if (typeof window === 'undefined') {
+    return adminToken ? `…/a/${tailSegment(adminToken)}` : '/a/…';
+  }
+  const host = window.location.host;
+  const path = window.location.pathname;
+  const match = path.match(/^\/a\/(.+)$/);
+  if (!match) return `${host}${path}`;
+  return `${host}/a/…${tailSegment(match[1])}`;
+}
+
+function tailSegment(token: string): string {
+  return token.length > 4 ? token.slice(-4) : token;
 }
 
 function billingErrorMessage(error: ApiClientError): string {
@@ -839,7 +970,7 @@ function adminCheckoutNotice(
       tone: 'danger',
       eyebrow: 'Payment failed',
       title: 'Stripe could not complete the board unlock.',
-      body: 'The board is still usable on Free. Restart checkout to unlock paid capacity for this round.',
+      body: 'The board is still usable on Free. Restart checkout to add paid capacity for this round.',
       actionLabel: 'Restart checkout',
       actionKind: 'checkout',
     };
@@ -849,7 +980,7 @@ function adminCheckoutNotice(
     tone: 'pending',
     eyebrow: 'Checkout returned',
     title: 'Payment status is still pending.',
-      body: 'Stripe sent you back to mytimes. The webhook may still be finishing, so refresh this board in a moment before sharing the unlocked board.',
+      body: 'Stripe sent you back to mytimes. The webhook may still be finishing, so refresh this board in a moment before sharing the upgraded board.',
     actionLabel: 'Refresh status',
     actionKind: 'refresh',
   };

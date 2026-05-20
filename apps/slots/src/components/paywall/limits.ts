@@ -1,7 +1,8 @@
 export const PLAN_LIMITS = {
   free: {
-    bookings: 25,
-    slots: 60,
+    bookings: 15,
+    slots: 30,
+    bookingDays: 3,
   },
   eventPass: {
     bookings: 75,

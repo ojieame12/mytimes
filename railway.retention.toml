@@ -14,7 +14,4 @@ watchPatterns = [
 preDeployCommand = ["npm run migrate:prod --workspace @fresh-feel/slots-api"]
 startCommand = "npm run retention:prod --workspace @fresh-feel/slots-api"
 cronSchedule = "0 2 * * *"
-healthcheckPath = null
-healthcheckTimeout = null
 restartPolicyType = "NEVER"
-restartPolicyMaxRetries = null

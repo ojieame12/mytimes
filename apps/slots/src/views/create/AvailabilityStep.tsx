@@ -85,15 +85,25 @@ export function AvailabilityStep() {
     }
   }, [baseAvailabilityInput]);
 
-  const generatedSlotCount = useMemo(() => {
-    try {
-      return generateAvailabilitySlots(availabilityInput).length;
-    } catch {
-      return 0;
-    }
-  }, [availabilityInput]);
+  const excludedSlotSet = useMemo(
+    () => new Set(draft.excludedSlotStarts),
+    [draft.excludedSlotStarts],
+  );
 
+  const generatedSlots = useMemo(
+    () => baseSlots.filter((slot) => !excludedSlotSet.has(slot.startsAt)),
+    [baseSlots, excludedSlotSet],
+  );
+
+  const generatedSlotCount = generatedSlots.length;
+
+  const bookingDayCount = useMemo(
+    () => new Set(baseSlots.map((slot) => slot.sourceDate)).size,
+    [baseSlots],
+  );
   const exceedsFreeSlots = generatedSlotCount > PLAN_LIMITS.free.slots;
+  const exceedsFreeBookingDays = bookingDayCount > PLAN_LIMITS.free.bookingDays;
+  const exceedsFree = exceedsFreeSlots || exceedsFreeBookingDays;
 
   const toggleExcludedSlot = (startsAt: string) => {
     const excluded = new Set(draft.excludedSlotStarts);
@@ -112,7 +122,7 @@ export function AvailabilityStep() {
   const onNext = () => {
     setSubmitAttempted(true);
     if (Object.keys(errors).length > 0) return;
-    if (exceedsFreeSlots) {
+    if (exceedsFree) {
       setUpgradeOpen(true);
       return;
     }
@@ -139,7 +149,12 @@ export function AvailabilityStep() {
             <header className="create-step__section-head">
               <h2 className="create-step__section-title">Date range</h2>
               <span className="create-step__section-meta create-step__section-meta--limits">
-                <span>Free slots</span>
+                <span>Free window</span>
+                <LimitIndicator
+                  count={bookingDayCount}
+                  max={PLAN_LIMITS.free.bookingDays}
+                  unit="days"
+                />
                 <LimitIndicator
                   count={generatedSlotCount}
                   max={PLAN_LIMITS.free.slots}
@@ -277,15 +292,19 @@ export function AvailabilityStep() {
         </form>
 
         <aside className="create-step__preview-rail" aria-label="Slot preview">
-          {exceedsFreeSlots && (
+          {exceedsFree && (
             <LimitBanner
-              count={generatedSlotCount}
-              max={PLAN_LIMITS.free.slots}
-              unit="slots"
+              count={exceedsFreeBookingDays ? bookingDayCount : generatedSlotCount}
+              max={exceedsFreeBookingDays ? PLAN_LIMITS.free.bookingDays : PLAN_LIMITS.free.slots}
+              unit={exceedsFreeBookingDays ? 'days' : 'slots'}
               onUpgrade={() => setUpgradeOpen(true)}
             />
           )}
-          <SlotPreviewSummary input={availabilityInput} viewerTimezone={viewerTz} />
+          <SlotPreviewSummary
+            input={availabilityInput}
+            viewerTimezone={viewerTz}
+            slots={generatedSlots}
+          />
           <SlotExceptionEditor
             slots={baseSlots}
             excludedSlotStarts={draft.excludedSlotStarts}
@@ -300,20 +319,28 @@ export function AvailabilityStep() {
         <UpgradePrompt
           title={
             <>
-              This setup creates{' '}
-              <span className="mono">{generatedSlotCount}</span> slots.
+              {exceedsFreeBookingDays ? (
+                <>
+                  This setup spans <span className="mono">{bookingDayCount}</span> booking days.
+                </>
+              ) : (
+                <>
+                  This setup creates <span className="mono">{generatedSlotCount}</span> slots.
+                </>
+              )}
             </>
           }
           body={
             <>
-              Free boards include {PLAN_LIMITS.free.slots} generated slots. You
-              can reduce the range now, or continue to review and unlock this
-              specific board from its admin link after posting.
+              Free boards include {PLAN_LIMITS.free.bookingDays} booking days and{' '}
+              {PLAN_LIMITS.free.slots} generated slots. You can reduce the range
+              now, or continue to review and add paid capacity from the admin
+              link after posting.
             </>
           }
-          current={generatedSlotCount}
-          max={PLAN_LIMITS.free.slots}
-          unit="slots"
+          current={exceedsFreeBookingDays ? bookingDayCount : generatedSlotCount}
+          max={exceedsFreeBookingDays ? PLAN_LIMITS.free.bookingDays : PLAN_LIMITS.free.slots}
+          unit={exceedsFreeBookingDays ? 'days' : 'slots'}
           primaryLabel="Continue to review"
           primaryPrice="$19 later"
           secondaryLabel="Open pricing"

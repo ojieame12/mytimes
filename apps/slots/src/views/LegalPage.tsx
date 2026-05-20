@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import '../styles/legal.css';
 
 type LegalSection = {
   id: string;
@@ -36,7 +37,7 @@ const privacySections: LegalSection[] = [
     id: 'how-we-use-it',
     title: 'How we use data',
     body: [
-      'We use this data to run the booking workflow: generate links, show open slots, prevent double booking, send confirmations, attach calendar files, recover admin links, process billing, and support customers.',
+      'We use this data to run the booking process: generate links, show open slots, prevent double booking, send confirmations, attach calendar files, recover admin links, process billing, and support customers.',
       'We also use operational data to protect the service, detect abuse, diagnose delivery failures, and improve reliability.',
     ],
   },
@@ -66,7 +67,7 @@ const privacySections: LegalSection[] = [
     id: 'retention',
     title: 'Retention',
     body: [
-      'Booking boards are kept for the active window that applies to the plan or unlock used for that board. Free boards are designed for short-lived interview rounds, while Company boards have longer retention.',
+      'Booking boards are kept for the active window that applies to the plan or board unlock used for that board. Free boards are short-lived interview rounds, while Company boards have longer retention.',
       'When data is deleted or archived, public access is removed first. Backups and operational logs may retain limited copies for a short period until normal rotation completes.',
     ],
   },
@@ -74,7 +75,7 @@ const privacySections: LegalSection[] = [
     id: 'choices',
     title: 'Your choices',
     body: [
-      'You can request access, correction, deletion, or recovery help by emailing hello@mytimes.co from the organizer email connected to the board.',
+      'You can request access, correction, deletion, or recovery help by emailing support@getcaboo.com from the organizer email connected to the board.',
       'Participants can use the manage link in their confirmation email to cancel their own booking when cancellation is available for that board.',
     ],
   },
@@ -114,7 +115,7 @@ const termsSections: LegalSection[] = [
     id: 'acceptable-use',
     title: 'Acceptable use',
     body: [
-      'Do not use mytimes for spam, harassment, unlawful activity, deceptive collection, or workflows that require regulated record handling that mytimes has not agreed to support in writing.',
+      'Do not use mytimes for spam, harassment, unlawful activity, deceptive collection, or use cases that require regulated record handling that mytimes has not agreed to support in writing.',
       'We may rate limit, suspend, archive, or remove boards that create security risk, delivery abuse, or service disruption.',
     ],
   },
@@ -138,7 +139,7 @@ const termsSections: LegalSection[] = [
     id: 'contact',
     title: 'Contact',
     body: [
-      'Questions about these terms, billing, or data requests can be sent to hello@mytimes.co.',
+      'Questions about these terms, billing, or data requests can be sent to support@getcaboo.com.',
     ],
   },
 ];

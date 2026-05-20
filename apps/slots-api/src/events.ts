@@ -16,6 +16,7 @@ import {
 } from "./email.js";
 import {
   FREE_ACTIVE_BOARD_LIMIT,
+  FREE_BOOKING_DAY_LIMIT,
   EVENT_PASS_SLOT_LIMIT,
   readCreationEntitlement,
   type EventEntitlement,
@@ -60,7 +61,8 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
   if (slots.length < 1) {
     throw new ApiError(400, "empty_availability", "Availability must generate at least one slot");
   }
-  const entitlement = await readCreationEntitlement(ownerUserId);
+  const baseEntitlement = await readCreationEntitlement(ownerUserId);
+  const entitlement = entitlementForGeneratedSlots(baseEntitlement, slots);
   assertGeneratedSlotsWithinCreationLimit(slots.length, entitlement);
 
   const publicToken = createTokenPair("public", env.tokenPepper);
@@ -149,6 +151,7 @@ export async function createEvent(input: CreateEventInput, ownerUserId: string |
       actorLabel: input.organizerName,
       metadata: {
         slotCount: slots.length,
+        bookingDayCount: countGeneratedBookingDays(slots),
         timezone: input.timezone,
         startDate: input.availability.startDate,
         endDate: input.availability.endDate,
@@ -247,7 +250,7 @@ async function assertWithinFreeActiveBoardLimit(
     throw new ApiError(
       402,
       "active_board_limit_reached",
-      `Free includes ${FREE_ACTIVE_BOARD_LIMIT} active boards. Archive an older board or start Company to create more.`,
+      `Free includes ${FREE_ACTIVE_BOARD_LIMIT} active board. Archive the older board or start Company to create more.`,
     );
   }
 }
@@ -281,6 +284,34 @@ function assertGeneratedSlotsWithinCreationLimit(slotCount: number, entitlement:
     "slot_limit_reached",
     `This setup creates ${slotCount} slots. The board unlock supports up to ${EVENT_PASS_SLOT_LIMIT} generated slots; reduce the availability range or use Company for larger recurring rounds.`,
   );
+}
+
+function entitlementForGeneratedSlots(
+  entitlement: EventEntitlement,
+  slots: GeneratedSlot[],
+): EventEntitlement {
+  if (entitlement.planKey !== "free") {
+    return entitlement;
+  }
+  const freeSourceDates = Array.from(new Set(slots.map((slot) => slot.sourceDate)))
+    .sort()
+    .slice(0, FREE_BOOKING_DAY_LIMIT);
+  const freeDateSet = new Set(freeSourceDates);
+  const latestFreeSlotEnd = slots.reduce<Date | null>((latest, slot) => {
+    if (!freeDateSet.has(slot.sourceDate)) {
+      return latest;
+    }
+    const endsAt = new Date(slot.endsAt);
+    return latest && latest > endsAt ? latest : endsAt;
+  }, null);
+  return {
+    ...entitlement,
+    expiresAt: latestFreeSlotEnd ?? entitlement.expiresAt,
+  };
+}
+
+function countGeneratedBookingDays(slots: GeneratedSlot[]): number {
+  return new Set(slots.map((slot) => slot.sourceDate)).size;
 }
 
 async function insertSlots(client: pg.PoolClient, eventId: string, slots: GeneratedSlot[]): Promise<void> {

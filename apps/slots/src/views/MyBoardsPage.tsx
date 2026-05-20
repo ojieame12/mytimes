@@ -7,6 +7,7 @@ import {
   type MyBoardsResponse,
 } from '../lib/api';
 import { navigate } from '../lib/routing';
+import '../styles/my-boards.css';
 
 type MyBoard = MyBoardsResponse['boards'][number];
 
@@ -139,6 +140,7 @@ export function MyBoardsPage() {
   const freeCount = boards.filter((b) => b.planKey === 'free' && b.status !== 'archived').length;
   const paidCount = boards.filter((b) => b.planKey !== 'free' && b.status !== 'archived').length;
   const totalBookings = boards.reduce((sum, b) => sum + b.bookingCount, 0);
+  const freeLimitReached = freeCount >= 1;
 
   return (
     <section className="my-boards-shell">
@@ -175,13 +177,32 @@ export function MyBoardsPage() {
           <button
             type="button"
             className="my-boards-card__new"
-            onClick={() => navigate('/new')}
+            onClick={() => navigate(freeLimitReached ? '/pricing' : '/new')}
           >
             <Plus size={14} strokeWidth={1.8} aria-hidden="true" />
-            <span>New board</span>
+            <span>{freeLimitReached ? 'See Company' : 'New board'}</span>
           </button>
         </div>
       </section>
+
+      {freeLimitReached && (
+        <aside className="my-boards-limit" role="note">
+          <div className="my-boards-limit__copy">
+            <span className="my-boards-limit__eyebrow">Free board limit</span>
+            <p>
+              Free includes one active board. Open an active free board, archive
+              it from the admin view, then you can create another free board.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="my-boards-limit__button"
+            onClick={() => navigate('/pricing')}
+          >
+            Compare Company
+          </button>
+        </aside>
+      )}
 
       {boards.length === 0 ? (
         <EmptyState
@@ -266,8 +287,10 @@ function EmptyState({
     <section className="my-boards-empty" aria-live="polite">
       <img
         className="my-boards-empty__vignette"
-        src="/assets/bg/vignette-laptop-still-life.png"
+        src="/assets/bg/vignette-laptop-still-life.webp"
         alt=""
+        loading="lazy"
+        decoding="async"
       />
       <h2 className="my-boards-empty__title">{title}</h2>
       <p className="my-boards-empty__body">{body}</p>

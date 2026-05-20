@@ -157,6 +157,45 @@ export type BillingReadinessResponse = {
   };
 };
 
+export type ContactLeadIntent =
+  | 'support'
+  | 'sales'
+  | 'enterprise'
+  | 'slack'
+  | 'teams'
+  | 'security'
+  | 'billing';
+
+export type ContactIntegrationInterest =
+  | 'slack'
+  | 'teams'
+  | 'sso'
+  | 'security'
+  | 'procurement'
+  | 'custom_limits';
+
+export type ContactLeadInput = {
+  intent: ContactLeadIntent;
+  name: string;
+  email: string;
+  company?: string;
+  role?: string;
+  teamSize?: string;
+  message: string;
+  sourcePath?: string;
+  integrationInterest?: ContactIntegrationInterest[];
+  website?: string;
+};
+
+export type ContactLeadResponse = {
+  ok: true;
+  lead: {
+    id?: string;
+    status: 'received';
+    createdAt?: string;
+  };
+};
+
 export type CheckoutResponse = {
   checkoutSessionId: string;
   url: string;
@@ -178,6 +217,101 @@ export type AccountBillingResponse = {
     cancelAtPeriodEnd: boolean;
   };
   canOpenPortal: boolean;
+};
+
+export type AccountWorkspaceResponse = {
+  eligible: boolean;
+  reason?: 'company_required';
+  organization?: {
+    id: string;
+    name: string;
+    slug?: string;
+    seatLimit: number;
+    status: 'active' | 'suspended' | 'cancelled';
+  };
+  currentMember?: {
+    role: 'owner' | 'admin' | 'organizer';
+    status: 'invited' | 'active' | 'removed';
+  };
+  members: {
+    id: string;
+    userId?: string;
+    email: string;
+    role: 'owner' | 'admin' | 'organizer';
+    status: 'invited' | 'active' | 'removed';
+    invitedAt: string;
+    acceptedAt?: string;
+  }[];
+};
+
+export type AccountTemplate = {
+  id: string;
+  organizationId: string;
+  name: string;
+  title: string;
+  description: string;
+  timezone: string;
+  durationMinutes: number;
+  intervalMinutes: number;
+  allowMultipleBookings: boolean;
+  availability: {
+    startDate: string;
+    endDate: string;
+    weekdays: number[];
+    dailyStart: string;
+    dailyEnd: string;
+    durationMinutes: number;
+    intervalMinutes?: number;
+    timezone: string;
+    blockedRanges?: { start: string; end: string }[];
+    excludedSlotStarts?: string[];
+  };
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AccountTemplatesResponse = {
+  eligible: boolean;
+  reason?: 'company_required';
+  templates: AccountTemplate[];
+};
+
+export type NotificationProvider = 'slack' | 'teams';
+
+export type NotificationIntegration = {
+  id: string;
+  provider: NotificationProvider;
+  destinationLabel: string;
+  status: 'active' | 'disabled' | 'failed';
+  lastTestedAt?: string;
+  lastError?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AccountNotificationIntegrationsResponse = {
+  eligible: boolean;
+  reason?: 'company_required' | 'permission_required' | 'encryption_key_required';
+  integrations: NotificationIntegration[];
+};
+
+export type NotificationDeliveryResult = {
+  status: 'sent' | 'failed';
+  providerStatus?: number;
+  providerResponse?: string;
+  error?: string;
+};
+
+export type NotificationIntegrationInput = {
+  provider: NotificationProvider;
+  destinationLabel: string;
+  webhookUrl: string;
+};
+
+export type TestNotificationIntegrationResponse = {
+  ok: true;
+  integration: NotificationIntegration;
+  delivery: NotificationDeliveryResult;
 };
 
 export type CustomerPortalResponse = {
@@ -419,6 +553,83 @@ export async function readAccountBilling(): Promise<AccountBillingResponse> {
   });
 }
 
+export async function readAccountWorkspace(): Promise<AccountWorkspaceResponse> {
+  return apiJson<AccountWorkspaceResponse>('/api/slotboard/account/workspace', {
+    credentials: 'include',
+  });
+}
+
+export async function inviteAccountWorkspaceMember(input: {
+  email: string;
+  role?: 'admin' | 'organizer';
+}): Promise<AccountWorkspaceResponse> {
+  return apiJson<AccountWorkspaceResponse>('/api/slotboard/account/workspace/invites', {
+    method: 'POST',
+    credentials: 'include',
+    body: input,
+  });
+}
+
+export async function readAccountTemplates(): Promise<AccountTemplatesResponse> {
+  return apiJson<AccountTemplatesResponse>('/api/slotboard/account/templates', {
+    credentials: 'include',
+  });
+}
+
+export async function createAccountTemplateFromEvent(
+  eventId: string,
+  input: { name?: string } = {},
+): Promise<{ template: AccountTemplate }> {
+  return apiJson<{ template: AccountTemplate }>(
+    `/api/slotboard/account/events/${encodeURIComponent(eventId)}/template`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      body: input,
+    },
+  );
+}
+
+export async function readAccountNotificationIntegrations(): Promise<AccountNotificationIntegrationsResponse> {
+  return apiJson<AccountNotificationIntegrationsResponse>('/api/slotboard/account/notification-integrations', {
+    credentials: 'include',
+  });
+}
+
+export async function createAccountNotificationIntegration(
+  input: NotificationIntegrationInput,
+): Promise<AccountNotificationIntegrationsResponse> {
+  return apiJson<AccountNotificationIntegrationsResponse>('/api/slotboard/account/notification-integrations', {
+    method: 'POST',
+    credentials: 'include',
+    body: input,
+  });
+}
+
+export async function testAccountNotificationIntegration(
+  integrationId: string,
+): Promise<TestNotificationIntegrationResponse> {
+  return apiJson<TestNotificationIntegrationResponse>(
+    `/api/slotboard/account/notification-integrations/${encodeURIComponent(integrationId)}/test`,
+    {
+      method: 'POST',
+      credentials: 'include',
+    },
+  );
+}
+
+export async function disableAccountNotificationIntegration(
+  integrationId: string,
+): Promise<AccountNotificationIntegrationsResponse> {
+  return apiJson<AccountNotificationIntegrationsResponse>(
+    `/api/slotboard/account/notification-integrations/${encodeURIComponent(integrationId)}/disable`,
+    {
+      method: 'POST',
+      credentials: 'include',
+    },
+  );
+}
+
 export async function createCompanyStandbyCheckout(
   billingInterval: 'month' | 'year' = 'year',
 ): Promise<CheckoutResponse> {
@@ -470,6 +681,16 @@ export async function createAccountEventPassCheckout(eventId: string): Promise<C
 export async function rotateAccountPublicLink(eventId: string): Promise<RotatedPublicLinkResponse> {
   return apiJson<RotatedPublicLinkResponse>(
     `/api/slotboard/account/events/${encodeURIComponent(eventId)}/public-link/rotate`,
+    {
+      method: 'POST',
+      credentials: 'include',
+    },
+  );
+}
+
+export async function rotateAccountPrivateLink(eventId: string): Promise<{ ok: true }> {
+  return apiJson<{ ok: true }>(
+    `/api/slotboard/account/events/${encodeURIComponent(eventId)}/admin-link/rotate`,
     {
       method: 'POST',
       credentials: 'include',
@@ -656,6 +877,18 @@ export async function rotateAdminPublicLink(adminToken: string): Promise<Rotated
   });
 }
 
+/* Rotates the admin (organizer) URL itself. The current token
+ * dies the moment this resolves; the backend emails the fresh
+ * URL to the organizer email of record. Caller is responsible
+ * for transitioning the UI into a success state — the page
+ * cannot be re-fetched after this, since the token is dead. */
+export async function rotateAdminPrivateLink(adminToken: string): Promise<{ ok: true }> {
+  return apiJson<{ ok: true }>('/api/slotboard/admin/rotate', {
+    method: 'POST',
+    token: adminToken,
+  });
+}
+
 export async function updateAdminEvent(
   adminToken: string,
   patch: AdminEventPatch,
@@ -769,8 +1002,19 @@ export function accountCsvURL(eventId: string): string {
   return `${apiBaseURL()}/api/slotboard/account/events/${encodeURIComponent(eventId)}/export.csv`;
 }
 
+export function accountCrossBoardCsvURL(): string {
+  return `${apiBaseURL()}/api/slotboard/account/exports/bookings.csv`;
+}
+
 export function manageCalendarURL(manageToken: string): string {
   return `${apiBaseURL()}/api/slotboard/manage/${encodeURIComponent(manageToken)}/calendar.ics`;
+}
+
+export async function submitContactLead(input: ContactLeadInput): Promise<ContactLeadResponse> {
+  return apiJson<ContactLeadResponse>('/api/slotboard/contact', {
+    method: 'POST',
+    body: input,
+  });
 }
 
 export function storeCreatedEvent(value: CreateEventResponse): void {

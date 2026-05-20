@@ -9,6 +9,8 @@ import { useEffect, useState } from 'react';
 export type Route =
   | { type: 'landing' }
   | { type: 'pricing' }
+  | { type: 'enterprise' }
+  | { type: 'contact' }
   | { type: 'privacy' }
   | { type: 'terms' }
   | { type: 'new-basics' }
@@ -33,6 +35,8 @@ export type Route =
 export function parseRoute(pathname: string): Route {
   if (pathname === '/' || pathname === '') return { type: 'landing' };
   if (pathname === '/pricing') return { type: 'pricing' };
+  if (pathname === '/enterprise') return { type: 'enterprise' };
+  if (pathname === '/contact') return { type: 'contact' };
   if (pathname === '/privacy') return { type: 'privacy' };
   if (pathname === '/terms') return { type: 'terms' };
   if (pathname === '/new') return { type: 'new-basics' };
@@ -87,7 +91,59 @@ export function useRoute(): Route {
 
 export function navigate(path: string) {
   if (typeof window === 'undefined') return;
-  if (window.location.pathname === path) return;
-  window.history.pushState(null, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
+  const target = new URL(path, window.location.origin);
+  const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const next = `${target.pathname}${target.search}${target.hash}`;
+
+  if (current === next) {
+    queueNavigationScroll(target);
+    return;
+  }
+
+  window.history.pushState(null, '', next);
+  dispatchRouteChange();
+  queueNavigationScroll(target);
+}
+
+function dispatchRouteChange() {
+  const PopStateCtor = window.PopStateEvent;
+  window.dispatchEvent(
+    PopStateCtor
+      ? new PopStateCtor('popstate')
+      : new Event('popstate'),
+  );
+}
+
+function queueNavigationScroll(target: URL) {
+  const runAfterPaint =
+    window.requestAnimationFrame ??
+    ((callback: FrameRequestCallback) => window.setTimeout(() => callback(Date.now()), 0));
+
+  runAfterPaint(() => {
+    if (target.hash) {
+      const targetId = decodeHashId(target.hash);
+      const anchor = targetId ? document.getElementById(targetId) : null;
+      if (anchor) {
+        anchor.scrollIntoView({
+          block: 'start',
+          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+        });
+        return;
+      }
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  });
+}
+
+function decodeHashId(hash: string): string {
+  try {
+    return decodeURIComponent(hash.slice(1));
+  } catch {
+    return hash.slice(1);
+  }
+}
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 }

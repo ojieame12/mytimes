@@ -1,5 +1,6 @@
 import type { SlotState } from '../lib/types';
 import { formatTimeInTz, formatTzAbbrev } from '../lib/time';
+import '../styles/slot-chip.css';
 
 /* ─── SlotChip — the wax-disc time chip ───────────────────
  * The central primitive of the app. Renders a single time

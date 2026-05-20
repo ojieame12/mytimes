@@ -16,6 +16,7 @@ import {
 import { billingReadiness, loadEnv } from "./env.js";
 import { ApiError } from "./errors.js";
 import { logInfo } from "./logger.js";
+import { ensureCompanyWorkspaceForOwner } from "./organizations.js";
 
 type CheckoutLineItem = NonNullable<
   NonNullable<Parameters<Stripe["checkout"]["sessions"]["create"]>[0]>["line_items"]
@@ -729,11 +730,28 @@ async function upsertSubscription(
       ownerUserId,
       customerId,
     });
+    const organizationId = ownerUserId
+      ? (await ensureCompanyWorkspaceForOwner(client, {
+          ownerUserId,
+          ownerEmail,
+        })).organizationId
+      : null;
+    if (organizationId && customerId) {
+      await client.query(
+        `
+          update slotboard.billing_customers
+          set organization_id = $2
+          where provider_customer_id = $1
+        `,
+        [customerId, organizationId],
+      );
+    }
     await client.query(
       `
         insert into slotboard.subscriptions (
           owner_email,
           owner_user_id,
+          organization_id,
           provider_customer_id,
           provider_subscription_id,
           plan_key,
@@ -742,10 +760,11 @@ async function upsertSubscription(
           current_period_end,
           cancel_at_period_end
         )
-        values ($1, $2, $3, $4, 'company_standby', $5, $6, $7, $8)
+        values ($1, $2, $3, $4, $5, 'company_standby', $6, $7, $8, $9)
         on conflict (provider_subscription_id) do update
         set owner_email = excluded.owner_email,
             owner_user_id = excluded.owner_user_id,
+            organization_id = excluded.organization_id,
             provider_customer_id = excluded.provider_customer_id,
             status = excluded.status,
             current_period_start = excluded.current_period_start,
@@ -755,6 +774,7 @@ async function upsertSubscription(
       [
         ownerEmail,
         ownerUserId,
+        organizationId,
         customerId,
         subscription.id,
         subscription.status,
@@ -767,6 +787,7 @@ async function upsertSubscription(
       if (isActiveCompanyStandbySubscription(subscription)) {
         await applyCompanyStandbyToOwnerEvents(client, {
           ownerUserId,
+          organizationId,
           customerId,
         });
       } else {
@@ -781,6 +802,7 @@ async function applyCompanyStandbyToOwnerEvents(
   client: pg.PoolClient,
   input: {
     ownerUserId: string;
+    organizationId: string | null;
     customerId: string | null;
   },
 ): Promise<void> {
@@ -793,12 +815,19 @@ async function applyCompanyStandbyToOwnerEvents(
           expires_at = null,
           booking_limit = $2,
           slot_limit = $3,
-          stripe_customer_id = $4
+          stripe_customer_id = $4,
+          organization_id = coalesce($5, organization_id)
       where owner_user_id = $1
         and status = 'active'
         and deleted_at is null
     `,
-    [input.ownerUserId, COMPANY_STANDBY_BOOKING_LIMIT, COMPANY_STANDBY_SLOT_LIMIT, input.customerId],
+    [
+      input.ownerUserId,
+      COMPANY_STANDBY_BOOKING_LIMIT,
+      COMPANY_STANDBY_SLOT_LIMIT,
+      input.customerId,
+      input.organizationId,
+    ],
   );
 }
 

@@ -16,6 +16,7 @@ import { FormField } from '../components/form/FormField';
 import { Textarea } from '../components/form/Inputs';
 import { Avatar } from '../components/Avatar';
 import type { TimeSlot } from '../lib/types';
+import '../styles/manage-booking.css';
 
 export interface ManageBookingPageProps {
   manageToken: string;
@@ -261,8 +262,10 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
         <section className="manage-success" aria-live="polite">
           <img
             className="manage-success__vignette"
-            src="/assets/bg/vignette-laptop-grass.png"
+            src="/assets/bg/vignette-laptop-grass.webp"
             alt=""
+            loading="lazy"
+            decoding="async"
           />
           <h1 className="manage-success__title">Booking cancelled.</h1>
           <p className="manage-success__body">
@@ -359,7 +362,7 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
             <span className="manage-card__ics-body">
               {isCancelled
                 ? 'Download the cancellation file so your calendar removes the slot.'
-                : 'Download the .ics and open it in any calendar app.'}
+                : 'Use this .ics download if the calendar buttons in your email did not open cleanly.'}
             </span>
           </div>
           <a className="manage-card__ics-link" href={manageCalendarURL(manageToken)}>

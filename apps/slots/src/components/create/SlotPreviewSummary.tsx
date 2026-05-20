@@ -4,14 +4,14 @@ import type { AvailabilityInput, GeneratedSlot } from '@fresh-feel/slotboard-cor
 
 /* ─── SlotPreviewSummary ─────────────────────────────
  * Lives in the right-rail of the availability step.
- * Calls generateAvailabilitySlots live with the current
- * draft and renders: count plates (slots / days / per day)
+ * Renders: count plates (slots / days / per day)
  * + a preview of the first day's chips. If generation
  * throws (bad config), shows the error inline. */
 
 export interface SlotPreviewSummaryProps {
   input: AvailabilityInput;
   viewerTimezone: string;
+  slots?: GeneratedSlot[];
   /** Limit how many chips we render for the day-1 preview. */
   maxChips?: number;
 }
@@ -19,16 +19,20 @@ export interface SlotPreviewSummaryProps {
 export function SlotPreviewSummary({
   input,
   viewerTimezone,
+  slots: providedSlots,
   maxChips = 12,
 }: SlotPreviewSummaryProps) {
   const result = useMemo(() => {
+    if (providedSlots) {
+      return { ok: true as const, slots: providedSlots };
+    }
     try {
       const slots = generateAvailabilitySlots(input);
       return { ok: true as const, slots };
     } catch (err) {
       return { ok: false as const, error: err instanceof Error ? err.message : 'Invalid availability' };
     }
-  }, [input]);
+  }, [input, providedSlots]);
 
   if (!result.ok) {
     return (

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import type { TimeSlot } from '../lib/types';
+import '../styles/date-dial.css';
 
 /* ─── MonthDateSpinners ───────────────────────────────────
  * Two compact pills at the top of the picker — one for month,

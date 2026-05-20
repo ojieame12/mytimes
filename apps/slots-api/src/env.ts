@@ -14,6 +14,7 @@ export type Env = {
   gracefulShutdownMs: number;
   emailProvider: "console" | "resend" | "postmark";
   senderEmail: string;
+  contactRecipientEmail: string;
   resendApiKey: string | undefined;
   resendWebhookSecret: string | undefined;
   postmarkServerToken: string | undefined;
@@ -41,6 +42,7 @@ export type Env = {
   railwayEnvironmentId: string | undefined;
   railwayCustomDomainServiceId: string | undefined;
   railwayCustomDomainTargetPort: number;
+  integrationEncryptionKey: string | undefined;
   sentryDsn: string | undefined;
   sentryEnvironment: string;
   sentryRelease: string | undefined;
@@ -110,6 +112,17 @@ export type ObservabilityReadiness = {
   issues: string[];
 };
 
+export type NotificationReadiness = {
+  provider: "webhook";
+  encryptionConfigured: boolean;
+  slackWebhookSupported: boolean;
+  teamsWebhookSupported: boolean;
+  productionReady: boolean;
+  requiredVariables: string[];
+  optionalVariables: string[];
+  issues: string[];
+};
+
 export function loadEnv(): Env {
   const webOrigins = listEnv("SLOTBOARD_WEB_ORIGINS", [
     "http://127.0.0.1:5174",
@@ -139,6 +152,7 @@ export function loadEnv(): Env {
     gracefulShutdownMs: numberEnv("SLOTBOARD_GRACEFUL_SHUTDOWN_MS", 10000),
     emailProvider: emailProviderEnv("SLOTBOARD_EMAIL_PROVIDER", "console"),
     senderEmail: env("SLOTBOARD_SENDER_EMAIL", "mytimes <bookings@example.com>"),
+    contactRecipientEmail: env("SLOTBOARD_CONTACT_RECIPIENT_EMAIL", "support@getcaboo.com"),
     resendApiKey: optionalEnv("RESEND_API_KEY") ?? optionalEnv("SLOTBOARD_RESEND_API_KEY"),
     resendWebhookSecret: optionalEnv("RESEND_WEBHOOK_SECRET") ?? optionalEnv("SLOTBOARD_RESEND_WEBHOOK_SECRET"),
     postmarkServerToken: optionalEnv("POSTMARK_SERVER_TOKEN") ?? optionalEnv("SLOTBOARD_POSTMARK_SERVER_TOKEN"),
@@ -166,6 +180,7 @@ export function loadEnv(): Env {
     railwayEnvironmentId: optionalEnv("SLOTBOARD_RAILWAY_ENVIRONMENT_ID") ?? optionalEnv("RAILWAY_ENVIRONMENT_ID"),
     railwayCustomDomainServiceId: optionalEnv("SLOTBOARD_RAILWAY_CUSTOM_DOMAIN_SERVICE_ID"),
     railwayCustomDomainTargetPort: numberEnv("SLOTBOARD_RAILWAY_DOMAIN_PORT", 4174, { min: 1 }),
+    integrationEncryptionKey: optionalEnv("SLOTBOARD_INTEGRATION_ENCRYPTION_KEY"),
     sentryDsn: optionalEnv("SENTRY_DSN") ?? optionalEnv("SLOTBOARD_SENTRY_DSN"),
     sentryEnvironment: env("SENTRY_ENVIRONMENT", process.env.NODE_ENV || "development"),
     sentryRelease: optionalEnv("SENTRY_RELEASE") ?? optionalEnv("RAILWAY_GIT_COMMIT_SHA"),
@@ -192,6 +207,7 @@ export function emailReadiness(env: Env = loadEnv()): EmailReadiness {
       optionalVariables: [
         "SLOTBOARD_RESEND_WEBHOOK_SECRET",
         "SLOTBOARD_EMAIL_WEBHOOK_SECRET",
+        "SLOTBOARD_CONTACT_RECIPIENT_EMAIL",
       ],
       webhookPath,
       issues: [
@@ -218,6 +234,7 @@ export function emailReadiness(env: Env = loadEnv()): EmailReadiness {
       optionalVariables: [
         "SLOTBOARD_RESEND_WEBHOOK_SECRET",
         "SLOTBOARD_EMAIL_WEBHOOK_SECRET",
+        "SLOTBOARD_CONTACT_RECIPIENT_EMAIL",
       ],
       webhookPath,
       issues: [
@@ -244,6 +261,7 @@ export function emailReadiness(env: Env = loadEnv()): EmailReadiness {
     ],
     optionalVariables: [
       "SLOTBOARD_POSTMARK_MESSAGE_STREAM",
+      "SLOTBOARD_CONTACT_RECIPIENT_EMAIL",
     ],
     webhookPath,
     issues: [
@@ -339,6 +357,22 @@ export function customDomainReadiness(env: Env = loadEnv()): CustomDomainReadine
       "SLOTBOARD_RAILWAY_DOMAIN_PORT",
     ],
     issues,
+  };
+}
+
+export function notificationReadiness(env: Env = loadEnv()): NotificationReadiness {
+  const encryptionConfigured = Boolean(env.integrationEncryptionKey);
+  return {
+    provider: "webhook",
+    encryptionConfigured,
+    slackWebhookSupported: true,
+    teamsWebhookSupported: true,
+    productionReady: encryptionConfigured,
+    requiredVariables: ["SLOTBOARD_INTEGRATION_ENCRYPTION_KEY"],
+    optionalVariables: [],
+    issues: encryptionConfigured
+      ? []
+      : ["Set SLOTBOARD_INTEGRATION_ENCRYPTION_KEY on the API service to store Slack and Teams webhook URLs."],
   };
 }
 

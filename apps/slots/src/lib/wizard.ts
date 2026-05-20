@@ -40,6 +40,7 @@ export interface WizardDraft {
 }
 
 const STORAGE_KEY = 'mytimes:slots:wizard-draft:v1';
+const DRAFT_PERSIST_DELAY_MS = 300;
 
 function detectedTimezone(): string {
   try {
@@ -98,6 +99,38 @@ function persistDraft(draft: WizardDraft): void {
   }
 }
 
+export function storeDraft(draft: WizardDraft): void {
+  persistDraft(draft);
+}
+
+function scheduleDraftPersist(draft: WizardDraft): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const win = window as Window & {
+    requestIdleCallback?: (
+      callback: () => void,
+      options?: { timeout?: number },
+    ) => number;
+    cancelIdleCallback?: (handle: number) => void;
+  };
+  let idleHandle: number | undefined;
+  const timeoutHandle = window.setTimeout(() => {
+    if (typeof win.requestIdleCallback === 'function') {
+      idleHandle = win.requestIdleCallback(() => persistDraft(draft), {
+        timeout: 1200,
+      });
+      return;
+    }
+    persistDraft(draft);
+  }, DRAFT_PERSIST_DELAY_MS);
+
+  return () => {
+    window.clearTimeout(timeoutHandle);
+    if (idleHandle !== undefined && typeof win.cancelIdleCallback === 'function') {
+      win.cancelIdleCallback(idleHandle);
+    }
+  };
+}
+
 export function clearDraft(): void {
   if (typeof window === 'undefined') return;
   try {
@@ -115,7 +148,7 @@ export function useWizardDraft(): {
   const [draft, setDraft] = useState<WizardDraft>(() => loadDraft());
 
   useEffect(() => {
-    persistDraft(draft);
+    return scheduleDraftPersist(draft);
   }, [draft]);
 
   const update = useCallback((patch: Partial<WizardDraft>) => {

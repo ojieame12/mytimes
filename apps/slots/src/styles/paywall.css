@@ -272,81 +272,10 @@
   border-radius: var(--radius-sm);
 }
 
-/* ─── 2 ▸ LimitIndicator — inline pill ──────────────────────
-   Reads as "5 / 25 bookings". Numbers in mono, unit in sans.
-   States: normal (muted), near (amber), at (red). 24px tall,
-   tight padding, semantic colors. */
-
-.limit-indicator {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: var(--radius-pill);
-  background: hsla(30, 50%, 99%, 1);
-  border: 1px solid var(--border-subtle);
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--fg-muted);
-  line-height: 1;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  transition:
-    background var(--motion-short) var(--ease-press),
-    border-color var(--motion-short) var(--ease-press),
-    color var(--motion-short) var(--ease-press);
-}
-.limit-indicator__count {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--zinc-800);
-  letter-spacing: -0.01em;
-}
-.limit-indicator__sep {
-  font-family: var(--font-mono);
-  color: var(--fg-faint);
-  font-weight: 500;
-}
-.limit-indicator__max {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--fg-subdued);
-}
-.limit-indicator__unit {
-  color: var(--fg-subtle);
-  font-size: 11.5px;
-  letter-spacing: 0.02em;
-}
-
-/* Near-limit (60–95%) — amber wash. */
-.limit-indicator.is-near {
-  background: var(--intent-warning-soft);
-  border-color: hsla(38, 92%, 50%, 0.30);
-  color: var(--intent-warning-strong);
-}
-.limit-indicator.is-near .limit-indicator__count,
-.limit-indicator.is-near .limit-indicator__max,
-.limit-indicator.is-near .limit-indicator__unit,
-.limit-indicator.is-near .limit-indicator__sep {
-  color: var(--intent-warning-strong);
-}
-
-/* At-limit (≥95%) — red wash. */
-.limit-indicator.is-at {
-  background: var(--intent-danger-soft);
-  border-color: hsla(0, 70%, 55%, 0.30);
-  color: var(--intent-danger-strong);
-}
-.limit-indicator.is-at .limit-indicator__count,
-.limit-indicator.is-at .limit-indicator__max,
-.limit-indicator.is-at .limit-indicator__unit,
-.limit-indicator.is-at .limit-indicator__sep {
-  color: var(--intent-danger-strong);
-}
+/* ─── 2 ▸ LimitIndicator ────────────────────────────────────
+   Moved to styles/limit-indicator-v2.css (the .limit-v2 family).
+   The component lives at components/paywall/LimitIndicator.tsx
+   and renders the new teal-only escalation with hairline bar. */
 
 /* ─── 3 ▸ LockedFeature — chip with tooltip ─────────────────
    Inline element with a lock icon + label. Tooltip appears on

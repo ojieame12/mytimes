@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import type { TimeSlot } from '../lib/types';
 import { groupSlotsByDay } from '../lib/time';
 import { DayGroupHeader } from './DayGroupHeader';
 import { SlotChip } from './SlotChip';
+import '../styles/slot-grid.css';
 
 /* ─── SlotGrid ────────────────────────────────────────────
  * Composes SlotChips into day buckets. Two modes:
@@ -29,7 +31,7 @@ export function SlotGrid({
   onSlotClick,
   includeCancelled = false,
 }: SlotGridProps) {
-  const groups = groupSlotsByDay(slots, viewerTz);
+  const groups = useMemo(() => groupSlotsByDay(slots, viewerTz), [slots, viewerTz]);
 
   return (
     <div className="slot-grid">

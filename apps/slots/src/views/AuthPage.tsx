@@ -81,8 +81,8 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
 
   const isSignUp = mode === 'signup';
   const bgImage = isSignUp
-    ? '/assets/bg/landscape-meadow-picnic.png'
-    : '/assets/bg/landscape-sunset-cabin.png';
+    ? '/assets/bg/landscape-meadow-picnic.webp'
+    : '/assets/bg/landscape-sunset-cabin.webp';
 
   return (
     <section className="auth-split" data-mode={mode}>

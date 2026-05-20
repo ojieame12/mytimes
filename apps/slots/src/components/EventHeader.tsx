@@ -1,4 +1,5 @@
 import type { BookingEvent } from '../lib/types';
+import '../styles/event-header.css';
 
 /* ─── EventHeader ─────────────────────────────────────────
  * Title + description + organizer + timezone disclosure.

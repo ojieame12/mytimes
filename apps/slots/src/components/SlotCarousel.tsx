@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Clock, Globe } from 'lucide-react';
 import type { TimeSlot } from '../lib/types';
 import { formatTimeInTz } from '../lib/time';
+import { expressiveScrollBehavior, syncScrollBehavior } from '../lib/motion';
+import '../styles/carousel.css';
 
 /* ─── SlotCarousel ────────────────────────────────────
  * Horizontal scroll-snap row of editorial slot cards.
@@ -36,8 +38,10 @@ export function SlotCarousel({
 }: SlotCarouselProps) {
   const [uncontrolledIndex, setUncontrolledIndex] = useState(0);
   const index = controlledIndex ?? uncontrolledIndex;
-  const setIndex = (next: number) => {
+  const scrollIntentRef = useRef<'sync' | 'expressive'>('sync');
+  const setIndex = (next: number, intent: 'sync' | 'expressive' = 'sync') => {
     const clamped = Math.max(0, Math.min(slots.length - 1, next));
+    scrollIntentRef.current = intent;
     if (controlledIndex === undefined) setUncontrolledIndex(clamped);
     onIndexChange?.(clamped);
   };
@@ -51,7 +55,12 @@ export function SlotCarousel({
     if (!track) return;
     const card = track.children[index] as HTMLElement | undefined;
     if (!card) return;
-    card.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    const behavior =
+      scrollIntentRef.current === 'expressive'
+        ? expressiveScrollBehavior()
+        : syncScrollBehavior();
+    scrollIntentRef.current = 'sync';
+    card.scrollIntoView({ behavior, inline: 'center', block: 'nearest' });
   }, [index]);
 
   /* Detect which card is centered by reading scroll position. */
@@ -70,17 +79,17 @@ export function SlotCarousel({
         closest = i;
       }
     }
-    if (closest !== index) setIndex(closest);
+    if (closest !== index) setIndex(closest, 'sync');
   };
 
   /* Keyboard support — arrow keys move between cards. */
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'ArrowRight') {
       e.preventDefault();
-      setIndex(index + 1);
+      setIndex(index + 1, 'expressive');
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
-      setIndex(index - 1);
+      setIndex(index - 1, 'expressive');
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       const slot = slots[index];
@@ -121,7 +130,7 @@ export function SlotCarousel({
               meetingDurationMinutes={meetingDurationMinutes}
               organizerName={organizerName}
               onPick={() => onSlotPick?.(slot)}
-              onFocus={() => setIndex(i)}
+              onFocus={() => setIndex(i, 'sync')}
             />
           );
         })}
@@ -132,7 +141,7 @@ export function SlotCarousel({
         <button
           type="button"
           className="carousel__nav-btn"
-          onClick={() => setIndex(index - 1)}
+          onClick={() => setIndex(index - 1, 'expressive')}
           disabled={index === 0}
           aria-label="Previous slot"
         >
@@ -146,7 +155,7 @@ export function SlotCarousel({
         <button
           type="button"
           className="carousel__nav-btn"
-          onClick={() => setIndex(index + 1)}
+          onClick={() => setIndex(index + 1, 'expressive')}
           disabled={index >= slots.length - 1}
           aria-label="Next slot"
         >

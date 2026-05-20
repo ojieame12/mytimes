@@ -12,10 +12,13 @@ export type EventEntitlement = {
   slotLimit: number;
 };
 
-export const FREE_BOOKING_LIMIT = 25;
-export const FREE_SLOT_LIMIT = 60;
-export const FREE_RETENTION_DAYS = 60;
-export const FREE_ACTIVE_BOARD_LIMIT = 2;
+export const FREE_BOOKING_LIMIT = 15;
+export const FREE_SLOT_LIMIT = 30;
+export const FREE_BOOKING_WINDOW_DAYS = 3;
+/** @deprecated Use {@link FREE_BOOKING_WINDOW_DAYS}. Retained for in-tree call sites pending a follow-up rename. */
+export const FREE_BOOKING_DAY_LIMIT = FREE_BOOKING_WINDOW_DAYS;
+export const FREE_RETENTION_DAYS = 3;
+export const FREE_ACTIVE_BOARD_LIMIT = 1;
 
 export const EVENT_PASS_BOOKING_LIMIT = 75;
 export const EVENT_PASS_SLOT_LIMIT = 200;

@@ -8,6 +8,7 @@ export interface LimitBannerProps {
 }
 
 export function LimitBanner({ count, max, unit, onUpgrade }: LimitBannerProps) {
+  const verb = unit === 'days' ? 'spans' : 'creates';
   return (
     <section className="limit-banner" aria-live="polite">
       <span className="limit-banner__head">
@@ -15,12 +16,12 @@ export function LimitBanner({ count, max, unit, onUpgrade }: LimitBannerProps) {
         Free limit exceeded
       </span>
       <p className="limit-banner__body">
-        This setup creates <strong className="mono">{count}</strong> {unit}.
-        Free boards include <strong className="mono">{max}</strong>. Keep the setup
-        and upgrade from the admin link after posting.
+        This setup {verb} <strong className="mono">{count}</strong> {unit}.
+        Free boards include <strong className="mono">{max}</strong> {unit}. Keep
+        the setup and upgrade from the admin link after posting.
       </p>
       <button type="button" className="limit-banner__cta" onClick={onUpgrade}>
-        See board unlock <ArrowRight size={13} strokeWidth={2} aria-hidden="true" />
+        See capacity upgrade <ArrowRight size={13} strokeWidth={2} aria-hidden="true" />
       </button>
     </section>
   );

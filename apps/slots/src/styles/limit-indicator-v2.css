@@ -1,0 +1,250 @@
+/* ═══════════════════════════════════════════════════════════
+   LimitIndicator v2 — usage chip with hairline progress bar,
+   warm brand tones (no system red/amber), and three sizes.
+
+   Tones derive from the `is-*` modifier on the root:
+     · default      → calm, peach track + teal fill
+     · is-warming   → 60% full, peach surface deepens
+     · is-near      → 80% full, brand orange enters
+     · is-at        → 95%+ full, full brand orange
+     · is-unlimited → no fill, peach track + ∞ glyph
+     · is-expired   → muted, strikethrough state
+
+   Inline layout: icon · count · bar in one row.
+   Stacked layout (auto for size=lg): count on top, bar below.
+═══════════════════════════════════════════════════════════ */
+
+.limit-v2 {
+  --limit-v2-fill: 0%;
+  --limit-v2-fill-color: var(--primary);
+  --limit-v2-track-bg: hsla(28, 100%, 95%, 1);
+  --limit-v2-text: var(--zinc-800);
+  --limit-v2-muted: var(--fg-subtle);
+
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-sans);
+  color: var(--limit-v2-text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.limit-v2__row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.limit-v2__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--limit-v2-muted);
+}
+
+.limit-v2__count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.limit-v2__current {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--limit-v2-text);
+}
+
+.limit-v2__sep {
+  color: var(--fg-faint);
+  font-family: var(--font-mono);
+  font-weight: 400;
+  margin: 0 1px;
+}
+
+.limit-v2__max {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--limit-v2-muted);
+  letter-spacing: -0.005em;
+}
+
+.limit-v2__unit {
+  color: var(--limit-v2-muted);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  margin-left: 4px;
+  text-transform: lowercase;
+}
+
+.limit-v2__symbol {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--limit-v2-text);
+}
+
+.limit-v2__expired {
+  font-style: italic;
+  color: var(--limit-v2-muted);
+  letter-spacing: 0.01em;
+}
+
+/* Progress bar — a thin track + a tinted fill. The fill width
+ * is set via the --limit-v2-fill custom property, so all motion
+ * is one transition on width. */
+.limit-v2__track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--limit-v2-track-bg);
+  overflow: hidden;
+}
+
+.limit-v2__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--limit-v2-fill);
+  background: var(--limit-v2-fill-color);
+  border-radius: 999px;
+  transition: width var(--motion-medium, 220ms) var(--ease-out, ease-out);
+}
+
+.limit-v2__track--unlimited {
+  --limit-v2-fill: 100%;
+  background: hsla(28, 100%, 95%, 1);
+}
+.limit-v2__track--unlimited .limit-v2__fill {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--primary) 18%, transparent),
+    color-mix(in oklch, var(--primary) 6%, transparent)
+  );
+}
+
+.limit-v2__track--expired {
+  --limit-v2-fill: 100%;
+  background: var(--border-subtle);
+}
+.limit-v2__track--expired .limit-v2__fill {
+  background: var(--fg-faint);
+  opacity: 0.5;
+}
+
+.limit-v2__helper {
+  font-size: 11.5px;
+  color: var(--limit-v2-muted);
+  letter-spacing: 0.01em;
+  font-weight: 500;
+}
+
+/* ─── Tones ───────────────────────────────────────────────
+ * Brand is teal-led. Three escalation options the team is
+ * choosing between — implemented here as "teal-only escalation"
+ * (Option A): the bar deepens through the teal scale as fill
+ * grows. No warning colors. Calm and decision-moment both
+ * read as the brand.
+ *
+ * If we want Option B (amber/red at near/at) or Option C (a
+ * warm secondary), this block is the single place to change. */
+.limit-v2 {
+  --limit-v2-fill-color: var(--teal-500);
+  --limit-v2-track-bg: var(--teal-50);
+}
+.limit-v2.is-warming {
+  --limit-v2-fill-color: var(--teal-600);
+}
+.limit-v2.is-near {
+  --limit-v2-fill-color: var(--teal-700);
+}
+.limit-v2.is-near .limit-v2__current,
+.limit-v2.is-near .limit-v2__helper {
+  color: var(--teal-700);
+}
+.limit-v2.is-at {
+  --limit-v2-fill-color: var(--teal-800);
+  --limit-v2-track-bg: var(--teal-100);
+}
+.limit-v2.is-at .limit-v2__current,
+.limit-v2.is-at .limit-v2__max,
+.limit-v2.is-at .limit-v2__helper {
+  color: var(--teal-800);
+}
+.limit-v2.is-at .limit-v2__current {
+  font-weight: 700;
+}
+
+.limit-v2.is-unlimited {
+  --limit-v2-text: var(--zinc-700);
+}
+.limit-v2.is-expired {
+  --limit-v2-text: var(--fg-subtle);
+}
+
+/* ─── Sizes ───────────────────────────────────────────────
+ *   sm — inline 12px text, 2px bar
+ *   md — 13px text, 3px bar (default)
+ *   lg — 22px stacked count, 4px bar, helper underneath
+ */
+.limit-v2--sm {
+  font-size: 12px;
+}
+.limit-v2--sm .limit-v2__track {
+  height: 2px;
+}
+.limit-v2--sm .limit-v2__icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.limit-v2--md {
+  font-size: 13px;
+}
+.limit-v2--md .limit-v2__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.limit-v2--lg {
+  font-size: 14px;
+  gap: 8px;
+}
+.limit-v2--lg .limit-v2__current,
+.limit-v2--lg .limit-v2__sep,
+.limit-v2--lg .limit-v2__max {
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.limit-v2--lg .limit-v2__unit {
+  font-size: 13px;
+  margin-left: 8px;
+}
+.limit-v2--lg .limit-v2__symbol {
+  font-size: 32px;
+  line-height: 1;
+}
+.limit-v2--lg .limit-v2__track {
+  height: 4px;
+}
+.limit-v2--lg .limit-v2__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ─── Layouts ─────────────────────────────────────────────
+ * inline — icon · count · bar are on the same baseline (bar
+ *          wraps to next visual row but layout stays compact).
+ *          We use the column flex on the root with the row as a
+ *          standalone block so the bar always lives under the
+ *          count, regardless of layout.
+ * stacked — same shape; reserved as the explicit hint for lg.
+ */

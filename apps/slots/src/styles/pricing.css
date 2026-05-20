@@ -266,12 +266,13 @@
   padding: clamp(16px, 2.4vw, 28px);
 }
 
-/* Three-column track, shared between heads + matrix.
-   Feature column is wider — it carries the row labels. */
+/* Four-column track, shared between heads + matrix.
+   Feature column is wider — it carries the row labels. The three
+   tier columns (Free, Company, Enterprise) split the rest evenly. */
 .pricing-compare__heads,
 .pricing-compare__row {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
   gap: 16px;
   align-items: stretch;
 }
@@ -377,6 +378,13 @@
   line-height: 1;
   letter-spacing: -0.01em;
   color: var(--fg-default);
+}
+/* "Custom" is a word, not a price — render in the display family so it
+ *  doesn't try to occupy the mono numeral slot. */
+.pricing-head__price--word strong {
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: -0.015em;
 }
 .pricing-head__price span {
   font-family: var(--font-body);
@@ -1057,7 +1065,7 @@
 
   .pricing-compare__heads,
   .pricing-compare__row {
-    grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.2fr) repeat(3, minmax(0, 1fr));
     gap: 10px;
   }
 }
