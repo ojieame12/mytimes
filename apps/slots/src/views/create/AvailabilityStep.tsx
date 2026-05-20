@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { generateAvailabilitySlots } from '@fresh-feel/slotboard-core/dist/slots.js';
 import type { AvailabilityInput, GeneratedSlot } from '@fresh-feel/slotboard-core/dist/types.js';
 import { CreateFlowShell } from '../../components/create/CreateFlowShell';
@@ -15,6 +15,7 @@ import {
   UpgradePrompt,
 } from '../../components/paywall';
 import { navigate } from '../../lib/routing';
+import { preloadReviewStep } from '../../lib/routePreload';
 import {
   ALLOWED_INTERVALS,
   useWizardDraft,
@@ -32,6 +33,10 @@ export function AvailabilityStep() {
   const { draft, update } = useWizardDraft();
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  useEffect(() => {
+    void preloadReviewStep();
+  }, []);
 
   /* If they skipped step 1, redirect back. */
   const detailsErrors = useMemo(() => validateDetails(draft), [draft]);

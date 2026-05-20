@@ -18,6 +18,7 @@ import {
   type OrganizerSessionResponse,
 } from '../lib/api';
 import { navigate } from '../lib/routing';
+import { preloadDetailsStep } from '../lib/routePreload';
 import {
   clearCheckoutReturnParams,
   readCheckoutReturn,
@@ -304,6 +305,8 @@ export function AccountEventsPage() {
           <button
             type="button"
             className="account-card__new"
+            onPointerEnter={() => void preloadDetailsStep()}
+            onFocus={() => void preloadDetailsStep()}
             onClick={() => navigate('/new')}
           >
             <Plus size={14} strokeWidth={1.8} aria-hidden="true" />
@@ -418,6 +421,8 @@ export function AccountEventsPage() {
           <button
             type="button"
             className="account-card__new"
+            onPointerEnter={() => void preloadDetailsStep()}
+            onFocus={() => void preloadDetailsStep()}
             onClick={() => navigate('/new')}
           >
             <Plus size={14} strokeWidth={1.8} aria-hidden="true" />

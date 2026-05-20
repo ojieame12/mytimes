@@ -13,6 +13,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { navigate } from '../lib/routing';
+import { preloadAuthPage, preloadBookingPage, preloadDetailsStep } from '../lib/routePreload';
 import { Avatar } from '../components/Avatar';
 
 /* ─── PricingPage ─────────────────────────────────────────
@@ -46,6 +47,7 @@ type Tier = {
   cta: string;
   ctaVariant: 'ghost' | 'primary' | 'secondary';
   onSelect: () => void;
+  onPreload?: () => void;
   badge?: string;
   highlighted?: boolean;
   priceAnchor?: string;
@@ -63,6 +65,7 @@ const tiers: Tier[] = [
     cta: 'Create free board',
     ctaVariant: 'ghost',
     onSelect: () => navigate('/new'),
+    onPreload: () => void preloadDetailsStep(),
     mobileFeatures: [
       '2 active boards',
       '25 bookings per board',
@@ -81,6 +84,7 @@ const tiers: Tier[] = [
     cta: 'Start company workspace',
     ctaVariant: 'primary',
     onSelect: () => navigate('/signup'),
+    onPreload: () => void preloadAuthPage(),
     mobileFeatures: [
       'Unlimited boards, fair use',
       '10 organizer seats',
@@ -344,6 +348,8 @@ export function PricingPage() {
             <button
               type="button"
               className="pricing-button pricing-button--primary"
+              onPointerEnter={() => void preloadDetailsStep()}
+              onFocus={() => void preloadDetailsStep()}
               onClick={() => navigate('/new')}
             >
               Create a board <ArrowRight size={16} strokeWidth={2} />
@@ -351,6 +357,8 @@ export function PricingPage() {
             <button
               type="button"
               className="pricing-button pricing-button--ghost"
+              onPointerEnter={() => void preloadBookingPage()}
+              onFocus={() => void preloadBookingPage()}
               onClick={() => navigate('/b/preview')}
             >
               View demo board <ArrowRight size={14} strokeWidth={2} />
@@ -575,6 +583,8 @@ export function PricingPage() {
         <button
           type="button"
           className="pricing-button pricing-button--primary"
+          onPointerEnter={() => void preloadDetailsStep()}
+          onFocus={() => void preloadDetailsStep()}
           onClick={() => navigate('/new')}
         >
           Create your first board <ArrowRight size={16} strokeWidth={2} />
@@ -627,7 +637,13 @@ function PriceHead({ tier }: { tier: Tier }) {
           </li>
         ))}
       </ul>
-      <button type="button" className={buttonClass} onClick={tier.onSelect}>
+      <button
+        type="button"
+        className={buttonClass}
+        onPointerEnter={tier.onPreload}
+        onFocus={tier.onPreload}
+        onClick={tier.onSelect}
+      >
         {tier.cta} <ArrowRight size={14} strokeWidth={2} />
       </button>
     </article>

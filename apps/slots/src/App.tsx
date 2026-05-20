@@ -6,84 +6,64 @@ import { PricingPage } from './views/PricingPage';
 import { PrivacyPage, TermsPage } from './views/LegalPage';
 import { ApiClientError, readPublicBoard, type ClaimSlotResponse, type PublicBoardResponse } from './lib/api';
 import { MOCK_EVENT, MOCK_SLOTS } from './lib/mockData';
+import {
+  preloadAccountEventsPage,
+  preloadAdminDashboardPage,
+  preloadAuthPage,
+  preloadAvailabilityStep,
+  preloadBookingPage,
+  preloadDetailsStep,
+  preloadDoneStep,
+  preloadManageBookingPage,
+  preloadMyBoardsPage,
+  preloadPasswordResetPage,
+  preloadRequestBoardsLinkPage,
+  preloadReviewStep,
+} from './lib/routePreload';
 
-const loadBookingPage = () =>
-  import('./views/BookingPage').then(({ BookingPage }) => ({ default: BookingPage }));
+const loadBookingPage = () => preloadBookingPage().then(({ BookingPage }) => ({ default: BookingPage }));
 const BookingPage = lazy(loadBookingPage);
-const loadCreateRouteStyles = () =>
-  Promise.all([
-    import('./styles/create-flow.css'),
-    import('./styles/paywall.css'),
-  ]);
 const DetailsStep = lazy(() =>
-  Promise.all([
-    loadCreateRouteStyles(),
-    import('./views/create/DetailsStep'),
-  ]).then(([, { DetailsStep }]) => ({ default: DetailsStep })),
+  preloadDetailsStep().then(({ DetailsStep }) => ({ default: DetailsStep })),
 );
 const AvailabilityStep = lazy(() =>
-  Promise.all([
-    loadCreateRouteStyles(),
-    import('./views/create/AvailabilityStep'),
-  ]).then(([, { AvailabilityStep }]) => ({ default: AvailabilityStep })),
+  preloadAvailabilityStep().then(({ AvailabilityStep }) => ({ default: AvailabilityStep })),
 );
 const ReviewStep = lazy(() =>
-  Promise.all([
-    loadCreateRouteStyles(),
-    import('./views/create/ReviewStep'),
-  ]).then(([, { ReviewStep }]) => ({ default: ReviewStep })),
+  preloadReviewStep().then(({ ReviewStep }) => ({ default: ReviewStep })),
 );
 const DoneStep = lazy(() =>
-  Promise.all([
-    loadCreateRouteStyles(),
-    import('./views/create/DoneStep'),
-  ]).then(([, { DoneStep }]) => ({ default: DoneStep })),
+  preloadDoneStep().then(({ DoneStep }) => ({ default: DoneStep })),
 );
 const ManageBookingPage = lazy(() =>
-  Promise.all([
-    import('./styles/manage-booking.css'),
-    import('./views/ManageBookingPage'),
-  ]).then(([, { ManageBookingPage }]) => ({ default: ManageBookingPage })),
+  preloadManageBookingPage().then(({ ManageBookingPage }) => ({ default: ManageBookingPage })),
 );
 const AdminDashboardPage = lazy(() =>
-  Promise.all([
-    import('./styles/checkout-return.css'),
-    import('./styles/management.css'),
-    import('./views/AdminDashboardPage'),
-  ]).then(([, , { AdminDashboardPage }]) => ({ default: AdminDashboardPage })),
+  preloadAdminDashboardPage().then(({ AdminDashboardPage }) => ({ default: AdminDashboardPage })),
 );
 const RecoverAdminPage = lazy(() =>
   import('./views/RecoverAdminPage').then(({ RecoverAdminPage }) => ({ default: RecoverAdminPage })),
 );
 const AuthPage = lazy(() =>
-  import('./views/AuthPage').then(({ AuthPage }) => ({ default: AuthPage })),
+  preloadAuthPage().then(({ AuthPage }) => ({ default: AuthPage })),
 );
 const ForgotPasswordPage = lazy(() =>
-  import('./views/PasswordResetPage').then(({ ForgotPasswordPage }) => ({ default: ForgotPasswordPage })),
+  preloadPasswordResetPage().then(({ ForgotPasswordPage }) => ({ default: ForgotPasswordPage })),
 );
 const ResetPasswordPage = lazy(() =>
-  import('./views/PasswordResetPage').then(({ ResetPasswordPage }) => ({ default: ResetPasswordPage })),
+  preloadPasswordResetPage().then(({ ResetPasswordPage }) => ({ default: ResetPasswordPage })),
 );
 const VerifyEmailPage = lazy(() =>
-  import('./views/PasswordResetPage').then(({ VerifyEmailPage }) => ({ default: VerifyEmailPage })),
+  preloadPasswordResetPage().then(({ VerifyEmailPage }) => ({ default: VerifyEmailPage })),
 );
 const AccountEventsPage = lazy(() =>
-  Promise.all([
-    import('./styles/checkout-return.css'),
-    import('./views/AccountEventsPage'),
-  ]).then(([, { AccountEventsPage }]) => ({ default: AccountEventsPage })),
+  preloadAccountEventsPage().then(({ AccountEventsPage }) => ({ default: AccountEventsPage })),
 );
 const MyBoardsPage = lazy(() =>
-  Promise.all([
-    import('./styles/my-boards.css'),
-    import('./views/MyBoardsPage'),
-  ]).then(([, { MyBoardsPage }]) => ({ default: MyBoardsPage })),
+  preloadMyBoardsPage().then(({ MyBoardsPage }) => ({ default: MyBoardsPage })),
 );
 const RequestBoardsLinkPage = lazy(() =>
-  Promise.all([
-    import('./styles/my-boards.css'),
-    import('./views/RequestBoardsLinkPage'),
-  ]).then(([, { RequestBoardsLinkPage }]) => ({ default: RequestBoardsLinkPage })),
+  preloadRequestBoardsLinkPage().then(({ RequestBoardsLinkPage }) => ({ default: RequestBoardsLinkPage })),
 );
 
 export function App() {

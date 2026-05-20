@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { generateAvailabilitySlots } from '@fresh-feel/slotboard-core/dist/slots.js';
 import { CreateFlowShell } from '../../components/create/CreateFlowShell';
 import { BookingPage } from '../BookingPage';
 import { navigate } from '../../lib/routing';
+import { preloadDoneStep } from '../../lib/routePreload';
 import { useWizardDraft, validateDetails, validateAvailability } from '../../lib/wizard';
 import { ApiClientError, createEventFromDraft, storeCreatedEvent } from '../../lib/api';
 import { createBoardErrorMessage } from '../../lib/errorMessages';
@@ -18,6 +19,10 @@ export function ReviewStep() {
   const { draft } = useWizardDraft();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
+
+  useEffect(() => {
+    void preloadDoneStep();
+  }, []);
 
   const detailsErrors = useMemo(() => validateDetails(draft), [draft]);
   const availabilityErrors = useMemo(() => validateAvailability(draft), [draft]);

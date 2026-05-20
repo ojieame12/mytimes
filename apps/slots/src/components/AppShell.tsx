@@ -1,6 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { navigate } from '../lib/routing';
 import { getOrganizerSession, type OrganizerSessionResponse } from '../lib/api';
+import {
+  preloadAccountEventsPage,
+  preloadAuthPage,
+  preloadBookingPage,
+  preloadDetailsStep,
+  preloadMyBoardsPage,
+} from '../lib/routePreload';
 
 /* ─── AppShell ────────────────────────────────────────────
  * Letterpress page chrome. Provides the top bar (brand mark,
@@ -128,16 +135,30 @@ function GuestNav() {
         <button type="button" className="app-bar__link" onClick={() => navigate('/pricing')}>
           Pricing
         </button>
-        <button type="button" className="app-bar__link" onClick={() => navigate('/b/preview')}>
+        <button
+          type="button"
+          className="app-bar__link"
+          onPointerEnter={() => void preloadBookingPage()}
+          onFocus={() => void preloadBookingPage()}
+          onClick={() => navigate('/b/preview')}
+        >
           Demo
         </button>
-        <button type="button" className="app-bar__link" onClick={() => navigate('/signin')}>
+        <button
+          type="button"
+          className="app-bar__link"
+          onPointerEnter={() => void preloadAuthPage()}
+          onFocus={() => void preloadAuthPage()}
+          onClick={() => navigate('/signin')}
+        >
           Sign in
         </button>
       </nav>
       <button
         type="button"
         className="app-bar__cta"
+        onPointerEnter={() => void preloadDetailsStep()}
+        onFocus={() => void preloadDetailsStep()}
         onClick={() => navigate('/new')}
       >
         Create board
@@ -159,13 +180,21 @@ function AuthedNav() {
         <button type="button" className="app-bar__link" onClick={() => navigate('/pricing')}>
           Pricing
         </button>
-        <button type="button" className="app-bar__link" onClick={() => navigate('/my-boards')}>
+        <button
+          type="button"
+          className="app-bar__link"
+          onPointerEnter={() => void preloadMyBoardsPage()}
+          onFocus={() => void preloadMyBoardsPage()}
+          onClick={() => navigate('/my-boards')}
+        >
           My boards
         </button>
       </nav>
       <button
         type="button"
         className="app-bar__account"
+        onPointerEnter={() => void preloadAccountEventsPage()}
+        onFocus={() => void preloadAccountEventsPage()}
         onClick={() => navigate('/account')}
         aria-haspopup="menu"
       >

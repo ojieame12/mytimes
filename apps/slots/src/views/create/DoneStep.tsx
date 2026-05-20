@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Copy, Check, KeyRound } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { navigate } from '../../lib/routing';
+import { preloadDetailsStep } from '../../lib/routePreload';
 import { useWizardDraft } from '../../lib/wizard';
 import {
   ApiClientError,
@@ -88,6 +89,8 @@ export function DoneStep({ variant: variantProp }: DoneStepProps = {}) {
             <button
               type="button"
               className="done-actions__primary"
+              onPointerEnter={() => void preloadDetailsStep()}
+              onFocus={() => void preloadDetailsStep()}
               onClick={() => navigate('/new')}
             >
               Create a board →
@@ -203,6 +206,8 @@ export function DoneStep({ variant: variantProp }: DoneStepProps = {}) {
           <button
             type="button"
             className="done-actions__ghost"
+            onPointerEnter={() => void preloadDetailsStep()}
+            onFocus={() => void preloadDetailsStep()}
             onClick={() => {
               clearStoredCreatedEvent();
               reset();

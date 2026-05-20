@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { CreateFlowShell } from '../../components/create/CreateFlowShell';
 import { FormField } from '../../components/form/FormField';
 import { TextInput, Textarea, Select, Toggle } from '../../components/form/Inputs';
@@ -9,6 +9,7 @@ import {
   PLAN_LIMITS,
 } from '../../components/paywall';
 import { navigate } from '../../lib/routing';
+import { preloadAvailabilityStep } from '../../lib/routePreload';
 import { useWizardDraft, validateDetails, ALLOWED_DURATIONS } from '../../lib/wizard';
 import { AVATAR_STYLES, type AvatarStyle } from '../../lib/types';
 
@@ -42,6 +43,10 @@ const COMMON_TIMEZONES: string[] = [
 export function DetailsStep() {
   const { draft, update } = useWizardDraft();
   const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  useEffect(() => {
+    void preloadAvailabilityStep();
+  }, []);
 
   const errors = useMemo(() => validateDetails(draft), [draft]);
   const showErrors = submitAttempted;

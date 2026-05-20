@@ -23,6 +23,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { navigate } from '../lib/routing';
+import { preloadBookingPage, preloadDetailsStep } from '../lib/routePreload';
 import { BookingHeaderCard } from '../components/BookingHeaderCard';
 import { TimezonePicker } from '../components/TimezonePicker';
 import { MOCK_EVENT, MOCK_SLOTS } from '../lib/mockData';
@@ -174,6 +175,8 @@ export function LandingPage() {
           <button
             type="button"
             className="landing-hero__primary"
+            onPointerEnter={() => void preloadDetailsStep()}
+            onFocus={() => void preloadDetailsStep()}
             onClick={() => navigate('/new')}
           >
             Create your board <ArrowRight size={16} strokeWidth={2} />
@@ -181,6 +184,8 @@ export function LandingPage() {
           <button
             type="button"
             className="landing-hero__ghost"
+            onPointerEnter={() => void preloadBookingPage()}
+            onFocus={() => void preloadBookingPage()}
             onClick={() => navigate('/b/preview')}
           >
             See demo board
@@ -355,6 +360,8 @@ export function LandingPage() {
         <button
           type="button"
           className="landing-hero__primary landing-footer__cta"
+          onPointerEnter={() => void preloadDetailsStep()}
+          onFocus={() => void preloadDetailsStep()}
           onClick={() => navigate('/new')}
         >
           Create your board <ArrowRight size={16} strokeWidth={2} />

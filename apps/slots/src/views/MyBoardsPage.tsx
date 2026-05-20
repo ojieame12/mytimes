@@ -7,6 +7,7 @@ import {
   type MyBoardsResponse,
 } from '../lib/api';
 import { navigate } from '../lib/routing';
+import { preloadDetailsStep } from '../lib/routePreload';
 
 type MyBoard = MyBoardsResponse['boards'][number];
 
@@ -175,6 +176,8 @@ export function MyBoardsPage() {
           <button
             type="button"
             className="my-boards-card__new"
+            onPointerEnter={() => void preloadDetailsStep()}
+            onFocus={() => void preloadDetailsStep()}
             onClick={() => navigate('/new')}
           >
             <Plus size={14} strokeWidth={1.8} aria-hidden="true" />
@@ -188,6 +191,7 @@ export function MyBoardsPage() {
           title="No boards yet"
           body="We didn’t find any mytimes boards for this email yet. Spin one up. Five minutes from idea to shareable link."
           actionLabel="Create a board"
+          onActionPreload={() => void preloadDetailsStep()}
           onAction={() => navigate('/new')}
         />
       ) : (
@@ -255,11 +259,13 @@ function EmptyState({
   title,
   body,
   actionLabel,
+  onActionPreload,
   onAction,
 }: {
   title: string;
   body: string;
   actionLabel?: string;
+  onActionPreload?: () => void;
   onAction?: () => void;
 }) {
   return (
@@ -278,6 +284,8 @@ function EmptyState({
         <button
           type="button"
           className="my-boards-card__new"
+          onPointerEnter={onActionPreload}
+          onFocus={onActionPreload}
           onClick={onAction}
         >
           <Plus size={14} strokeWidth={1.8} aria-hidden="true" />
