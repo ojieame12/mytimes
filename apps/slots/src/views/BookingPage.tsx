@@ -245,7 +245,10 @@ export function BookingPage({
         });
         if (bestVisible) {
           const id = (bestVisible.target as HTMLElement).id;
-          if (id.startsWith('day-')) setVisibleDateKey(id.slice(4));
+          if (id.startsWith('day-')) {
+            const nextDateKey = id.slice(4);
+            setVisibleDateKey((current) => (current === nextDateKey ? current : nextDateKey));
+          }
         }
       },
       { threshold: [0, 0.5, 1] },
@@ -271,7 +274,10 @@ export function BookingPage({
     const el = headerCardRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setCompactVisible(!entry.isIntersecting),
+      ([entry]) => {
+        const nextVisible = !entry.isIntersecting;
+        setCompactVisible((current) => (current === nextVisible ? current : nextVisible));
+      },
       { threshold: 0 },
     );
     observer.observe(el);

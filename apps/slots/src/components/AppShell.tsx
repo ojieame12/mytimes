@@ -65,6 +65,9 @@ export function AppShell({
           <img
             src="/assets/brand/wordmark-dark.svg"
             alt="mytimes"
+            width="117"
+            height="24"
+            decoding="async"
             style={{ height: '24px', width: 'auto', display: 'block' }}
           />
         </button>
@@ -81,6 +84,9 @@ export function AppShell({
           <img
             src="/assets/brand/wordmark-dark.svg"
             alt="mytimes"
+            width="117"
+            height="24"
+            decoding="async"
             style={{ height: '16px', width: 'auto', display: 'block', opacity: 0.7 }}
           />
         </span>

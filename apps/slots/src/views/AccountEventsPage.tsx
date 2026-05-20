@@ -406,6 +406,9 @@ export function AccountEventsPage() {
             className="account-empty__vignette"
             src="/assets/bg/vignette-laptop-only.webp"
             alt=""
+            width="140"
+            height="140"
+            decoding="async"
           />
           <h2 className="account-empty__title">No boards yet</h2>
           <p className="account-empty__body">

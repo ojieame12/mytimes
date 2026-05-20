@@ -83,6 +83,9 @@ export function DateStrip({ slots, viewerTz, currentDateKey }: DateStripProps) {
   }, [slots, viewerTz]);
 
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const navFrameRef = useRef<number | undefined>();
+  const canPrevRef = useRef(false);
+  const canNextRef = useRef(false);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
 
@@ -90,19 +93,39 @@ export function DateStrip({ slots, viewerTz, currentDateKey }: DateStripProps) {
   const updateNav = () => {
     const t = trackRef.current;
     if (!t) return;
-    setCanPrev(t.scrollLeft > 4);
-    setCanNext(t.scrollLeft + t.clientWidth < t.scrollWidth - 4);
+    const nextCanPrev = t.scrollLeft > 4;
+    const nextCanNext = t.scrollLeft + t.clientWidth < t.scrollWidth - 4;
+    if (canPrevRef.current !== nextCanPrev) {
+      canPrevRef.current = nextCanPrev;
+      setCanPrev(nextCanPrev);
+    }
+    if (canNextRef.current !== nextCanNext) {
+      canNextRef.current = nextCanNext;
+      setCanNext(nextCanNext);
+    }
+  };
+
+  const scheduleNavUpdate = () => {
+    if (navFrameRef.current !== undefined) return;
+    navFrameRef.current = window.requestAnimationFrame(() => {
+      navFrameRef.current = undefined;
+      updateNav();
+    });
   };
 
   useEffect(() => {
     updateNav();
     const t = trackRef.current;
     if (!t) return;
-    t.addEventListener('scroll', updateNav, { passive: true });
-    const ro = new ResizeObserver(updateNav);
+    t.addEventListener('scroll', scheduleNavUpdate, { passive: true });
+    const ro = new ResizeObserver(scheduleNavUpdate);
     ro.observe(t);
     return () => {
-      t.removeEventListener('scroll', updateNav);
+      t.removeEventListener('scroll', scheduleNavUpdate);
+      if (navFrameRef.current !== undefined) {
+        window.cancelAnimationFrame(navFrameRef.current);
+        navFrameRef.current = undefined;
+      }
       ro.disconnect();
     };
   }, [days.length]);

@@ -60,6 +60,9 @@ export function RequestBoardsLinkPage() {
           className="my-boards-request__vignette"
           src="/assets/bg/vignette-trio-mug-books.webp"
           alt=""
+          width="96"
+          height="96"
+          decoding="async"
         />
         <p className="my-boards-request__eyebrow">
           <span>Check</span> your inbox
@@ -106,6 +109,9 @@ export function RequestBoardsLinkPage() {
         className="my-boards-request__vignette"
         src="/assets/bg/vignette-trio-mug-books.webp"
         alt=""
+        width="96"
+        height="96"
+        decoding="async"
       />
       <p className="my-boards-request__eyebrow">
         <span>Find</span> my boards

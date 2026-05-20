@@ -478,6 +478,9 @@ function NotFoundPage() {
         <img
           src="/assets/bg/vignette-bicycle-bag.webp"
           alt=""
+          width="140"
+          height="140"
+          decoding="async"
           style={{
             width: '140px',
             height: '140px',

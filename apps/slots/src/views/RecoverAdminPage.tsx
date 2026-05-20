@@ -41,6 +41,9 @@ export function RecoverAdminPage() {
           className="recover-shell__vignette"
           src="/assets/bg/vignette-trio-mug-books.webp"
           alt=""
+          width="96"
+          height="96"
+          decoding="async"
         />
         <p className="recover-shell__eyebrow">
           <span>Recovery</span> sent
@@ -80,6 +83,9 @@ export function RecoverAdminPage() {
         className="recover-shell__vignette"
         src="/assets/bg/vignette-reading-nook.webp"
         alt=""
+        width="96"
+        height="96"
+        decoding="async"
       />
       <p className="recover-shell__eyebrow">
         <span>Recover</span> admin link

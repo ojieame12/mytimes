@@ -105,7 +105,14 @@ export function Avatar({
       aria-label={ariaLabel}
     >
       {dataUri ? (
-        <img className="avatar__img" src={dataUri} alt="" />
+        <img
+          className="avatar__img"
+          src={dataUri}
+          alt=""
+          width={size}
+          height={size}
+          decoding="async"
+        />
       ) : (
         <span className="avatar__fallback mono" aria-hidden="true">{initials}</span>
       )}

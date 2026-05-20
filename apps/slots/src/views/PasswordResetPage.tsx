@@ -42,6 +42,9 @@ export function ForgotPasswordPage() {
             <img
               src="/assets/brand/wordmark-dark.svg"
               alt="mytimes"
+              width="117"
+              height="24"
+              decoding="async"
               style={{ height: '28px', width: 'auto', marginBottom: '4px' }}
             />
             <h1 className="auth-split__title">Reset your password</h1>
@@ -151,6 +154,9 @@ export function ResetPasswordPage() {
             <img
               src="/assets/brand/wordmark-dark.svg"
               alt="mytimes"
+              width="117"
+              height="24"
+              decoding="async"
               style={{ height: '28px', width: 'auto', marginBottom: '4px' }}
             />
             <h1 className="auth-split__title">
@@ -244,6 +250,9 @@ export function VerifyEmailPage() {
             <img
               src="/assets/brand/wordmark-dark.svg"
               alt="mytimes"
+              width="117"
+              height="24"
+              decoding="async"
               style={{ height: '28px', width: 'auto', marginBottom: '4px' }}
             />
             <h1 className="auth-split__title">

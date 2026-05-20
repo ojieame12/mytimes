@@ -72,6 +72,9 @@ export function DoneStep({ variant: variantProp }: DoneStepProps = {}) {
               className="done-hero__vignette"
               src="/assets/bg/vignette-laptop-only.webp"
               alt=""
+              width="140"
+              height="140"
+              decoding="async"
             />
             <p className="done-hero__eyebrow">
               <span>NOTHING POSTED YET</span>
@@ -142,6 +145,9 @@ export function DoneStep({ variant: variantProp }: DoneStepProps = {}) {
             className="done-hero__vignette"
             src="/assets/bg/vignette-laptop-only.webp"
             alt=""
+            width="140"
+            height="140"
+            decoding="async"
           />
           <p className="done-hero__eyebrow">
             <span>{postedEyebrow}</span>

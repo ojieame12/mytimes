@@ -263,6 +263,9 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
             className="manage-success__vignette"
             src="/assets/bg/vignette-laptop-grass.webp"
             alt=""
+            width="160"
+            height="160"
+            decoding="async"
           />
           <h1 className="manage-success__title">Booking cancelled.</h1>
           <p className="manage-success__body">

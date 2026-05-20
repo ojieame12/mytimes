@@ -80,9 +80,6 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   };
 
   const isSignUp = mode === 'signup';
-  const bgImage = isSignUp
-    ? '/assets/bg/landscape-meadow-picnic.webp'
-    : '/assets/bg/landscape-sunset-cabin.webp';
 
   return (
     <section className="auth-split" data-mode={mode}>
@@ -99,6 +96,9 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
             <img
               src="/assets/brand/wordmark-dark.svg"
               alt="mytimes"
+              width="117"
+              height="24"
+              decoding="async"
               style={{ height: '28px', width: 'auto', marginBottom: '4px' }}
             />
             <h1 className="auth-split__title">

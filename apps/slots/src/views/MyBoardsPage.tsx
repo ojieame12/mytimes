@@ -268,6 +268,9 @@ function EmptyState({
         className="my-boards-empty__vignette"
         src="/assets/bg/vignette-laptop-still-life.webp"
         alt=""
+        width="96"
+        height="96"
+        decoding="async"
       />
       <h2 className="my-boards-empty__title">{title}</h2>
       <p className="my-boards-empty__body">{body}</p>
