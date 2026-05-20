@@ -27,8 +27,11 @@
   margin: 0 -16px 8px;
   padding: 10px 16px;
   background: hsla(0, 0%, 99%, 0.84);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  /* Sticky blur repaints during scroll. Keep the soft glass edge,
+   * but drop the expensive saturation pass and match the lighter
+   * compact booking bar blur. */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--border-subtle);
 }
 
