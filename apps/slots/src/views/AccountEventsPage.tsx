@@ -445,6 +445,7 @@ export function AccountEventsPage() {
             seed={session.user.email}
             style="notionists"
             size={44}
+            priority
           />
         </header>
         <div className="account-card__strip">

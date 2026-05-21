@@ -299,6 +299,7 @@ export function ManageBookingPage({ manageToken }: ManageBookingPageProps) {
                 seed={event.avatarSeed ?? event.organizerEmail}
                 style={event.avatarStyle ?? 'notionists'}
                 size={26}
+                priority
               />
               <span>
                 with <span className="manage-card__meta-organizer-name">{event.organizerName}</span>

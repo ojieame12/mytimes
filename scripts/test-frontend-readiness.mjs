@@ -118,6 +118,24 @@ assertFileIncludes("apps/slots/src/views/LandingPage.tsx", [
   "../styles/carousel.css",
   "../styles/landing.css",
 ]);
+assertFileIncludes("apps/slots/src/components/Avatar.tsx", [
+  "const AVATAR_LOAD_DELAY_MS = 250",
+  "priority?: boolean",
+  "if (priority || loadDelayMs <= 0)",
+]);
+assertFileExcludes("apps/slots/src/components/Avatar.tsx", [
+  "const AVATAR_LOAD_DELAY_MS = 4000",
+]);
+assertFileIncludes("apps/slots/src/components/BookingHeaderCard.tsx", [
+  "priority",
+]);
+assertFileIncludes("apps/slots/src/views/create/DetailsStep.tsx", [
+  "loadDelayMs={isSelected ? 0 : 700 + index * 200}",
+  "priority={isSelected}",
+]);
+assertFileExcludes("apps/slots/src/views/create/DetailsStep.tsx", [
+  "4600 + index * 700",
+]);
 assertFileIncludes("apps/slots/src/views/BookingPage.tsx", [
   "const [bookingDraft, setBookingDraft] = useState<InlineSlotFormDraft>",
   "setBookingDraft(EMPTY_INLINE_SLOT_FORM_DRAFT);",

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CreateFlowShell } from '../../components/create/CreateFlowShell';
 import { FormField } from '../../components/form/FormField';
 import { TextInput, Textarea, Select, Toggle } from '../../components/form/Inputs';
@@ -279,10 +279,31 @@ function AvatarStylePicker({
   value: AvatarStyle;
   onChange: (style: AvatarStyle) => void;
 }) {
+  const [previewedStyles, setPreviewedStyles] = useState<Set<AvatarStyle>>(() => new Set([value]));
+
+  useEffect(() => {
+    setPreviewedStyles((current) => {
+      if (current.has(value)) return current;
+      const next = new Set(current);
+      next.add(value);
+      return next;
+    });
+  }, [value]);
+
+  const previewStyle = (style: AvatarStyle) => {
+    setPreviewedStyles((current) => {
+      if (current.has(style)) return current;
+      const next = new Set(current);
+      next.add(style);
+      return next;
+    });
+  };
+
   return (
     <div className="avatar-style-picker" role="radiogroup" aria-label="Avatar style">
       {AVATAR_STYLES.map((option, index) => {
         const isSelected = option.id === value;
+        const shouldRenderImage = previewedStyles.has(option.id);
         return (
           <button
             key={option.id}
@@ -290,13 +311,20 @@ function AvatarStylePicker({
             role="radio"
             aria-checked={isSelected}
             className={`avatar-style-picker__option${isSelected ? ' is-selected' : ''}`}
-            onClick={() => onChange(option.id)}
+            onPointerEnter={() => previewStyle(option.id)}
+            onFocus={() => previewStyle(option.id)}
+            onClick={() => {
+              previewStyle(option.id);
+              onChange(option.id);
+            }}
           >
             <Avatar
               seed={seed}
               style={option.id}
               size={40}
-              loadDelayMs={isSelected ? 700 : 4600 + index * 700}
+              renderImage={shouldRenderImage}
+              loadDelayMs={isSelected ? 0 : 700 + index * 200}
+              priority={isSelected}
             />
             <span className="avatar-style-picker__option-text">
               <span className="avatar-style-picker__option-label">

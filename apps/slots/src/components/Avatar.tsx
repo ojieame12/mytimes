@@ -24,7 +24,7 @@ const STYLE_LOADERS: Record<AvatarStyle, () => Promise<AvatarAdapter>> = {
 const BG_PALETTE = ['fcebd7', 'fde9da', 'ffd4bc', 'fff1e3'];
 const DATA_URI_CACHE = new Map<string, string>();
 const DATA_URI_PROMISES = new Map<string, Promise<string>>();
-const AVATAR_LOAD_DELAY_MS = 4000;
+const AVATAR_LOAD_DELAY_MS = 250;
 
 export interface AvatarProps {
   /** Stable seed — typically the organizer's email. */
@@ -39,6 +39,10 @@ export interface AvatarProps {
   ariaLabel?: string;
   /** Delay before loading the DiceBear style chunk after the avatar is near the viewport. */
   loadDelayMs?: number;
+  /** Bypass idle scheduling for product-critical avatars visible near first paint. */
+  priority?: boolean;
+  /** When false, keep the lightweight initials fallback and skip DiceBear loading. */
+  renderImage?: boolean;
 }
 
 export function Avatar({
@@ -48,14 +52,21 @@ export function Avatar({
   className,
   ariaLabel,
   loadDelayMs = AVATAR_LOAD_DELAY_MS,
+  priority = false,
+  renderImage = true,
 }: AvatarProps) {
   const cacheKey = `${style}:${seed}`;
   const rootRef = useRef<HTMLSpanElement | null>(null);
-  const [nearViewport, setNearViewport] = useState(false);
+  const [nearViewport, setNearViewport] = useState(priority);
   const [dataUri, setDataUri] = useState(() => DATA_URI_CACHE.get(cacheKey));
   const initials = useMemo(() => fallbackInitials(seed), [seed]);
 
   useEffect(() => {
+    if (!renderImage) return;
+    if (priority) {
+      setNearViewport(true);
+      return;
+    }
     if (typeof window === 'undefined') return;
     const node = rootRef.current;
     if (!node || typeof IntersectionObserver === 'undefined') {
@@ -74,9 +85,10 @@ export function Avatar({
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, []);
+  }, [priority, renderImage]);
 
   useEffect(() => {
+    if (!renderImage) return;
     if (isReactActTestEnvironment()) return;
     if (!nearViewport) return;
 
@@ -89,6 +101,15 @@ export function Avatar({
       };
     }
     setDataUri(undefined);
+    if (priority || loadDelayMs <= 0) {
+      void loadAvatarDataUri(style, seed, cacheKey).then((next) => {
+        if (!cancelled) setDataUri(next);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const cancelScheduledLoad = scheduleIdleAfterCriticalPaint(loadDelayMs, () => {
       void loadAvatarDataUri(style, seed, cacheKey).then((next) => {
         if (!cancelled) setDataUri(next);
@@ -98,7 +119,7 @@ export function Avatar({
       cancelled = true;
       cancelScheduledLoad();
     };
-  }, [cacheKey, loadDelayMs, nearViewport, seed, style]);
+  }, [cacheKey, loadDelayMs, nearViewport, priority, renderImage, seed, style]);
 
   return (
     <span

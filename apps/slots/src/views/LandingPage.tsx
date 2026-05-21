@@ -847,6 +847,7 @@ function OperationsSection() {
               style="notionists"
               size={56}
               ariaLabel="Avatar for Anya Gupta"
+              priority
             />
             <div className="landing-ops__booking-id">
               <span className="landing-ops__booking-eyebrow">Booked · Tue 18 May</span>
@@ -1047,6 +1048,7 @@ function ParticipantLifecycleSection() {
             style="notionists"
             size={36}
             ariaLabel="Avatar for Oyani Solis"
+            priority
           />
           <div className="landing-inbox__row-text">
             <div className="landing-inbox__row-top">

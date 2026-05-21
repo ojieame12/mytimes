@@ -32,6 +32,7 @@ export function BookingCompact({
           seed={event.avatarSeed ?? event.organizerEmail}
           style={event.avatarStyle ?? 'notionists'}
           size={28}
+          priority
         />
         <span className="booking-compact__title">{event.title}</span>
         <span className="booking-compact__dot" aria-hidden="true">·</span>

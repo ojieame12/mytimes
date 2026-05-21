@@ -81,6 +81,7 @@ export function BookingHeaderCard({
           seed={event.avatarSeed ?? event.organizerEmail}
           style={event.avatarStyle ?? 'notionists'}
           size={44}
+          priority
         />
       </header>
 

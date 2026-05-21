@@ -443,6 +443,7 @@ function ContactSignature() {
         style="notionists"
         size={28}
         className="contact-signature__avatar"
+        priority
       />
       <span className="contact-signature__text">
         I read every one of these. James Miller, founder.

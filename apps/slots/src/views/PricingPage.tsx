@@ -597,6 +597,7 @@ export function PricingPage() {
           seed="james.miller@mytimes.co"
           style="notionists"
           size={56}
+          priority
         />
         <div className="pricing-founder__copy">
           <p>
