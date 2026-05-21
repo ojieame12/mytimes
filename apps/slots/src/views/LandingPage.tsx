@@ -31,6 +31,8 @@ import { BookingHeaderCard } from '../components/BookingHeaderCard';
 import { TimezonePicker } from '../components/TimezonePicker';
 import { MOCK_EVENT, MOCK_SLOTS } from '../lib/mockData';
 import { formatTimeInTz, formatDateKey, formatDayPartsInTz } from '../lib/time';
+import '../styles/booking-page.css';
+import '../styles/carousel.css';
 import '../styles/landing.css';
 
 /* ─── LandingPage ─────────────────────────────────────────

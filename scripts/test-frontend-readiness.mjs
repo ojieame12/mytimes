@@ -113,6 +113,11 @@ assertFileIncludes("apps/slots/src/views/AuthPage.tsx", [
   "Check your email",
   "Verify your email first",
 ]);
+assertFileIncludes("apps/slots/src/views/LandingPage.tsx", [
+  "../styles/booking-page.css",
+  "../styles/carousel.css",
+  "../styles/landing.css",
+]);
 assertFileIncludes("apps/slots/src/views/BookingPage.tsx", [
   "const [bookingDraft, setBookingDraft] = useState<InlineSlotFormDraft>",
   "setBookingDraft(EMPTY_INLINE_SLOT_FORM_DRAFT);",
@@ -138,6 +143,15 @@ assert(
   distJs.length > 0,
   "production build must contain a JS bundle under apps/slots/dist/assets",
 );
+const distIndex = readFileSync(join(root, "apps/slots/dist/index.html"), "utf8");
+const initialCssLinks = [...distIndex.matchAll(/href="([^"]+\.css)"/g)].map((match) => match[1]);
+assert(initialCssLinks.length > 0, "production landing HTML must link initial CSS");
+const initialCssText = initialCssLinks
+  .map((href) => readFileSync(join(root, "apps/slots/dist", href.replace(/^\//, "")), "utf8"))
+  .join("\n");
+assertIncludes(initialCssText, ".booking-card", "initial landing CSS includes booking card styles");
+assertIncludes(initialCssText, ".day-band", "initial landing CSS includes day band styles");
+assertIncludes(initialCssText, ".tz-picker", "initial landing CSS includes timezone picker styles");
 const bundleText = distJs.map((file) => readFileSync(file, "utf8")).join("\n");
 assertIncludes(bundleText, "Preview only", "bundle must include read-only demo submit label");
 assertIncludes(bundleText, "This is a demo board", "bundle must include demo submit guard copy");
