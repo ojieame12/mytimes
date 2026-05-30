@@ -24,8 +24,8 @@ export type EmailType =
 
 export type EmailDeliveryResult = {
   emailType: EmailType;
-  status: "sent" | "failed";
-  provider: "console" | "resend" | "postmark";
+  status: "sent" | "failed" | "suppressed";
+  provider: "console" | "resend" | "postmark" | "suppressed";
   deliveryLogId?: string | undefined;
   providerMessageId?: string | undefined;
   error?: string | undefined;
@@ -34,6 +34,7 @@ export type EmailDeliveryResult = {
 export type BookingClaimedEmailResult = {
   participantConfirmation: EmailDeliveryResult;
   organizerNotice: EmailDeliveryResult;
+  sourceEmailsSuppressed?: boolean | undefined;
 };
 
 export type EventCreatedEmailResult = {
@@ -140,6 +141,22 @@ export async function sendBookingClaimedEmails(input: {
   return {
     participantConfirmation,
     organizerNotice,
+  };
+}
+
+export function suppressedBookingClaimedEmails(): BookingClaimedEmailResult {
+  return {
+    sourceEmailsSuppressed: true,
+    participantConfirmation: suppressedDelivery("booking_confirmation"),
+    organizerNotice: suppressedDelivery("organizer_booking_notice"),
+  };
+}
+
+function suppressedDelivery(emailType: EmailType): EmailDeliveryResult {
+  return {
+    emailType,
+    status: "suppressed",
+    provider: "suppressed",
   };
 }
 

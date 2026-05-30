@@ -43,8 +43,8 @@ export type CreateEventResponse = {
 
 export type EmailDeliveryResult = {
   emailType: string;
-  status: 'sent' | 'failed';
-  provider?: 'console' | 'resend' | 'postmark';
+  status: 'sent' | 'failed' | 'suppressed';
+  provider?: 'console' | 'resend' | 'postmark' | 'suppressed';
   deliveryLogId?: string;
   providerMessageId?: string;
   error?: string;
@@ -82,7 +82,9 @@ export type ClaimSlotResponse = {
   email?: {
     participantConfirmation: EmailDeliveryResult;
     organizerNotice: EmailDeliveryResult;
+    sourceEmailsSuppressed?: boolean;
   };
+  sourceEmailsSuppressed?: boolean;
 };
 
 export type ManageBookingResponse = {

@@ -24,6 +24,7 @@ export type ClaimSlotInput = {
   participantTimezone?: string | undefined;
   participantLocale?: string | undefined;
   participantOffsetAtBooking?: string | undefined;
+  suppressSourceEmails?: boolean | undefined;
 };
 
 export type UpdateEventInput = {
@@ -225,6 +226,7 @@ export function toClaimSlotInput(value: unknown): ClaimSlotInput {
   const participantTimezone = optionalString(value, "participantTimezone", "");
   const participantLocale = optionalString(value, "participantLocale", "");
   const participantOffsetAtBooking = optionalString(value, "participantOffsetAtBooking", "");
+  const suppressSourceEmails = optionalBoolean(value, "suppressSourceEmails", false);
 
   if (!isUuid(slotId)) {
     throw new ApiError(400, "invalid_booking", "slotId must be a UUID");
@@ -256,6 +258,7 @@ export function toClaimSlotInput(value: unknown): ClaimSlotInput {
     participantTimezone: participantTimezone || undefined,
     participantLocale: participantLocale || undefined,
     participantOffsetAtBooking: participantOffsetAtBooking || undefined,
+    suppressSourceEmails: suppressSourceEmails || undefined,
   };
 }
 

@@ -390,6 +390,9 @@ function confirmationDeliveryCopy(delivery?: EmailDeliveryResult): string {
   if (delivery.status === 'failed') {
     return 'Your booking is saved, but email delivery failed. Keep the manage link below.';
   }
+  if (delivery.status === 'suppressed') {
+    return 'Your booking is saved. Keep the manage link below.';
+  }
   if (delivery.provider === 'console') {
     return 'Your booking is saved. Email delivery is not configured here, so keep the manage link below.';
   }

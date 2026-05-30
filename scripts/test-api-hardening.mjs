@@ -241,6 +241,56 @@ try {
   });
   assert((await activeBookingCount(publicBoard.slots[0].id)) === 1, "expected idempotent claim to write one active booking");
 
+  const suppressionFixture = await request("/api/slotboard/events", {
+    method: "POST",
+    expectedStatus: 201,
+    json: boardBody({
+      title: `Suppressed Source Email Claim ${suffix}`,
+      organizerEmail: `suppressed-source+${suffix}@example.com`,
+      dayOffset: 33,
+    }),
+  });
+  const suppressionPublicToken = tokenFromLink(suppressionFixture.links.public);
+  const suppressionAdminToken = tokenFromLink(suppressionFixture.links.admin);
+  const suppressionPublicBoard = await request("/api/slotboard/book", {
+    token: suppressionPublicToken,
+  });
+  const suppressionBody = {
+    slotId: suppressionPublicBoard.slots[0].id,
+    participantName: "Suppressed Source Email",
+    participantEmail: `suppressed-source-participant+${suffix}@example.com`,
+    notes: "Caboo owns the notifications for this booking.",
+    suppressSourceEmails: true,
+  };
+  await request("/api/slotboard/book/claim", {
+    method: "POST",
+    token: suppressionPublicToken,
+    expectedStatus: 403,
+    expectedError: "invalid_admin_token_for_email_suppression",
+    json: suppressionBody,
+  });
+  assert(
+    (await activeBookingCount(suppressionPublicBoard.slots[0].id)) === 0,
+    "expected unauthenticated email suppression to write no booking",
+  );
+  const suppressedClaim = await request("/api/slotboard/book/claim", {
+    method: "POST",
+    token: suppressionPublicToken,
+    expectedStatus: 201,
+    headers: { "x-mytimes-admin-token": suppressionAdminToken },
+    json: suppressionBody,
+  });
+  assert(suppressedClaim.sourceEmailsSuppressed === true, "expected claim to mark source emails suppressed");
+  assert(
+    suppressedClaim.email.participantConfirmation.status === "suppressed" &&
+      suppressedClaim.email.organizerNotice.status === "suppressed",
+    "expected source email delivery records to be suppressed",
+  );
+  assert(
+    (await emailLogCountForBooking(suppressedClaim.booking.id)) === 0,
+    "expected suppressed source emails to create no source email logs",
+  );
+
   const rescheduleFixtureBody = boardBody({
     title: `Idempotency Reschedule ${suffix}`,
     organizerEmail: `idem-reschedule+${suffix}@example.com`,
@@ -435,6 +485,8 @@ try {
           "idempotent-claim-single-write",
           "idempotent-claim-replay-conflict",
           "idempotent-claim-body-reuse-conflict",
+          "email-suppression-requires-admin-token",
+          "email-suppression-writes-booking-without-source-email-logs",
           "reschedule-token-purpose-rejection",
           "reschedule-options-token-redaction",
           "reschedule-same-slot-rejection",
@@ -671,6 +723,18 @@ async function activeBookingCount(slotId) {
         and cancelled_at is null
     `,
     [slotId],
+  );
+  return result.rows[0]?.count ?? 0;
+}
+
+async function emailLogCountForBooking(bookingId) {
+  const result = await pool.query(
+    `
+      select count(*)::int as count
+      from slotboard.email_delivery_logs
+      where booking_id = $1
+    `,
+    [bookingId],
   );
   return result.rows[0]?.count ?? 0;
 }

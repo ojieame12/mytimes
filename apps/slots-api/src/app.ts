@@ -762,12 +762,15 @@ async function claimSlotHandler(c: Context, paramName?: string) {
     await assertRateLimit("public:claim", requestActorKey(c.req.raw.headers), { limit: 20, windowSeconds: 3600 });
     const body = await readJson(c.req);
     const input = toClaimSlotInput(body);
+    const adminToken = input.suppressSourceEmails
+      ? c.req.header("x-mytimes-admin-token")?.trim()
+      : undefined;
     const response = await runIdempotent({
       routeKey: "slotboard.book.claim",
       actorKey: `public:${tokenHash(rawToken)}`,
       idempotencyKey: idempotencyKeyFromHeaders(c.req.raw.headers),
       requestBody: input,
-      run: () => claimSlot(rawToken, input),
+      run: () => claimSlot(rawToken, input, { adminToken }),
     });
     return c.json(response, 201);
   } catch (error) {

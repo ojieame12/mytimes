@@ -16,6 +16,7 @@ import {
   sendBookingClaimedEmails,
   sendManagedBookingDetailsEmail,
   sendManageLinkRecoveryEmail,
+  suppressedBookingClaimedEmails,
 } from "./email.js";
 import { loadEnv } from "./env.js";
 import { hasActiveCompanyStandby } from "./entitlements.js";
@@ -137,18 +138,24 @@ export async function readPublicBoard(rawToken: string): Promise<{ event: EventD
 export async function claimSlot(
   rawToken: string,
   input: ClaimSlotInput,
+  options: { adminToken?: string | undefined } = {},
 ): Promise<{
   event: EventDTO;
   slot: SlotDTO;
   booking: BookingDTO;
   links: { manage: string };
   email: BookingClaimedEmailResult;
+  sourceEmailsSuppressed?: boolean | undefined;
 }> {
   const env = loadEnv();
   const manageToken = createTokenPair("manage", env.tokenPepper);
+  const suppressSourceEmails = input.suppressSourceEmails === true;
 
   const result = await withTransaction(async (client) => {
     const event = await resolveEventByToken("public_token_hash", rawToken, client, true);
+    if (suppressSourceEmails) {
+      await assertAdminTokenForEmailSuppression(client, event.id, options.adminToken);
+    }
     if (event.status !== "active") {
       throw new ApiError(409, "event_not_active", "This event is not accepting bookings");
     }
@@ -231,13 +238,15 @@ export async function claimSlot(
     },
   };
 
-  const email = await sendBookingClaimedEmails({
-    event: response.event,
-    slot: response.slot,
-    booking: response.booking,
-    manageURL: response.links.manage,
-    calendarURL,
-  });
+  const email = suppressSourceEmails
+    ? suppressedBookingClaimedEmails()
+    : await sendBookingClaimedEmails({
+      event: response.event,
+      slot: response.slot,
+      booking: response.booking,
+      manageURL: response.links.manage,
+      calendarURL,
+    });
   await notifyWorkspaceIntegrations({
     type: "booking_created",
     event: response.event,
@@ -248,6 +257,7 @@ export async function claimSlot(
   return {
     ...response,
     email,
+    sourceEmailsSuppressed: suppressSourceEmails || undefined,
   };
 }
 
@@ -1459,6 +1469,38 @@ async function resolveEventByToken(
     [tokenHash(rawToken)],
   );
   return mapEvent(rowOrThrow(result, "event_not_found", "Event not found"));
+}
+
+async function assertAdminTokenForEmailSuppression(
+  client: Queryable,
+  eventId: string,
+  rawAdminToken: string | undefined,
+): Promise<void> {
+  if (!rawAdminToken || !/^[A-Za-z0-9_-]{16,256}$/.test(rawAdminToken)) {
+    throw new ApiError(
+      403,
+      "invalid_admin_token_for_email_suppression",
+      "Source email suppression requires a valid admin token",
+    );
+  }
+  const result = await client.query<{ ok: number }>(
+    `
+      select 1 as ok
+      from slotboard.booking_events
+      where id = $1
+        and admin_token_hash = $2
+        and deleted_at is null
+      limit 1
+    `,
+    [eventId, tokenHash(rawAdminToken)],
+  );
+  if (!result.rows[0]) {
+    throw new ApiError(
+      403,
+      "invalid_admin_token_for_email_suppression",
+      "Source email suppression requires a valid admin token",
+    );
+  }
 }
 
 async function resolveEventByOwner(
