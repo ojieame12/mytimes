@@ -4,6 +4,8 @@ import type { Root } from "react-dom/client";
 import type { ClaimSlotResponse, PublicBoardResponse } from "../apps/slots/src/lib/api";
 
 const { Pool } = pg;
+process.env.TZ = "Africa/Johannesburg";
+
 const databaseURL =
   process.env.SLOTBOARD_DATABASE_URL ||
   "postgres://slotboard:slotboard@localhost:5434/slotboard?sslmode=disable";
