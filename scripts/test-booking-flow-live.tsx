@@ -11,6 +11,7 @@ const suffix = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,
 const actor = `booking-live-flow-${suffix}`;
 const checked: string[] = [];
 let baseURL = "";
+const { availabilityStartDate, availabilityEndDate } = createFutureAvailabilityRange();
 
 process.env.SLOTBOARD_DATABASE_URL ||= databaseURL;
 process.env.SLOTBOARD_EMAIL_WEBHOOK_SECRET ||= "local-email-webhook-secret";
@@ -28,7 +29,10 @@ try {
   assert(publicBefore.event.avatarSeed === board.event.avatarSeed, "public board preserves avatar seed");
   assert(publicBefore.slots.length === 8, `public board exposes generated slots, got ${publicBefore.slots.length}`);
   assert(
-    publicBefore.slots.every((slot: { sourceDate?: string }) => slot.sourceDate?.startsWith("2026-06-")),
+    publicBefore.slots.every(
+      (slot: { sourceDate?: string }) =>
+        slot.sourceDate === availabilityStartDate || slot.sourceDate === availabilityEndDate,
+    ),
     "public board keeps source dates as date-only values",
   );
   assertNoPublicLeak(publicBefore, [publicToken, tokenFromLink(board.links.admin)]);
@@ -192,8 +196,8 @@ async function createDisposableBoard() {
       timezone: "Africa/Johannesburg",
       allowMultipleBookings: false,
       availability: {
-        startDate: "2026-06-08",
-        endDate: "2026-06-09",
+        startDate: availabilityStartDate,
+        endDate: availabilityEndDate,
         weekdays: [1, 2],
         dailyStart: "09:00",
         dailyEnd: "11:00",
@@ -203,6 +207,21 @@ async function createDisposableBoard() {
       },
     },
   });
+}
+
+function createFutureAvailabilityRange() {
+  const start = new Date();
+  start.setUTCHours(12, 0, 0, 0);
+  start.setUTCDate(start.getUTCDate() + 7);
+  start.setUTCDate(start.getUTCDate() + ((8 - start.getUTCDay()) % 7));
+
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+
+  return {
+    availabilityStartDate: start.toISOString().slice(0, 10),
+    availabilityEndDate: end.toISOString().slice(0, 10),
+  };
 }
 
 function setupDom(path: string) {
